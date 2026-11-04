@@ -1,0 +1,46 @@
+{
+  "name": "@trf/esr-workspace",
+  "version": "0.1.0",
+  "description": "Vue-based embeddable Engineering Service Request web component",
+  "type": "module",
+  "main": "./dist/component/esr-workspace.js",
+  "module": "./dist/component/esr-workspace.js",
+  "types": "./dist/component/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/component/index.d.ts",
+      "import": "./dist/component/esr-workspace.js"
+    }
+  },
+  "files": [
+    "dist/component",
+    "README.md",
+    "LICENSE",
+    "docs/api.md"
+  ],
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "dev:api": "dotnet run --project backend/Esr.Api --urls http://127.0.0.1:5080",
+    "build": "npm run build:component",
+    "build:component": "vite build --mode component && node scripts/component-types.mjs",
+    "build:host": "vite build",
+    "package:component": "npm run build:component && npm pack --ignore-scripts --pack-destination artifacts",
+    "prepack": "npm run build:component",
+    "test": "vitest run",
+    "test:backend": "dotnet test backend/Esr.Tests",
+    "test:e2e": "playwright test",
+    "validate": "npm test && npm run test:component && npm run build:host && npm run test:backend && npm run test:e2e",
+    "test:component": "npm run build:component && playwright test --config playwright.component.config.js"
+  },
+  "engines": {
+    "node": ">=22.12"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "@vitejs/plugin-vue": "^6.0.0",
+    "vite": "^7.2.0",
+    "vitest": "^5.1.0",
+    "vue": "^3.5.0"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Esr.Api", "backend/Esr.Api/Esr.Api.csproj", "{F20383DD-A831-413E-A49C-17277EE96524}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Esr.Tests", "backend/Esr.Tests/Esr.Tests.csproj", "{3E30CABF-E877-415E-9452-779B01D77172}"
+EndProject
+Global
+ GlobalSection(SolutionConfigurationPlatforms) = preSolution
+  Debug|Any CPU = Debug|Any CPU
+  Release|Any CPU = Release|Any CPU
+ EndGlobalSection
+ GlobalSection(ProjectConfigurationPlatforms) = postSolution
+  {F20383DD-A831-413E-A49C-17277EE96524}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+  {F20383DD-A831-413E-A49C-17277EE96524}.Debug|Any CPU.Build.0 = Debug|Any CPU
+  {F20383DD-A831-413E-A49C-17277EE96524}.Release|Any CPU.ActiveCfg = Release|Any CPU
+  {F20383DD-A831-413E-A49C-17277EE96524}.Release|Any CPU.Build.0 = Release|Any CPU
+  {3E30CABF-E877-415E-9452-779B01D77172}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+  {3E30CABF-E877-415E-9452-779B01D77172}.Debug|Any CPU.Build.0 = Debug|Any CPU
+  {3E30CABF-E877-415E-9452-779B01D77172}.Release|Any CPU.ActiveCfg = Release|Any CPU
+  {3E30CABF-E877-415E-9452-779B01D77172}.Release|Any CPU.Build.0 = Release|Any CPU
+ EndGlobalSection
+EndGlobal

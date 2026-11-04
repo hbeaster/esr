@@ -1,0 +1,9 @@
+.git
+node_modules
+dist
+**/bin
+**/obj
+artifacts
+test-results
+playwright-report
+backend/Esr.Tests

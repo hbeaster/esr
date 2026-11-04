@@ -1,0 +1,43 @@
+using System.Net;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text.Json.Nodes;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Xunit;
+namespace Esr.Tests;
+public sealed class ApiTests : IClassFixture<WebApplicationFactory<Program>>
+{
+    readonly HttpClient client;
+    public ApiTests(WebApplicationFactory<Program> factory) => client = factory.CreateClient();
+    async Task SignIn(string id)
+    {
+        var response = await client.PostAsJsonAsync("/api/demo/session", new { userId = id }); var session = await response.Content.ReadFromJsonAsync<JsonObject>();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", session!["token"]!.GetValue<string>());
+    }
+    [Fact] public async Task HealthDoesNotRequireIdentity()
+    {
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/health/ready")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/bootstrap")).StatusCode);
+    }
+    [Fact] public async Task ApiRejectsUnauthorizedTransitionsAndServesApprovedPdf()
+    {
+        await SignIn("requestor");
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.PostAsJsonAsync("/api/records/demo-2/assign", new { engineerId = "engineer" })).StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, (await client.GetAsync("/api/records/demo-1/pdf")).StatusCode);
+        var pdf = await client.GetAsync("/api/records/demo-4/pdf"); Assert.Equal("application/pdf", pdf.Content.Headers.ContentType!.MediaType); Assert.True((await pdf.Content.ReadAsByteArrayAsync()).Length > 500);
+    }
+    [Fact] public async Task LdsAndSearchReturnSyntheticData()
+    {
+        await SignIn("engineer");
+        var lds = await client.GetFromJsonAsync<JsonObject>("/api/lds?jcn=JCN-260184"); Assert.Contains("TSN", lds!["component"]!.GetValue<string>());
+        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/api/lds?jcn=unknown")).StatusCode);
+        var search = await client.PostAsJsonAsync("/api/history/search", new { condition = "Uneven pump coupling wear" }); var result = await search.Content.ReadFromJsonAsync<JsonObject>(); Assert.NotEmpty(result!["matches"]!.AsArray());
+    }
+    [Fact] public async Task AttachmentRetainsOriginal()
+    {
+        await SignIn("engineer");
+        var response = await client.PostAsJsonAsync("/api/records/demo-1/attach", new { name = "inspection.txt", type = "text/plain", section = "Continuation", base64 = Convert.ToBase64String("Synthetic inspection record"u8.ToArray()) });
+        response.EnsureSuccessStatusCode(); var r = await response.Content.ReadFromJsonAsync<JsonObject>(); var file = r!["attachments"]!.AsArray().Last()!;
+        Assert.Equal("", file["base64"]!.GetValue<string>()); Assert.Equal("Synthetic inspection record", await client.GetStringAsync($"/api/records/demo-1/files/{file["id"]!.GetValue<string>()}"));
+    }
+}

@@ -1,0 +1,26 @@
+name: Validate ESR
+on: [push, pull_request]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run validate
+      - run: npm run package:component
+      - run: docker build -t esr-demo:ci .
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: esr-validation
+          path: |
+            artifacts/*.tgz
+            test-results/

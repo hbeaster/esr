@@ -1,0 +1,158 @@
+# ESR Workspace
+
+An embeddable **Vue 3 web component** backed by a thin **ASP.NET Core / .NET 10** demo API. The component uses Shadow DOM, a bundled Vue runtime, and a light theme. The host application is separate from the npm package.
+
+All records, LDS responses, historical matches, identities, signatures and approvals are **synthetic**. The backend keeps data in memory; restarting it resets the demo. The public role selector is a demonstration tool, not an authentication system.
+
+## Build and package only the component
+
+Requires Node.js 22.12+ and npm. **No .NET SDK, Docker, or backend build is needed.**
+
+```sh
+npm ci
+npm run build:component
+npm run package:component
+```
+
+`npm run build` is an alias for the component-only build.
+
+- Bundle: `dist/component/esr-workspace.js`
+- Type declarations: `dist/component/index.d.ts`
+- Installable npm tarball: `artifacts/trf-esr-workspace-0.1.0.tgz`
+
+The npm allowlist includes only `dist/component/`, this README, the API contract, and the license. It excludes the demo host, C# backend, synthetic seed records, deployment files, tests, and source tree. `npm pack` also builds the component through `prepack`. No registry publishing is performed.
+
+### Embed in another application
+
+```sh
+npm install ./artifacts/trf-esr-workspace-0.1.0.tgz
+```
+
+```html
+<esr-workspace api-base="/api"></esr-workspace>
+```
+
+```js
+import '@trf/esr-workspace';
+
+const workspace = document.querySelector('esr-workspace');
+workspace.tokenProvider = async () => getAccessTokenFromYourHost();
+workspace.addEventListener('record-change', event => {
+  // Vue custom-element events provide emitted arguments in an array.
+  const [{ id, action, status }] = event.detail;
+  console.log(id, action, status);
+});
+workspace.addEventListener('workspace-error', event => {
+  const [{ message }] = event.detail;
+  console.error(message);
+});
+```
+
+The host owns token acquisition and renewal. `tokenProvider` is invoked for every API call; assigning a new provider reloads the workspace. The mock API accepts its own demo JWTs; a production host token requires replacing the demo identity adapter with real JWT/OIDC validation. Use a same-origin reverse proxy for `/api`; cross-origin deployments must explicitly configure CORS on their API.
+
+For Vue hosts, configure `compilerOptions.isCustomElement` for `esr-workspace`. For React/Angular hosts, assign the function property through a DOM reference. You can import `registerEsrWorkspace` and register an additional custom tag when needed.
+
+```css
+esr-workspace {
+  --esr-accent: #196b57;
+  --esr-bg: #f5f7f8;
+}
+```
+
+See [API contract](docs/api.md) for the endpoints an embedding host must provide. Vue's [custom element guidance](https://vuejs.org/guide/extras/web-components) describes the underlying embedding model.
+
+## Run the demo locally
+
+Requires the [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0).
+
+```sh
+npm ci
+npm run dev:api  # terminal 1: ASP.NET on http://127.0.0.1:5080
+npm run dev      # terminal 2: Vue host on http://127.0.0.1:5173
+```
+
+Use the identity selector above the workspace to follow each role. Start with **Requestor**, create a request, switch to **Supervisor** to assign it, then **Engineer**, **Supervisor**, **Shop**, and **Division Head** for the full workflow. Administrator can grant cross-TRF review and delegated signatures. Demo JCNs are `JCN-260184` and `JCN-260207`; `N/A` is supported.
+
+A host-only build is available with `npm run build:host`, producing `dist/host/`. The Docker build copies this into ASP.NET's `wwwroot` so one server serves both the host and API.
+
+## Docker
+
+```sh
+docker build -t esr-demo:local .
+docker run --rm -p 127.0.0.1:8080:8080 esr-demo:local
+# Or:
+docker compose up --build
+```
+
+Open `http://localhost:8080`. The multi-stage image builds Vue with Node and the backend with .NET, then runs only the ASP.NET runtime as a non-root user. Health endpoints are `/health/live` and `/health/ready`.
+
+## Kubernetes
+
+Build and load `esr-demo:local` into your local cluster, or push it to your own registry and update the image:
+
+```sh
+# Local kind example:
+kind load docker-image esr-demo:local
+kubectl apply -k deploy/k8s
+kubectl rollout status deployment/esr-demo
+kubectl port-forward service/esr-demo 8080:80
+```
+
+For a registry, use a kustomize overlay or `kubectl set image deployment/esr-demo esr=YOUR_REGISTRY/esr-demo:TAG`. Add your ingress/TLS policy in the deployment environment. No cluster changes or remote publication are performed by the build commands.
+
+The manifest includes startup/readiness/liveness probes, CPU/memory requests and limits, a read-only root filesystem, dropped capabilities, and a temporary volume. **Keep one replica**: demo records and JWT signing keys are process-local. Production scaling requires shared persistence and a real identity provider. `Recreate` avoids concurrent mock stores during rollout.
+
+## Validate
+
+```sh
+npm test                       # Vitest component boundary and filtering unit tests
+npm run test:component          # browser integration with isolated API fixtures
+npm run test:backend            # xUnit domain and ASP.NET HTTP integration tests
+npx playwright install chromium
+npm run test:e2e                # actual Vue host + actual .NET backend in Chromium
+npm run validate               # unit tests, component browser tests, both builds, backend tests, full-flow browser tests
+```
+
+To validate entirely through Docker without a local .NET SDK:
+
+```sh
+docker run --rm -v "$PWD:/source" -w /source mcr.microsoft.com/dotnet/sdk:10.0 dotnet test backend/Esr.Tests --configuration Release
+# With the built application running at localhost:8080:
+ESR_BASE_URL=http://127.0.0.1:8080 npm run test:e2e
+```
+
+If .NET is installed outside PATH, `DOTNET_BIN=/path/to/dotnet npm run test:e2e` configures Playwright's backend command. xUnit can be run with `/path/to/dotnet test backend/Esr.Tests`.
+
+CI runs these checks, creates the component tarball, and builds the Docker image. In the source checkout, see `docs/requirements.md` for the implemented PRD coverage and deliberate mock boundaries.
+
+## Design and decisions
+
+- The reusable component is independent of the demo host and .NET server.
+- Workflow rules and permissions are enforced by the API, not only hidden buttons.
+- Signatures derive name and user ID from a server-verified demo JWT, ignoring submitted signature identities.
+- Supervisor-approved templates only, per the agreed policy. Templates are maintained in the synthetic catalog.
+- New revisions copy prior content, retain frozen prior versions, and require fresh signatures.
+- Rejected initiation requests stay `Unassigned` with a returned flag/comment, preserving the five-state primary workflow. The requestor can update and resubmit.
+- Base serials are `YYNNNN`; revisions append `A`–`ZZ`. This resolves the PRD's ambiguous initial suffix using the explicit revision requirement.
+- Shop deferral sets `ESR Issued – Deferred`. Division Head must explicitly acknowledge that disposition before closing.
+- PDF export is a paginated engineering record with references, attributes, signatures, comments, audit trail, and embedded original attachments. JPEG and standard non-interlaced 8-bit PNG images are rendered on printable continuation pages. All original files are also embedded; WebP and other PNG variants are retained as originals with UI previews. The PDF is a demonstration layout, not a certified facility form.
+- Historical “AI” results use deterministic term overlap and a synthetic summary. They are not real generative or semantic search results and are labeled accordingly.
+
+## Source map
+
+| Location | Responsibility |
+| --- | --- |
+| `src/Workspace.ce.vue` | Vue custom element UI and component-scoped styles |
+| `src/api.js` | Host-token API adapter and workspace filtering |
+| `src/index.js` | Custom element registration and package exports |
+| `host/main.js` | Demo-only identity selector and host initialization |
+| `backend/Esr.Api/Workflow.cs` | Authorization, transitions, revisions, validation |
+| `backend/Esr.Api/DemoIdentity.cs` | Ephemeral signed demo JWTs |
+| `backend/Esr.Api/PdfExport.cs` | Paginated PDF and embedded attachments |
+| `backend/Esr.Tests/` | Domain and HTTP integration tests |
+| `tests/e2e/` | Browser integration tests |
+| `deploy/k8s/` | Deployment, service and kustomization |
+
+## Production integration boundary
+
+Replace the in-memory store, demo session endpoints, deterministic history service and LDS fixtures with production adapters. A production rollout also needs the facility-approved PDF layout, actual signature/compliance requirements, durable attachment storage and malware scanning, a persistent append-only audit store, server-side session/permission administration, operational monitoring, and a defined retention policy. None of those services are represented as production-ready in this synthetic build.
