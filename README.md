@@ -1,12 +1,12 @@
 # ESR Workspace
 
-An embeddable **Vue 3 web component** backed by a thin **ASP.NET Core / .NET 10** demo API. The component uses Shadow DOM, a bundled Vue runtime, and a light theme. The host application is separate from the npm package.
+An embeddable **Vue 3 + TypeScript web component** backed by a thin **ASP.NET Core / .NET 10** demo API. The component uses Shadow DOM, a bundled Vue runtime, and a light theme. The host application is separate from the npm package.
 
 All records, LDS responses, historical matches, identities, signatures and approvals are **synthetic**. The backend keeps data in memory; restarting it resets the demo. The public role selector is a demonstration tool, not an authentication system.
 
 ## Build and package only the component
 
-Requires Node.js 22.12+ and npm. **No .NET SDK, Docker, or backend build is needed.**
+Requires Node.js 22.13+ (22.x) or 24+ and npm. **No .NET SDK, Docker, or backend build is needed.**
 
 ```sh
 npm ci
@@ -105,7 +105,9 @@ The manifest includes startup/readiness/liveness probes, CPU/memory requests and
 ## Validate
 
 ```sh
-npm test                       # Vitest component boundary and filtering unit tests
+npm run lint                   # ESLint recommended JavaScript / TypeScript / Vue rules
+npm run typecheck              # Strict TypeScript and Vue template checks
+npm test                       # Vitest + Vue Test Utils component/controller unit tests
 npm run test:component          # browser integration with isolated API fixtures
 npm run test:backend            # xUnit domain and ASP.NET HTTP integration tests
 npx playwright install chromium
@@ -125,6 +127,14 @@ If .NET is installed outside PATH, `DOTNET_BIN=/path/to/dotnet npm run test:e2e`
 
 CI runs these checks, creates the component tarball, and builds the Docker image. In the source checkout, see `docs/requirements.md` for the implemented PRD coverage and deliberate mock boundaries.
 
+## Frontend development
+
+All frontend application code, browser tests, and Vite/Playwright configurations use TypeScript. Vue SFCs use `<script setup lang="ts">`; `vue-tsc` checks both scripts and templates in strict mode. Vite builds the component and host independently, and `vue-tsc` generates package declarations from the source rather than copying a handwritten declaration.
+
+ESLint uses the unmodified recommended configurations from ESLint, typescript-eslint, and eslint-plugin-vue. `npm run lint` rejects warnings; `npm run lint:fix` applies available fixes. `npm run format` formats the frontend with Prettier and then applies ESLint’s Vue formatting defaults.
+
+UI sections share a typed, instance-local Vue injection context. No state is shared across custom-element instances. Small presentation components, such as the signature record, use typed props. Styles remain inside the outer custom element’s shadow root so ordinary child Vue components inherit the same theme.
+
 ## Design and decisions
 
 - The reusable component is independent of the demo host and .NET server.
@@ -142,15 +152,23 @@ CI runs these checks, creates the component tarball, and builds the Docker image
 
 | Location | Responsibility |
 | --- | --- |
-| `src/Workspace.ce.vue` | Vue custom element UI and component-scoped styles |
-| `src/api.js` | Host-token API adapter and workspace filtering |
-| `src/index.js` | Custom element registration and package exports |
-| `host/main.js` | Demo-only identity selector and host initialization |
+| `src/Workspace.ce.vue` | Custom-element shell and instance-local context provider |
+| `src/components/` | Request workspace, record tabs, dialogs, forms, signatures, and permissions |
+| `src/composables/useWorkspace.ts` | Typed state, API actions, draft and workflow coordination |
+| `src/composables/useDialogFocus.ts` | Modal focus trapping and keyboard lifecycle |
+| `src/styles/workspace.css` | Shared theme, injected once into the custom element shadow root |
+| `src/api.ts` | Typed host-token API adapter |
+| `src/presentation.ts` | Search filtering, status tones, and display helpers |
+| `src/types.ts` | Shared domain DTOs and public component types |
+| `src/index.ts` | Custom element registration and package exports |
+| `host/main.ts` | Demo-only identity selector and host initialization |
 | `backend/Esr.Api/Workflow.cs` | Authorization, transitions, revisions, validation |
 | `backend/Esr.Api/DemoIdentity.cs` | Ephemeral signed demo JWTs |
 | `backend/Esr.Api/PdfExport.cs` | Paginated PDF and embedded attachments |
 | `backend/Esr.Tests/` | Domain and HTTP integration tests |
-| `tests/e2e/` | Browser integration tests |
+| `tests/unit/` | Vitest and Vue Test Utils unit tests |
+| `tests/component/` | Isolated component browser tests and bundle smoke test |
+| `tests/e2e/` | Full browser workflow against ASP.NET |
 | `deploy/k8s/` | Deployment, service and kustomization |
 
 ## Production integration boundary

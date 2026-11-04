@@ -5,7 +5,9 @@ This is a synthetic, end-to-end demonstration. “Implemented” describes demo 
 | PRD requirement | Implementation | Verification |
 | --- | --- | --- |
 | Thin host, reusable npm component | Vue custom element, separate host build, strict npm files allowlist | Vite builds; npm package inspection |
-| Vue frontend / .NET backend | Vue 3 custom element and ASP.NET Core 10 API | Frontend and backend builds |
+| Vue / TypeScript frontend / .NET backend | Strict TypeScript Vue 3 components and ASP.NET Core 10 API | vue-tsc, Vite component/host builds, backend tests |
+| UI component boundaries | 17 focused child components, typed instance context, dialog focus composable | Vue Test Utils unit tests and browser regressions |
+| ESLint defaults | Recommended ESLint, typescript-eslint, and Vue presets without rule overrides | Lint passes with zero warnings |
 | Docker / Kubernetes | Multi-stage image, Compose, Kustomize deployment/service | Passed Docker build and hardened-container smoke test; Kustomize rendering (no cluster rollout) |
 | Initiation required fields / JCN optional | Required form fields; two synthetic LDS JCNs or N/A | Browser creation/import; HTTP LDS test |
 | Assignment / serial | Supervisor assigns local engineer, generates YYNNNN | Workflow tests; full browser flow |
@@ -37,4 +39,4 @@ This is a synthetic, end-to-end demonstration. “Implemented” describes demo 
 - The generated PDF prints JPEG and standard non-interlaced 8-bit PNG continuation images and embeds every original. WebP and other PNG variants retain UI preview and original-download support.
 - Mock state is process-local and reset at restart; Kubernetes deployment deliberately uses one replica.
 
-All 37 automated tests passed. Actual executed results, PDF visual QA, and deployment limits are recorded in `docs/validation-results.md`.
+All 54 automated tests passed. Actual executed results, PDF visual QA, and deployment limits are recorded in `docs/validation-results.md`.

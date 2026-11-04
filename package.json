@@ -22,25 +22,40 @@
     "dev": "vite --host 127.0.0.1",
     "dev:api": "dotnet run --project backend/Esr.Api --urls http://127.0.0.1:5080",
     "build": "npm run build:component",
-    "build:component": "vite build --mode component && node scripts/component-types.mjs",
-    "build:host": "vite build",
+    "build:component": "vue-tsc --noEmit -p tsconfig.component.json && vite build --mode component && vue-tsc -p tsconfig.build.json",
+    "build:host": "vue-tsc --noEmit && vite build",
     "package:component": "npm run build:component && npm pack --ignore-scripts --pack-destination artifacts",
     "prepack": "npm run build:component",
     "test": "vitest run",
     "test:backend": "dotnet test backend/Esr.Tests",
     "test:e2e": "playwright test",
-    "validate": "npm test && npm run test:component && npm run build:host && npm run test:backend && npm run test:e2e",
-    "test:component": "npm run build:component && playwright test --config playwright.component.config.js"
+    "validate": "npm run lint && npm run typecheck && npm test && npm run test:component && npm run build:host && npm run test:backend && npm run test:e2e",
+    "test:component": "npm run build:component && playwright test --config playwright.component.config.ts",
+    "typecheck": "vue-tsc --noEmit",
+    "lint": "eslint . --max-warnings 0",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"src/**/*.{ts,vue,css}\" \"host/**/*.ts\" \"tests/**/*.ts\" \"*.config.{ts,js}\" && npm run lint:fix"
   },
   "engines": {
-    "node": ">=22.12"
+    "node": "^22.13.0 || >=24"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.56.1",
+    "@types/node": "^22.20.5",
     "@vitejs/plugin-vue": "^6.0.0",
+    "@vue/test-utils": "^2.4.11",
+    "eslint": "^10.14.0",
+    "eslint-plugin-vue": "^10.12.0",
+    "globals": "^16.5.0",
+    "happy-dom": "^21.0.4",
+    "prettier": "^3.9.10",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.72.1",
     "vite": "^7.2.0",
     "vitest": "^5.1.0",
-    "vue": "^3.5.0"
+    "vue": "^3.5.0",
+    "vue-tsc": "^3.3.14"
   },
   "license": "MIT"
 }

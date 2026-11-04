@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.component.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "outDir": "dist/component",
+    "rootDir": "src"
+  }
+}
