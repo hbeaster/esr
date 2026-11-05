@@ -32,12 +32,114 @@ export const time = (value?: string): string =>
 /** Revision letters of a YYNNNN + A–ZZ number. Empty until a record is assigned. */
 export const esrRevision = (serial?: string | null): string =>
   serial?.match(/^[0-9]{6}([A-Z]{1,2})$/)?.[1] ?? "";
+export const esrTableColumns = [
+  { id: "serial", label: "Serial" },
+  { id: "jcn", label: "JCN" },
+  { id: "refit", label: "Refit" },
+  { id: "requester", label: "Requester" },
+  { id: "shop", label: "Shop Code" },
+  { id: "condition", label: "Condition" },
+  { id: "resolution", label: "Resolution" },
+  { id: "swbs", label: "SWBS" },
+  { id: "status", label: "Status" },
+  { id: "engineer", label: "Assigned Engineer" },
+  { id: "initiated", label: "Date Initiated" },
+] as const;
+export type EsrTableColumnId = (typeof esrTableColumns)[number]["id"];
+export type SortDirection = "asc" | "desc";
+const statusSortOrder: WorkflowStatus[] = [
+  "Unassigned",
+  "In Process",
+  "Awaiting Approval",
+  "ESR Issued",
+  "ESR Issued – Deferred",
+  "ESR Closed",
+];
+type SortableRecord = Pick<
+  EsrRecord,
+  | "serial"
+  | "jcn"
+  | "refit"
+  | "name"
+  | "shop"
+  | "condition"
+  | "resolution"
+  | "swbs"
+  | "status"
+  | "engineerId"
+  | "createdAt"
+>;
+/** Sort a copy. Blank values stay last in either direction, and equal values keep their current order. */
+export function sortRecords<T extends SortableRecord>(
+  records: T[],
+  column: EsrTableColumnId | null,
+  direction: SortDirection,
+  engineerName: (id: string) => string = () => "",
+): T[] {
+  if (!column) return records;
+  const sign = direction === "asc" ? 1 : -1;
+  const key = (record: T): string | number | null => {
+    const text = (value?: string | null) => value?.trim() || null;
+    switch (column) {
+      case "serial":
+        return text(record.serial);
+      case "jcn":
+        return text(record.jcn);
+      case "refit":
+        return text(record.refit);
+      case "requester":
+        return text(record.name);
+      case "shop":
+        return text(record.shop);
+      case "condition":
+        return text(plainText(record.condition));
+      case "resolution":
+        return text(plainText(record.resolution));
+      case "swbs":
+        return text(record.swbs);
+      case "status": {
+        const index = statusSortOrder.indexOf(record.status);
+        return index === -1 ? null : index;
+      }
+      case "engineer":
+        return record.engineerId
+          ? text(engineerName(record.engineerId))
+          : "Unassigned";
+      case "initiated": {
+        const time = Date.parse(record.createdAt);
+        return Number.isNaN(time) ? null : time;
+      }
+    }
+  };
+  return records
+    .map((record, index) => ({ record, index, value: key(record) }))
+    .sort((left, right) => {
+      if (left.value === null && right.value === null)
+        return left.index - right.index;
+      if (left.value === null) return 1;
+      if (right.value === null) return -1;
+      const compared =
+        typeof left.value === "number" && typeof right.value === "number"
+          ? left.value - right.value
+          : String(left.value).localeCompare(String(right.value), undefined, {
+              numeric: true,
+              sensitivity: "base",
+            });
+      return compared === 0 ? left.index - right.index : compared * sign;
+    })
+    .map(({ record }) => record);
+}
 type SearchableRecord = Pick<
   EsrRecord,
   | "title"
   | "serial"
   | "jcn"
+  | "refit"
+  | "name"
+  | "shop"
   | "condition"
+  | "resolution"
+  | "swbs"
   | "attributes"
   | "engineerId"
   | "status"
@@ -54,7 +156,18 @@ export function filterRecords<T extends SearchableRecord>(
   return records.filter(
     (r) =>
       (!search ||
-        [r.title, r.serial, r.jcn, r.condition, ...r.attributes]
+        [
+          r.title,
+          r.serial,
+          r.jcn,
+          r.refit,
+          r.name,
+          r.shop,
+          plainText(r.condition),
+          plainText(r.resolution),
+          r.swbs,
+          ...r.attributes,
+        ]
           .join(" ")
           .toLowerCase()
           .includes(search)) &&
@@ -64,4 +177,90 @@ export function filterRecords<T extends SearchableRecord>(
         r.requestorId === userId) &&
       (scope !== "history" || r.status === "ESR Closed"),
   );
+}
+const richTags = new Set([
+  "P",
+  "BR",
+  "DIV",
+  "STRONG",
+  "B",
+  "EM",
+  "I",
+  "U",
+  "UL",
+  "OL",
+  "LI",
+]);
+const droppedTags = new Set([
+  "SCRIPT",
+  "STYLE",
+  "IFRAME",
+  "OBJECT",
+  "EMBED",
+  "NOSCRIPT",
+  "TEMPLATE",
+]);
+function escapeHtml(value: string): string {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+/** Keep paragraphs, line breaks, emphasis, and lists. Drop every other tag and its unsafe contents. */
+export function sanitizeRichText(value: string): string {
+  if (!value) return "";
+  const doc = new DOMParser().parseFromString(`<div>${value}</div>`, "text/html");
+  const root = doc.body.firstElementChild;
+  if (!root) return "";
+  const clean = (node: Node): Node | null => {
+    if (node.nodeType === Node.TEXT_NODE)
+      return doc.createTextNode(node.textContent || "");
+    if (node.nodeType !== Node.ELEMENT_NODE) return null;
+    const element = node as HTMLElement;
+    if (droppedTags.has(element.tagName)) return null;
+    if (!richTags.has(element.tagName)) {
+      const fragment = doc.createDocumentFragment();
+      element.childNodes.forEach((child) => {
+        const next = clean(child);
+        if (next) fragment.append(next);
+      });
+      return fragment;
+    }
+    const copy = doc.createElement(element.tagName.toLowerCase());
+    element.childNodes.forEach((child) => {
+      const next = clean(child);
+      if (next) copy.append(next);
+    });
+    return copy;
+  };
+  const out = doc.createElement("div");
+  root.childNodes.forEach((child) => {
+    const next = clean(child);
+    if (next) out.append(next);
+  });
+  return out.innerHTML;
+}
+export function plainText(value?: string | null): string {
+  return sanitizeRichText(value || "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|div|li)>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+/** Show stored plain text or sanitized formatting. Plain text keeps its line breaks. */
+export function richTextHtml(value?: string | null): string {
+  const source = value ?? "";
+  if (!source.trim()) return "";
+  if (/<\/?[a-z][^>]*>/i.test(source)) return sanitizeRichText(source);
+  return escapeHtml(source).replace(/\n/g, "<br>");
+}
+export function appendRichText(current: string, addition: string): string {
+  const base = richTextHtml(current);
+  const next = richTextHtml(addition);
+  if (!plainText(base)) return next;
+  if (!plainText(next)) return base;
+  return `${base}<br><br>${next}`;
 }

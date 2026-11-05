@@ -9,6 +9,14 @@ public sealed class Workflow(StoreData data)
     public static void Require(bool valid, string message, int status = 400) { if (!valid) throw new RuleException(message, status); }
     static string Get(JsonObject d, string key) => d[key]?.GetValue<string>() ?? "";
     static string Required(JsonObject d, string key) { var value = Get(d, key); Require(!string.IsNullOrWhiteSpace(value), $"{key} is required."); return value.Trim(); }
+    static string VisibleText(string value)
+    {
+        var text = System.Text.RegularExpressions.Regex.Replace(value ?? "", @"<br\s*/?>", "\n", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"</(p|div|li)>", "\n", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        text = System.Text.RegularExpressions.Regex.Replace(text, "<[^>]+>", "");
+        return text.Replace("&nbsp;", " ", StringComparison.OrdinalIgnoreCase).Replace("&amp;", "&").Replace("&lt;", "<").Replace("&gt;", ">").Trim();
+    }
+    static string RequiredText(JsonObject d, string key) { var value = Get(d, key).Trim(); Require(!string.IsNullOrWhiteSpace(VisibleText(value)), $"{key} is required."); return value; }
     static void Role(Actor a, params string[] roles) => Require(roles.Contains(a.Role), "Your active role cannot perform this action.", 403);
     public string Access(Actor a, EsrRecord r) => a.Site == r.Site ? "full" : Data.Permissions.GetValueOrDefault(a.Id)?.CrossSite ?? "none";
     public IEnumerable<EsrRecord> Visible(Actor a) => Data.Records.Where(r => Access(a, r) != "none");
@@ -36,9 +44,9 @@ public sealed class Workflow(StoreData data)
     public EsrRecord Create(Actor actor, JsonObject d, LdsData? lds = null)
     {
         Role(actor, "Requestor", "Shop", "Engineer", "Supervisor");
-        var r = new EsrRecord { Title = Required(d, "title"), Name = Required(d, "name"), Shop = Required(d, "shop"), Phone = Required(d, "phone"), References = Required(d, "references"), Condition = Required(d, "condition"), Jcn = Required(d, "jcn"), RequestorId = actor.Id, Site = actor.Site };
+        var r = new EsrRecord { Name = Required(d, "name"), Shop = Required(d, "shop"), Phone = Required(d, "phone"), References = RequiredText(d, "references"), Condition = RequiredText(d, "condition"), Jcn = Required(d, "jcn"), RequestorId = actor.Id, Site = actor.Site };
         Require(r.Jcn == "N/A" || lds is not null, "Import a JCN from CRACN or select N/A.");
-        if (r.Jcn != "N/A" && lds is not null) { r.WorkStatement = lds.WorkStatement; r.Refit = lds.Refit; r.Component = lds.Component; r.Location = lds.Location; }
+        if (r.Jcn != "N/A" && lds is not null) { r.WorkStatement = lds.WorkStatement; r.Refit = lds.Refit; r.Component = lds.Component; r.Location = lds.Location; r.Swbs = lds.Swbs; }
         Audit(r, actor, "Request submitted"); Data.Records.Insert(0, r); return r;
     }
     /// <summary>Validate a deep copy before commit so failed actions cannot partially alter records.</summary>
@@ -57,7 +65,7 @@ public sealed class Workflow(StoreData data)
             case "reject":
                 Local(a, r); Role(a, "Supervisor"); Require(r.Status == "Unassigned", "Only unassigned requests can be returned.", 409); Required(d, "comment"); r.Rejected = true; r.Comments.Add(new() { Name = a.Name, UserId = a.Id, Text = comment }); break;
             case "resubmit":
-                Local(a, r); Require(r.RequestorId == a.Id && r.Rejected && r.Status == "Unassigned", "Only the original requestor can resubmit a returned request.", 403); r.Condition = Required(d, "condition"); r.Rejected = false; break;
+                Local(a, r); Require(r.RequestorId == a.Id && r.Rejected && r.Status == "Unassigned", "Only the original requestor can resubmit a returned request.", 403); r.Condition = RequiredText(d, "condition"); r.Rejected = false; break;
             case "delete":
                 Local(a, r); Role(a, "Supervisor"); Require(r.Status == "Unassigned", "Only unassigned requests can be deleted.", 409); Data.Records.Remove(original); return null;
             case "draft":
@@ -112,8 +120,8 @@ public sealed class Workflow(StoreData data)
     }
     public object Search(Actor actor, JsonObject d)
     {
-        var condition = Required(d, "condition"); var terms = Tokens(condition);
-        return new { summary = $"Inspection finding: {condition[..Math.Min(condition.Length, 210)]}", matches = Visible(actor).Where(r => r.Status == "ESR Closed").Select(r => new { r.Id, r.Serial, r.Title, r.Resolution, r.Rationale, similarity = (int)Math.Round(100.0 * terms.Intersect(Tokens(r.Condition)).Count() / Math.Max(terms.Count, 1)) }).OrderByDescending(r => r.similarity).Take(3) };
+        var condition = VisibleText(Required(d, "condition")); var terms = Tokens(condition);
+        return new { summary = $"Inspection finding: {condition[..Math.Min(condition.Length, 210)]}", matches = Visible(actor).Where(r => r.Status == "ESR Closed").Select(r => new { r.Id, r.Serial, r.Title, r.Resolution, r.Rationale, similarity = (int)Math.Round(100.0 * terms.Intersect(Tokens(VisibleText(r.Condition))).Count() / Math.Max(terms.Count, 1)) }).OrderByDescending(r => r.similarity).Take(3) };
     }
     static HashSet<string> Tokens(string text) => System.Text.RegularExpressions.Regex.Matches(text.ToLowerInvariant(), "[a-z]{4,}").Select(m => m.Value).ToHashSet();
     public static EsrRecord Public(EsrRecord record) { var copy = JsonConfig.Clone(record); foreach (var a in copy.Attachments) a.Base64 = ""; copy.Revisions = copy.Revisions.Select(Public).ToList(); return copy; }

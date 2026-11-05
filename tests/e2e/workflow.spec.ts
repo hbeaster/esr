@@ -16,7 +16,6 @@ test("request → assignment → resolution → approval → shop → division �
   await page.goto("/");
   await selectRole(page, "requestor", "Alex Morgan");
   await page.getByRole("button", { name: "New request", exact: false }).click();
-  await page.getByLabel("Request title").fill("E2E coupling inspection");
   await page.getByLabel("Job Control Number").fill("JCN-260184");
   await page.getByRole("button", { name: "Import LDS" }).click();
   await expect(page.locator(".lds-result")).toContainText("ASW-P-02");
@@ -28,7 +27,9 @@ test("request → assignment → resolution → approval → shop → division �
     .fill("Uneven wear on seawater pump coupling face during inspection.");
   await page.getByRole("button", { name: "Submit request" }).click();
   await expect(
-    page.getByRole("heading", { name: "E2E coupling inspection" }),
+    page.getByRole("heading", {
+      name: "Uneven wear on seawater pump coupling face during inspection.",
+    }),
   ).toBeVisible();
   await page.getByRole("tab", { name: "Files" }).click();
   await page.getByLabel("Upload supporting file").setInputFiles({
@@ -131,7 +132,7 @@ test("cross-facility review allows comments but no engineering actions", async (
   await selectRole(page, "remote", "Riley Parker");
   await page.getByRole("button", { name: "All requests" }).click();
   await page
-    .getByRole("button", { name: "Open Auxiliary seawater pump" })
+    .getByRole("button", { name: "Open 260037A" })
     .click();
   await expect(page.getByText("Cross-facility review access")).toBeVisible();
   await expect(

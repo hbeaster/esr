@@ -25,7 +25,7 @@ public sealed class ApiTests : IClassFixture<CracnFactory>
         Assert.Equal(HttpStatusCode.Conflict, (await client.GetAsync("/api/records/demo-1/pdf")).StatusCode);
         var pdf = await client.GetAsync("/api/records/demo-4/pdf"); Assert.Equal("application/pdf", pdf.Content.Headers.ContentType!.MediaType); Assert.True((await pdf.Content.ReadAsByteArrayAsync()).Length > 500);
     }
-    static object NewRequest(string jcn) => new { title = "CRACN request", name = "Alex Morgan", shop = "31", phone = "555-0131", references = "DEMO-1", condition = "Coupling wear", jcn };
+    static object NewRequest(string jcn) => new { name = "Alex Morgan", shop = "31", phone = "555-0131", references = "DEMO-1", condition = "Coupling wear", jcn };
     [Fact] public async Task LdsAndSearchReturnMockData()
     {
         await SignIn("engineer");
@@ -51,6 +51,8 @@ public sealed class ApiTests : IClassFixture<CracnFactory>
         var demo = await (await client.PostAsJsonAsync("/api/records", NewRequest("JCN-260184"))).Content.ReadFromJsonAsync<JsonObject>();
         Assert.Equal("A014", demo!["refit"]!.GetValue<string>());
         Assert.Equal("ASW-P-02 / TSN-10482", demo["component"]!.GetValue<string>());
+        Assert.Equal("6286FCA00000", demo["swbs"]!.GetValue<string>());
+        Assert.Equal("", demo["title"]!.GetValue<string>());
         Assert.Equal(HttpStatusCode.NotFound, (await client.PostAsJsonAsync("/api/records", NewRequest("JCN-000000"))).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync("/api/records", NewRequest("N/A"))).StatusCode);
     }
