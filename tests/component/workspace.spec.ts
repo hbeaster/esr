@@ -91,6 +91,11 @@ test("editor inserts approved template, answers sequential prompts, and saves", 
   await page
     .getByRole("button", { name: "Open 260037A" })
     .click();
+  await expect(
+    page.locator(".detail-heading").getByRole("img", {
+      name: "Mock illustration: Pump",
+    }),
+  ).toBeVisible();
   await page.getByRole("tab", { name: "Resolution", exact: true }).click();
   await page.getByRole("button", { name: "Insert template" }).click();
   await page
@@ -198,7 +203,9 @@ test("top tabs expose permitted views and support keyboard navigation", async ({
         record.engineerId === "engineer" || record.requestorId === "engineer",
     ).length,
   );
-  await page.getByRole("button", { name: "Open 260037A" }).click();
+  await page
+    .getByRole("button", { name: "Open 260037A" })
+    .click();
   await expect(all).toHaveAttribute("aria-selected", "true");
   await page.getByRole("button", { name: "Back to requests" }).click();
   await all.focus();

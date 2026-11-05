@@ -17,6 +17,7 @@ This is a synthetic, end-to-end demonstration. “Implemented” describes demo 
 | Approved templates | Library and insert flow; the API ships none, and the dev-only simulated data has three synthetic templates | Component browser insert test; browser library and insert test in simulated mode |
 | High-resolution attachments / preview | Original file bytes, authenticated previews, section classification | HTTP byte roundtrip; browser upload |
 | DFS / TVD sequential questions | Conditional prompts and references, server validation | Missing DFS reference unit test; browser entry |
+| Mock equipment visual | The record header shows a labeled mock SVG for the equipment class (pump, valve, heat exchanger, electrical, sensor, ventilation, tank, engine, or generic). The class comes from keywords in the LDS component, then the title, work statement, and condition, so the component takes precedence | Classifier unit tests; component browser check |
 | Attributes / document labels | Record header and PDF metadata | Browser SUBSAFE/DFS; PDF unit test |
 | ESR table | Serial, JCN, Refit, Requester, Shop Code, Condition, Resolution, SWBS, Status, Assigned Engineer, and Date Initiated. Each column can be shown or hidden, and clicking its header sorts the visible rows | Column toggle and sort unit tests; browser layout |
 | JWT identity signatures | Server-verified demo JWT supplies identity | Tampering and spoofed payload tests |

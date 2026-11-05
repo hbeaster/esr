@@ -6,6 +6,7 @@ import RevisionHistory from "./RevisionHistory.vue";
 import RecordActivity from "./RecordActivity.vue";
 import WorkflowActions from "./WorkflowActions.vue";
 import SignatureRecord from "./SignatureRecord.vue";
+import EquipmentVisual from "./EquipmentVisual.vue";
 import { esrRevision, plainText, steps, statusTone } from "../presentation";
 import { useWorkspaceContext } from "../composables/workspaceContext";
 const {
@@ -32,30 +33,38 @@ const {
       ← Back to requests
     </button>
     <div class="page-heading detail-heading">
-      <div>
-        <div :class="['detail-serial', { pending: !record.serial }]">
-          {{ record.serial || "Awaiting ESR number" }}
-          <span
-            v-if="esrRevision(record.serial) && esrRevision(record.serial) !== 'A'"
-            class="rev"
-          >Revision {{ esrRevision(record.serial) }}</span>
-        </div>
-        <h1>{{ record.title || plainText(record.condition) }}</h1>
-        <div class="detail-meta">
-          <span :class="['badge', statusTone(record.status)]">{{
-            record.status
-          }}</span><span>{{ record.site }} · Shop {{ record.shop }}</span><span
-            v-for="a in [
-              ...record.attributes,
-              ...(record.dfs === 'yes' ? ['DFS'] : []),
-              ...(record.tvd === 'yes' ? ['TVD'] : []),
-            ]"
-            :key="a"
-            :class="[
-              'tag',
-              { critical: a === 'SUBSAFE', special: a === 'DFS' || a === 'TVD' },
-            ]"
-          >{{ a }}</span>
+      <div class="detail-identity">
+        <EquipmentVisual :record="record" />
+        <div class="detail-text">
+          <div :class="['detail-serial', { pending: !record.serial }]">
+            {{ record.serial || "Awaiting ESR number" }}
+            <span
+              v-if="
+                esrRevision(record.serial) && esrRevision(record.serial) !== 'A'
+              "
+              class="rev"
+            >Revision {{ esrRevision(record.serial) }}</span>
+          </div>
+          <h1>{{ record.title || plainText(record.condition) }}</h1>
+          <div class="detail-meta">
+            <span :class="['badge', statusTone(record.status)]">{{
+              record.status
+            }}</span><span>{{ record.site }} · Shop {{ record.shop }}</span><span
+              v-for="a in [
+                ...record.attributes,
+                ...(record.dfs === 'yes' ? ['DFS'] : []),
+                ...(record.tvd === 'yes' ? ['TVD'] : []),
+              ]"
+              :key="a"
+              :class="[
+                'tag',
+                {
+                  critical: a === 'SUBSAFE',
+                  special: a === 'DFS' || a === 'TVD',
+                },
+              ]"
+            >{{ a }}</span>
+          </div>
         </div>
       </div>
       <div class="action-row">
@@ -200,6 +209,15 @@ const {
 .detail-heading {
   align-items: flex-start;
   margin-bottom: var(--sp-5);
+}
+.detail-identity {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+.detail-text {
+  min-width: 0;
 }
 .detail-serial {
   display: flex;
@@ -396,6 +414,9 @@ const {
   }
   .detail-heading h1 {
     font-size: 20px;
+  }
+  .detail-identity {
+    gap: var(--sp-3);
   }
   .tabs {
     gap: var(--sp-5);

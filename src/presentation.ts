@@ -22,6 +22,69 @@ export const statusTone = (status: string): string =>
     "ESR Issued – Deferred": "amber",
     "ESR Closed": "gray",
   })[status] || "gray";
+export type EquipmentClass =
+  | "pump"
+  | "valve"
+  | "heat-exchanger"
+  | "electrical"
+  | "sensor"
+  | "ventilation"
+  | "tank"
+  | "engine"
+  | "generic";
+/** Ordered: the first class whose pattern matches wins. */
+const equipmentPatterns: [EquipmentClass, RegExp][] = [
+  ["pump", /\bpumps?\b|-p-/],
+  ["valve", /\bvalves?\b|\bvlv\b|vlv-|\bactuators?\b/],
+  [
+    "heat-exchanger",
+    /\bcoolers?\b|\bchill(?:er|ed water)\b|\bexchangers?\b|\bcondensers?\b/,
+  ],
+  [
+    "electrical",
+    /\bbreakers?\b|\bshore power\b|\bswitchboards?\b|\binsulation\b/,
+  ],
+  ["sensor", /\bsensors?\b|\bgauges?\b|\btransmitters?\b|\bcalibration\b/],
+  ["ventilation", /\bdampers?\b|\bfans?\b|\bventilation\b/],
+  ["tank", /\baccumulators?\b|\btanks?\b|\bheaders?\b/],
+  ["engine", /\bdiesel\b|\bgears?\b|\bstarters?\b|\bmotors?\b/],
+];
+/**
+ * Mock equipment class for the record's illustration, from keywords only.
+ * Fields are checked in order, so the LDS component outranks the title.
+ */
+export function equipmentClass(
+  record: Pick<
+    EsrRecord,
+    "component" | "title" | "workStatement" | "condition"
+  >,
+): EquipmentClass {
+  const fields = [
+    record.component,
+    record.title,
+    record.workStatement,
+    plainText(record.condition),
+  ];
+  for (const field of fields) {
+    const text = (field || "").toLowerCase();
+    if (!text) continue;
+    const hit = equipmentPatterns.find(([, pattern]) => pattern.test(text));
+    if (hit) return hit[0];
+  }
+  return "generic";
+}
+export const equipmentClassLabel = (value: EquipmentClass): string =>
+  ({
+    pump: "Pump",
+    valve: "Valve",
+    "heat-exchanger": "Heat exchanger",
+    electrical: "Electrical",
+    sensor: "Sensor",
+    ventilation: "Ventilation",
+    tank: "Tank",
+    engine: "Engine",
+    generic: "Equipment",
+  })[value];
 export const initials = (name?: string | null): string =>
   (name || "")
     .split(" ")
@@ -208,12 +271,18 @@ const droppedTags = new Set([
   "TEMPLATE",
 ]);
 function escapeHtml(value: string): string {
-  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
 /** Keep paragraphs, line breaks, emphasis, and lists. Drop every other tag and its unsafe contents. */
 export function sanitizeRichText(value: string): string {
   if (!value) return "";
-  const doc = new DOMParser().parseFromString(`<div>${value}</div>`, "text/html");
+  const doc = new DOMParser().parseFromString(
+    `<div>${value}</div>`,
+    "text/html",
+  );
   const root = doc.body.firstElementChild;
   if (!root) return "";
   const clean = (node: Node): Node | null => {
