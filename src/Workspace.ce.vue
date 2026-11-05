@@ -13,6 +13,7 @@ defineOptions({ name: "EsrWorkspace" });
 const props = withDefaults(defineProps<WorkspaceProps>(), {
   apiBase: "/api",
   tokenProvider: null,
+  doomUrl: "",
 });
 const emit = defineEmits<WorkspaceEvents>();
 const workspace = useWorkspace(props, emit);
@@ -25,7 +26,7 @@ const { state, busy, error, notice, view, dialog, record, run, reload } =
     class="app"
     :aria-busy="busy"
   >
-    <WorkspaceSidebar />
+    <WorkspaceSidebar :doom-url="props.doomUrl" />
     <div
       class="main-shell"
       :inert="!!dialog"

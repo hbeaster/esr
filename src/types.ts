@@ -189,6 +189,8 @@ export interface WorkspaceError {
 export interface WorkspaceProps {
   apiBase?: string;
   tokenProvider?: TokenProvider | null;
+  /** When set, the sidebar shows a DOOM link to this host page. */
+  doomUrl?: string;
 }
 export interface WorkspaceEvents {
   (event: "record-change", payload: RecordChange): void;
@@ -197,4 +199,5 @@ export interface WorkspaceEvents {
 export interface EsrWorkspaceElement extends HTMLElement {
   apiBase?: string;
   tokenProvider?: TokenProvider | null;
+  doomUrl?: string;
 }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { initials } from "../presentation";
 import { useWorkspaceContext } from "../composables/workspaceContext";
+defineProps<{ doomUrl?: string }>();
 const { state, view, scope, dialog, navigate } = useWorkspaceContext();
 </script>
 
@@ -59,6 +60,13 @@ const { state, view, scope, dialog, navigate } = useWorkspaceContext();
       >
         <span>⚙</span> Permissions
       </button>
+      <a
+        v-if="doomUrl"
+        class="button nav-link"
+        :href="doomUrl"
+      >
+        <span>☠</span> DOOM
+      </a>
     </nav>
     <div class="sidebar-note">
       <span class="small-icon">↗</span><strong>One request. Full traceability.</strong>

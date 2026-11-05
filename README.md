@@ -84,6 +84,8 @@ JCN context (work statement, refit, component, location) comes from the **CRACN 
 
 Use the identity selector above the workspace to follow each role. Start with **Requestor**, create a request, switch to **Supervisor** to assign it, then **Engineer**, **Supervisor**, **Shop**, and **Division Head** for the full workflow. Administrator can grant cross-TRF review and delegated signatures. Demo JCNs are `21036WX010184` and `21036WX020207`; every other job in the mock data (for example `71204POAH7469`) also resolves, and `N/A` is supported.
 
+The demo host sets `doom-url="doom.html"`, so the sidebar has a **DOOM** link. `doom.html` runs the unmodified DOOM v1.9 shareware episode (`host/public/doom/doom-shareware.zip`) in js-dos 8.5.3 from jsDelivr. The bundle is host-only and stays out of `dist/component/` and the npm package; see `host/public/doom/NOTICE.md` for its source and hashes.
+
 A host-only build is available with `npm run build:host`, producing `dist/host/`. The Docker build copies this into ASP.NET's `wwwroot` so one server serves both the host and API.
 
 ## Docker
@@ -174,6 +176,7 @@ UI sections share a typed, instance-local Vue injection context. No state is sha
 | `src/types.ts` | Shared domain DTOs and public component types |
 | `src/index.ts` | Custom element registration and package exports |
 | `host/main.ts` | Demo-only identity selector and host initialization |
+| `doom.html`, `host/doom.ts`, `host/public/doom/` | Demo-only DOOM shareware page and bundle |
 | `backend/Esr.Api/Workflow.cs` | Authorization, transitions, revisions, validation |
 | `backend/Esr.Api/DemoIdentity.cs` | Ephemeral signed demo JWTs |
 | `backend/Esr.Api/PdfExport.cs` | Paginated PDF and embedded attachments |

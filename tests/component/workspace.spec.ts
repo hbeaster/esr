@@ -151,3 +151,52 @@ test("built package bundle boots independently of Vue host source", async ({
   ).toBeVisible();
   await expect(page.locator("tbody tr")).toHaveCount(6);
 });
+test("DOOM link opens the host page, which starts the self-hosted bundle", async ({
+  page,
+}) => {
+  await page.route("https://cdn.jsdelivr.net/npm/js-dos@8.5.3/**", (route) =>
+    route.request().url().endsWith("js-dos.js")
+      ? route.fulfill({
+          contentType: "text/javascript",
+          body: "window.Dos = (el, options) => { window.__dosOptions = options; };",
+        })
+      : route.fulfill({ contentType: "text/css", body: "" }),
+  );
+  await page.goto("/");
+  const link = page.getByRole("link", { name: "DOOM" });
+  await expect(link).toHaveAttribute("href", "doom.html");
+  await link.click();
+  await expect(page).toHaveURL(/\/doom\.html$/);
+  const options = await page.waitForFunction(
+    () => (window as unknown as { __dosOptions?: unknown }).__dosOptions,
+  );
+  const { url, pathPrefix } = (await options.jsonValue()) as {
+    url: string;
+    pathPrefix: string;
+  };
+  expect(pathPrefix).toBe(
+    "https://cdn.jsdelivr.net/npm/js-dos@8.5.3/dist/emulators/",
+  );
+  const bundle = await page.request.get(url);
+  expect(bundle.ok()).toBe(true);
+  expect((await bundle.body()).subarray(0, 2).toString()).toBe("PK");
+  await page.getByRole("link", { name: "Back to the ESR workspace" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Service requests" }),
+  ).toBeVisible();
+});
+test("DOOM link is hidden when the host does not set doom-url", async ({
+  page,
+}) => {
+  await page.route("**/host/main.ts", (route) =>
+    route.fulfill({
+      contentType: "text/javascript",
+      body: `import '/src/index.ts'; const el = document.querySelector('esr-workspace'); el.removeAttribute('doom-url'); el.tokenProvider = () => 'test-token';`,
+    }),
+  );
+  await page.goto("/");
+  await expect(
+    page.getByRole("heading", { name: "Service requests" }),
+  ).toBeVisible();
+  await expect(page.getByRole("link", { name: "DOOM" })).toHaveCount(0);
+});

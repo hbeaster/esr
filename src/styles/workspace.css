@@ -198,7 +198,8 @@ nav {
   flex-direction: column;
   gap: 6px;
 }
-nav button {
+nav button,
+nav .nav-link {
   justify-content: flex-start;
   padding: 11px 12px;
   border: 0;
@@ -206,7 +207,8 @@ nav button {
   color: #67717e;
   font-weight: 500;
 }
-nav button > span {
+nav button > span,
+nav .nav-link > span {
   font-size: 19px;
   width: 20px;
   line-height: 1;
@@ -1501,12 +1503,14 @@ iframe.file-preview {
   nav {
     margin-top: 35px;
   }
-  nav button {
+  nav button,
+  nav .nav-link {
     font-size: 0;
     justify-content: center;
     padding: 13px 0;
   }
-  nav button > span {
+  nav button > span,
+  nav .nav-link > span {
     font-size: 23px;
   }
   .profile {
@@ -1595,7 +1599,8 @@ iframe.file-preview {
     justify-content: flex-end;
     gap: 5px;
   }
-  .sidebar nav button {
+  .sidebar nav button,
+  .sidebar nav .nav-link {
     padding: 6px 9px;
   }
   .sidebar .profile {

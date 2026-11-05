@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>DOOM · ESR demo host</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/js-dos@8.5.3/dist/js-dos.css"
+    />
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #0b0b0c;
+        color: #e6e6e6;
+        font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+      }
+      .bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 16px;
+        font-size: 12px;
+        background: #17181a;
+        border-bottom: 1px solid #2a2c30;
+      }
+      .bar a {
+        color: #9ec1ff;
+      }
+      #dos {
+        flex: 1;
+        min-height: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bar">
+      <a href="./">← Back to the ESR workspace</a>
+      <span>DOOM shareware v1.9 (Episode 1) · © id Software</span>
+    </div>
+    <div id="dos" aria-label="DOOM"></div>
+    <script src="https://cdn.jsdelivr.net/npm/js-dos@8.5.3/dist/js-dos.js"></script>
+    <script type="module" src="/host/doom.ts"></script>
+  </body>
+</html>

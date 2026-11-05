@@ -20,6 +20,7 @@ Communication uses JavaScript properties, HTML attributes, DOM `CustomEvent`s, a
 | --- | --- | --- | --- | --- |
 | `apiBase` | `api-base` | `string` | `/api` | API prefix used for subsequent requests. One trailing slash is removed before endpoint paths are appended. |
 | `tokenProvider` | None supported | `() => string \| Promise<string>` or `null` | `null` | Called before every API request, including downloads. A new non-null function identity triggers a bootstrap reload. |
+| `doomUrl` | `doom-url` | `string` | `""` | When non-empty, the sidebar shows a **DOOM** link to this URL. It is an ordinary same-tab link; the component does not load or host the game. The demo host sets `doom.html`. |
 
 Assign `tokenProvider` as a JavaScript property. Do not put credentials or executable function text in HTML attributes. Return the raw access token without the `Bearer ` prefix. The component adds that prefix to the `Authorization` header. An empty token results in no Authorization header; the API decides whether to reject the request.
 

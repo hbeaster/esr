@@ -3,7 +3,7 @@ FROM node:22-alpine AS frontend
 WORKDIR /source
 COPY package.json package-lock.json ./
 RUN --mount=type=cache,target=/root/.npm npm ci --no-audit --no-fund
-COPY vite.config.ts tsconfig.json index.html ./
+COPY vite.config.ts tsconfig.json index.html doom.html ./
 COPY src ./src
 COPY host ./host
 RUN npm run build:host
