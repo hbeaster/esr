@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import { useWorkspaceContext } from "../composables/workspaceContext";
+import { isJcn, JCN_PATTERN, normalizeJcn } from "../presentation";
 const { busy, form, ldsResult, importLds, createRequest, closeDialog } =
   useWorkspaceContext();
+function onJcnInput(event: Event) {
+  form.jcn = normalizeJcn((event.target as HTMLInputElement).value);
+  ldsResult.value = null;
+}
 </script>
 
 <template>
@@ -28,19 +33,24 @@ const { busy, form, ldsResult, importLds, createRequest, closeDialog } =
         class="input-action"
       >
         <label>Job Control Number<input
-          v-model="form.jcn"
+          :value="form.jcn"
           required
-          placeholder="JCN-260184"
-          @input="ldsResult = null"
+          placeholder="12345WX019999"
+          maxlength="13"
+          :pattern="JCN_PATTERN"
+          title="13 characters: 5 digits, 4 letters or digits, then 0001–9999"
+          autocapitalize="characters"
+          spellcheck="false"
+          @input="onJcnInput"
         ></label><button
           type="button"
-          :disabled="busy || !form.jcn"
+          :disabled="busy || !isJcn(form.jcn)"
           @click="importLds"
         >
           Import LDS
         </button>
       </div>
-      <small v-if="!form.noJcn">Demo JCNs: JCN-260184 · JCN-260207</small>
+      <small v-if="!form.noJcn">Format 12345WX019999 (5 digits, 4 letters or digits, 0001–9999). Demo JCNs: 21036WX010184 · 21036WX020207</small>
       <div
         v-if="ldsResult"
         class="lds-result"

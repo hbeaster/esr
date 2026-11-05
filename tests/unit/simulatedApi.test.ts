@@ -192,7 +192,7 @@ describe("simulated API", () => {
   });
 
   it("returns known LDS data and a helpful miss", () => {
-    const query = new URLSearchParams({ jcn: "JCN-260184" });
+    const query = new URLSearchParams({ jcn: "21036WX010184" });
     expect(call("/lds", { query }).status).toBe(200);
     expect(call("/lds").status).toBe(404);
   });

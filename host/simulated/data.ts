@@ -20,13 +20,13 @@ export const SIMULATED_RECORD_COUNT = 60;
 
 /** Same JCN as the CRACN mock's demo job, so the New Request form behaves alike. */
 export const simulatedLds: Record<string, LdsData> = {
-  "JCN-260184": {
+  "21036WX010184": {
     workStatement: "Inspect auxiliary seawater pump coupling",
     refit: "A014",
     component: "ASW-P-02 / TSN-10482",
     location: "Auxiliary machinery space",
   },
-  "JCN-260207": {
+  "21036WX020207": {
     workStatement: "Restore valve actuator mounting hardware",
     refit: "A018",
     component: "VLV-214 / TSN-20871",

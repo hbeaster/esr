@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 namespace Esr.Api;
 
 /// <summary>Authoritative workflow rules. Call under the store lock for atomic transitions.</summary>
@@ -9,6 +10,14 @@ public sealed class Workflow(StoreData data)
     public static void Require(bool valid, string message, int status = 400) { if (!valid) throw new RuleException(message, status); }
     static string Get(JsonObject d, string key) => d[key]?.GetValue<string>() ?? "";
     static string Required(JsonObject d, string key) { var value = Get(d, key); Require(!string.IsNullOrWhiteSpace(value), $"{key} is required."); return value.Trim(); }
+    static readonly Regex JcnFormat = new("^[0-9]{5}[A-Z0-9]{4}(?!0000)[0-9]{4}$", RegexOptions.CultureInvariant);
+    /// <summary>Normalizes a JCN to upper case and requires 5 digits, 4 letters or digits, then a 0001–9999 sequence (12345WX019999).</summary>
+    public static string Jcn(string value)
+    {
+        var jcn = value.Trim().ToUpperInvariant();
+        Require(JcnFormat.IsMatch(jcn), "JCN must be 13 characters: 5 digits, 4 letters or digits, then 0001–9999 (for example 12345WX019999).");
+        return jcn;
+    }
     static void Role(Actor a, params string[] roles) => Require(roles.Contains(a.Role), "Your active role cannot perform this action.", 403);
     public string Access(Actor a, EsrRecord r) => a.Site == r.Site ? "full" : Data.Permissions.GetValueOrDefault(a.Id)?.CrossSite ?? "none";
     public IEnumerable<EsrRecord> Visible(Actor a) => Data.Records.Where(r => Access(a, r) != "none");
@@ -37,6 +46,7 @@ public sealed class Workflow(StoreData data)
     {
         Role(actor, "Requestor", "Shop", "Engineer", "Supervisor");
         var r = new EsrRecord { Title = Required(d, "title"), Name = Required(d, "name"), Shop = Required(d, "shop"), Phone = Required(d, "phone"), References = Required(d, "references"), Condition = Required(d, "condition"), Jcn = Required(d, "jcn"), RequestorId = actor.Id, Site = actor.Site };
+        if (r.Jcn != "N/A") r.Jcn = Jcn(r.Jcn);
         Require(r.Jcn == "N/A" || lds is not null, "Import a JCN from CRACN or select N/A.");
         if (r.Jcn != "N/A" && lds is not null) { r.WorkStatement = lds.WorkStatement; r.Refit = lds.Refit; r.Component = lds.Component; r.Location = lds.Location; }
         Audit(r, actor, "Request submitted"); Data.Records.Insert(0, r); return r;
