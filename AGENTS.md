@@ -12,6 +12,7 @@ Human docs, which these instructions do not restate:
 
 ## Invariants
 
+- `backend/Esr.Api/seed.json` ships no records or templates, so the workspace starts empty. Pre-populated data comes only from the dev-only **Use fake data** toggle (`host/simulated/`). Backend and component tests use `backend/Esr.Tests/test-data.json`.
 - Workflow authority is `backend/Esr.Api/Workflow.cs`. Hiding a button in `src/components/WorkflowActions.vue` does not authorize or forbid an action.
 - Signature name and user id come from the validated demo JWT in `backend/Esr.Api/DemoIdentity.cs`. Ignore identity fields in the action body.
 - The deferred status is exactly `ESR Issued – Deferred` (en dash, U+2013).

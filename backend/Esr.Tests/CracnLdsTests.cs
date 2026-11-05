@@ -76,7 +76,8 @@ public sealed class CracnLdsTests
 /// <summary>The API wired to a CRACN stub that serves mocks/cracn/data.json.</summary>
 public sealed class CracnFactory : WebApplicationFactory<Program>
 {
+    // The shipped seed.json has no records, so API tests load the sample data.
     protected override void ConfigureWebHost(IWebHostBuilder builder) =>
-        builder.UseSetting("Cracn:BaseUrl", "http://cracn.test").ConfigureTestServices(s =>
+        builder.UseSetting("Demo:DataFile", Path.Combine(AppContext.BaseDirectory, "test-data.json")).UseSetting("Cracn:BaseUrl", "http://cracn.test").ConfigureTestServices(s =>
             s.AddHttpClient<ILdsSource, CracnLdsSource>().ConfigurePrimaryHttpMessageHandler(() => new CracnDataHandler()));
 }

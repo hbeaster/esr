@@ -1,9 +1,10 @@
 import { defineConfig } from "vitest/config";
 import vue from "@vitejs/plugin-vue";
+import { simulatedApiPlugin } from "./host/simulated/plugin";
 export default defineConfig(({ mode }) => ({
   // Every SFC compiles in custom-element mode so its <style scoped> block is
   // injected into the <esr-workspace> shadow root instead of document.head.
-  plugins: [vue({ customElement: true })],
+  plugins: [vue({ customElement: true }), simulatedApiPlugin()],
   server: {
     port: 5173,
     proxy: {

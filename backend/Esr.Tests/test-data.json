@@ -1,0 +1,476 @@
+{
+  "records": [
+    {
+      "id": "demo-1",
+      "title": "Auxiliary seawater pump \u2014 coupling wear",
+      "name": "Alex Morgan",
+      "shop": "31",
+      "phone": "555-0131",
+      "references": "SYNTHETIC-REF-100, drawing DEMO-42",
+      "condition": "Uneven wear observed on auxiliary seawater pump coupling during scheduled inspection. Witness marks are visible on the coupling face.",
+      "jcn": "21036WX010184",
+      "workStatement": "Inspect auxiliary seawater pump coupling",
+      "refit": "A014",
+      "component": "ASW-P-02 / TSN-10482",
+      "location": "Auxiliary machinery space",
+      "swbs": "6286FCA00000",
+      "site": "Bangor",
+      "requestorId": "requestor",
+      "status": "In Process",
+      "serial": "260037A",
+      "serialBase": "260037",
+      "revision": 1,
+      "engineerId": "engineer",
+      "resolution": "1. Isolate the affected component in accordance with the approved work package.\n2. Inspect the identified area and document as-found condition.\n3. Restore using the applicable approved technical procedure.\n4. Perform required verification and record as-left condition.",
+      "rationale": "Restoration and verification establish that the component meets the acceptance criteria in the cited technical reference.",
+      "dfs": "yes",
+      "dfsReference": "DFS-DEMO-026",
+      "tvd": "no",
+      "tvdReference": "",
+      "attributes": [
+        "SUBSAFE",
+        "Level 1"
+      ],
+      "attachments": [],
+      "comments": [],
+      "signatures": [],
+      "audit": [
+        {
+          "id": "3f6e2b90-f428-44a0-a42d-4d18fd5413e9",
+          "actor": "Demo system",
+          "time": "2026-11-04T15:00:10.993Z",
+          "action": "Synthetic record initialized: In Process"
+        }
+      ],
+      "revisions": [],
+      "completion": null,
+      "createdAt": "2026-11-04T15:00:10.991Z",
+      "updatedAt": "2026-11-04T15:00:10.993Z",
+      "version": 1,
+      "rejected": false
+    },
+    {
+      "id": "demo-2",
+      "title": "Valve actuator mounting discrepancy",
+      "name": "Alex Morgan",
+      "shop": "31",
+      "phone": "555-0131",
+      "references": "SYNTHETIC-REF-100, drawing DEMO-42",
+      "condition": "Mounting hardware does not match the referenced drawing. Shop requests an engineering disposition before proceeding.",
+      "jcn": "N/A",
+      "workStatement": "",
+      "refit": "",
+      "component": "",
+      "location": "",
+      "site": "Bangor",
+      "requestorId": "requestor",
+      "status": "Unassigned",
+      "serial": null,
+      "serialBase": null,
+      "revision": 0,
+      "engineerId": null,
+      "resolution": "",
+      "rationale": "",
+      "dfs": "no",
+      "dfsReference": "",
+      "tvd": "no",
+      "tvdReference": "",
+      "attributes": [],
+      "attachments": [],
+      "comments": [],
+      "signatures": [],
+      "audit": [
+        {
+          "id": "fe34e602-83c9-4a9e-9aeb-f79e55e0377e",
+          "actor": "Demo system",
+          "time": "2026-11-04T15:00:10.993Z",
+          "action": "Synthetic record initialized: Unassigned"
+        }
+      ],
+      "revisions": [],
+      "completion": null,
+      "createdAt": "2026-11-04T15:00:10.993Z",
+      "updatedAt": "2026-11-04T15:00:10.993Z",
+      "version": 1,
+      "rejected": false
+    },
+    {
+      "id": "demo-3",
+      "title": "Support bracket surface indication",
+      "name": "Alex Morgan",
+      "shop": "31",
+      "phone": "555-0131",
+      "references": "SYNTHETIC-REF-100, drawing DEMO-42",
+      "condition": "Surface indication observed adjacent to bracket attachment during visual inspection.",
+      "jcn": "N/A",
+      "workStatement": "",
+      "refit": "",
+      "component": "",
+      "location": "",
+      "site": "Bangor",
+      "requestorId": "requestor",
+      "status": "Awaiting Approval",
+      "serial": "260039A",
+      "serialBase": "260039",
+      "revision": 1,
+      "engineerId": "engineer",
+      "resolution": "1. Isolate the affected component in accordance with the approved work package.\n2. Inspect the identified area and document as-found condition.\n3. Restore using the applicable approved technical procedure.\n4. Perform required verification and record as-left condition.",
+      "rationale": "Restoration and verification establish that the component meets the acceptance criteria in the cited technical reference.",
+      "dfs": "no",
+      "dfsReference": "",
+      "tvd": "no",
+      "tvdReference": "",
+      "attributes": [
+        "SOC"
+      ],
+      "attachments": [],
+      "comments": [],
+      "signatures": [
+        {
+          "id": "f7c34ade-e756-4182-8841-1b71ba0e0daa",
+          "userId": "engineer",
+          "name": "Jordan Lee",
+          "block": "Resolved By",
+          "time": "2026-11-04T15:00:10.993Z",
+          "comment": "Synthetic seed signature"
+        }
+      ],
+      "audit": [
+        {
+          "id": "dd627633-77e6-4ce3-8da7-fb15f55aa158",
+          "actor": "Demo system",
+          "time": "2026-11-04T15:00:10.993Z",
+          "action": "Synthetic record initialized: Awaiting Approval"
+        }
+      ],
+      "revisions": [],
+      "completion": null,
+      "createdAt": "2026-11-04T15:00:10.993Z",
+      "updatedAt": "2026-11-04T15:00:10.993Z",
+      "version": 1,
+      "rejected": false
+    },
+    {
+      "id": "demo-4",
+      "title": "Ventilation damper travel verification",
+      "name": "Alex Morgan",
+      "shop": "31",
+      "phone": "555-0131",
+      "references": "SYNTHETIC-REF-100, drawing DEMO-42",
+      "condition": "Damper travel does not meet documented acceptance criteria after actuator replacement.",
+      "jcn": "N/A",
+      "workStatement": "",
+      "refit": "",
+      "component": "",
+      "location": "",
+      "site": "Bangor",
+      "requestorId": "requestor",
+      "status": "ESR Issued",
+      "serial": "260040A",
+      "serialBase": "260040",
+      "revision": 1,
+      "engineerId": "engineer",
+      "resolution": "1. Isolate the affected component in accordance with the approved work package.\n2. Inspect the identified area and document as-found condition.\n3. Restore using the applicable approved technical procedure.\n4. Perform required verification and record as-left condition.",
+      "rationale": "Restoration and verification establish that the component meets the acceptance criteria in the cited technical reference.",
+      "dfs": "no",
+      "dfsReference": "",
+      "tvd": "no",
+      "tvdReference": "",
+      "attributes": [],
+      "attachments": [],
+      "comments": [],
+      "signatures": [
+        {
+          "id": "9faa56ca-6b52-49a0-986b-771664b098f8",
+          "userId": "engineer",
+          "name": "Jordan Lee",
+          "block": "Resolved By",
+          "time": "2026-11-04T15:00:10.993Z",
+          "comment": "Synthetic seed signature"
+        },
+        {
+          "id": "a859a4b5-8cb9-4dea-b730-573b8475b37b",
+          "userId": "supervisor",
+          "name": "Casey Rivera",
+          "block": "Approved By",
+          "time": "2026-11-04T15:00:10.993Z",
+          "comment": "Synthetic seed signature"
+        }
+      ],
+      "audit": [
+        {
+          "id": "a6b4b1f6-bdfa-4a30-ba8b-60c36dcc1b4f",
+          "actor": "Demo system",
+          "time": "2026-11-04T15:00:10.993Z",
+          "action": "Synthetic record initialized: ESR Issued"
+        }
+      ],
+      "revisions": [],
+      "completion": null,
+      "createdAt": "2026-11-04T15:00:10.993Z",
+      "updatedAt": "2026-11-04T15:00:10.993Z",
+      "version": 1,
+      "rejected": false
+    },
+    {
+      "id": "demo-5",
+      "title": "Pump coupling inspection and restoration",
+      "name": "Alex Morgan",
+      "shop": "31",
+      "phone": "555-0131",
+      "references": "SYNTHETIC-REF-100, drawing DEMO-42",
+      "condition": "Uneven wear on seawater pump coupling face found during scheduled inspection.",
+      "jcn": "N/A",
+      "workStatement": "",
+      "refit": "",
+      "component": "",
+      "location": "",
+      "site": "Bangor",
+      "requestorId": "requestor",
+      "status": "ESR Closed",
+      "serial": "260041A",
+      "serialBase": "260041",
+      "revision": 1,
+      "engineerId": "engineer",
+      "resolution": "1. Isolate the affected component in accordance with the approved work package.\n2. Inspect the identified area and document as-found condition.\n3. Restore using the applicable approved technical procedure.\n4. Perform required verification and record as-left condition.",
+      "rationale": "Restoration and verification establish that the component meets the acceptance criteria in the cited technical reference.",
+      "dfs": "no",
+      "dfsReference": "",
+      "tvd": "no",
+      "tvdReference": "",
+      "attributes": [],
+      "attachments": [],
+      "comments": [],
+      "signatures": [
+        {
+          "id": "f3356967-ade7-440f-817c-3bd64e557c74",
+          "userId": "engineer",
+          "name": "Jordan Lee",
+          "block": "Resolved By",
+          "time": "2026-11-04T15:00:10.993Z",
+          "comment": "Synthetic seed signature"
+        },
+        {
+          "id": "ad3e7b92-8d1b-487c-bace-fe31ce82d095",
+          "userId": "supervisor",
+          "name": "Casey Rivera",
+          "block": "Approved By",
+          "time": "2026-11-04T15:00:10.993Z",
+          "comment": "Synthetic seed signature"
+        },
+        {
+          "id": "0b8b551c-20ff-4d01-9a81-0044d980c5aa",
+          "userId": "shop",
+          "name": "Taylor Brooks",
+          "block": "Shop Representative",
+          "time": "2026-11-04T15:00:10.993Z",
+          "comment": ""
+        },
+        {
+          "id": "fa11d6e3-9e99-4982-a1aa-1c2fbc515047",
+          "userId": "division",
+          "name": "Sam Chen",
+          "block": "Division Head",
+          "time": "2026-11-04T15:00:10.993Z",
+          "comment": ""
+        }
+      ],
+      "audit": [
+        {
+          "id": "fddfca81-43ca-43cf-8daa-cbaa982bc9c6",
+          "actor": "Demo system",
+          "time": "2026-11-04T15:00:10.993Z",
+          "action": "Synthetic record initialized: ESR Closed"
+        }
+      ],
+      "revisions": [],
+      "completion": {
+        "status": "Completed",
+        "explanation": "",
+        "shop": "31",
+        "date": "2026-11-01",
+        "name": "Taylor Brooks"
+      },
+      "createdAt": "2026-11-04T15:00:10.993Z",
+      "updatedAt": "2026-11-04T15:00:10.993Z",
+      "version": 1,
+      "rejected": false
+    },
+    {
+      "id": "demo-6",
+      "title": "Valve mounting hardware restoration",
+      "name": "Alex Morgan",
+      "shop": "31",
+      "phone": "555-0131",
+      "references": "SYNTHETIC-REF-100, drawing DEMO-42",
+      "condition": "Valve actuator mounting hardware differed from approved configuration.",
+      "jcn": "N/A",
+      "workStatement": "",
+      "refit": "",
+      "component": "",
+      "location": "",
+      "site": "Bangor",
+      "requestorId": "requestor",
+      "status": "ESR Closed",
+      "serial": "260042A",
+      "serialBase": "260042",
+      "revision": 1,
+      "engineerId": "engineer",
+      "resolution": "1. Isolate the affected component in accordance with the approved work package.\n2. Inspect the identified area and document as-found condition.\n3. Restore using the applicable approved technical procedure.\n4. Perform required verification and record as-left condition.",
+      "rationale": "Restoration and verification establish that the component meets the acceptance criteria in the cited technical reference.",
+      "dfs": "no",
+      "dfsReference": "",
+      "tvd": "no",
+      "tvdReference": "",
+      "attributes": [],
+      "attachments": [],
+      "comments": [],
+      "signatures": [
+        {
+          "id": "6aa2e9ad-a98b-440e-8466-da07e8d03703",
+          "userId": "engineer",
+          "name": "Jordan Lee",
+          "block": "Resolved By",
+          "time": "2026-11-04T15:00:10.993Z",
+          "comment": "Synthetic seed signature"
+        },
+        {
+          "id": "9347afa0-4638-48e2-95b3-69d606adcbc6",
+          "userId": "supervisor",
+          "name": "Casey Rivera",
+          "block": "Approved By",
+          "time": "2026-11-04T15:00:10.993Z",
+          "comment": "Synthetic seed signature"
+        },
+        {
+          "id": "ec3f7519-3c4e-4c90-8b8d-71bf7c86cf32",
+          "userId": "shop",
+          "name": "Taylor Brooks",
+          "block": "Shop Representative",
+          "time": "2026-11-04T15:00:10.993Z",
+          "comment": ""
+        },
+        {
+          "id": "2906e55b-b8e6-4861-8c68-ecf381fe1caa",
+          "userId": "division",
+          "name": "Sam Chen",
+          "block": "Division Head",
+          "time": "2026-11-04T15:00:10.993Z",
+          "comment": ""
+        }
+      ],
+      "audit": [
+        {
+          "id": "5184fc73-a2ee-4c9f-bb3c-c83dc111ede7",
+          "actor": "Demo system",
+          "time": "2026-11-04T15:00:10.993Z",
+          "action": "Synthetic record initialized: ESR Closed"
+        }
+      ],
+      "revisions": [],
+      "completion": {
+        "status": "Completed",
+        "explanation": "",
+        "shop": "31",
+        "date": "2026-11-01",
+        "name": "Taylor Brooks"
+      },
+      "createdAt": "2026-11-04T15:00:10.993Z",
+      "updatedAt": "2026-11-04T15:00:10.993Z",
+      "version": 1,
+      "rejected": false
+    }
+  ],
+  "sequence": 42,
+  "sequenceYear": 2026,
+  "permissions": {},
+  "users": [
+    {
+      "id": "requestor",
+      "name": "Alex Morgan",
+      "role": "Requestor",
+      "site": "Bangor",
+      "shop": "31",
+      "phone": "555-0131"
+    },
+    {
+      "id": "engineer",
+      "name": "Jordan Lee",
+      "role": "Engineer",
+      "site": "Bangor",
+      "shop": "Engineering",
+      "phone": "555-0142"
+    },
+    {
+      "id": "supervisor",
+      "name": "Casey Rivera",
+      "role": "Supervisor",
+      "site": "Bangor",
+      "shop": "Engineering",
+      "phone": "555-0143"
+    },
+    {
+      "id": "shop",
+      "name": "Taylor Brooks",
+      "role": "Shop",
+      "site": "Bangor",
+      "shop": "31",
+      "phone": "555-0131"
+    },
+    {
+      "id": "division",
+      "name": "Sam Chen",
+      "role": "Division Head",
+      "site": "Bangor",
+      "shop": "Division",
+      "phone": "555-0150"
+    },
+    {
+      "id": "admin",
+      "name": "Drew Ellis",
+      "role": "Administrator",
+      "site": "Bangor",
+      "shop": "Administration",
+      "phone": "555-0100"
+    },
+    {
+      "id": "remote",
+      "name": "Riley Parker",
+      "role": "Engineer",
+      "site": "Kings Bay",
+      "shop": "Engineering",
+      "phone": "555-0170"
+    },
+    {
+      "id": "planner",
+      "name": "Avery Quinn",
+      "role": "Planner",
+      "site": "Bangor",
+      "shop": "Planning",
+      "phone": "555-0160"
+    }
+  ],
+  "templates": [
+    {
+      "id": "inspect",
+      "title": "Inspection & restoration",
+      "category": "Mechanical",
+      "resolution": "1. Isolate the affected component in accordance with the approved work package.\n2. Inspect the identified area and document as-found condition.\n3. Restore using the applicable approved technical procedure.\n4. Perform required verification and record as-left condition.",
+      "rationale": "Restoration and verification establish that the component meets the acceptance criteria in the cited technical reference."
+    },
+    {
+      "id": "replace",
+      "title": "Component replacement",
+      "category": "Maintenance",
+      "resolution": "1. Verify replacement component identification and traceability.\n2. Remove and replace the affected component using the referenced procedure.\n3. Complete inspection and functional verification before return to service.",
+      "rationale": "Replacement restores the intended configuration. Required inspections verify installation and functional performance."
+    },
+    {
+      "id": "evaluate",
+      "title": "Engineering evaluation",
+      "category": "Assessment",
+      "resolution": "1. Record measurements and inspection evidence.\n2. Compare findings against the referenced acceptance criteria.\n3. Document the engineering disposition and required follow-up actions.",
+      "rationale": "Disposition is based on documented evidence and applicable acceptance criteria."
+    }
+  ]
+}
