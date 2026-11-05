@@ -138,8 +138,54 @@ function onJcnInput(event: Event) {
         class="primary"
         :disabled="busy"
       >
-        Submit request →
+        Submit request <span class="arrow">→</span>
       </button>
     </div>
   </form>
 </template>
+
+<style scoped>
+.fields-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+.request-files {
+  margin: var(--sp-4) 0 var(--sp-1);
+}
+.input-action {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-2);
+}
+.input-action label {
+  margin: 0;
+  flex: 1;
+}
+.input-action button {
+  height: 40px;
+}
+.lds-result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  background: var(--green-bg);
+  border: 1px solid var(--green-line);
+  padding: var(--sp-3);
+  border-radius: var(--radius-sm);
+  margin-top: var(--sp-3);
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+.lds-result strong {
+  color: var(--green-text);
+}
+@container (max-width: 560px) {
+  .fields-grid {
+    grid-template-columns: 1fr;
+  }
+  .fields-grid label {
+    margin: var(--sp-1) 0;
+  }
+}
+</style>

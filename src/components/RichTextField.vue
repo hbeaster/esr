@@ -147,3 +147,75 @@ onBeforeUnmount(() => form?.removeEventListener("submit", onSubmit, true));
     </p>
   </div>
 </template>
+
+<style scoped>
+.rich-field {
+  margin: var(--sp-4) 0;
+}
+.rich-box {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.rich-box:hover {
+  border-color: #b9c2ce;
+}
+.rich-box:focus-within {
+  border-color: var(--esr-accent);
+  box-shadow: 0 0 0 3px var(--esr-accent-soft);
+}
+.rich-box.invalid {
+  border-color: var(--red-solid);
+}
+.rich-toolbar {
+  display: flex;
+  gap: var(--sp-1);
+  padding: 6px;
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--surface-2);
+}
+.rich-tool {
+  min-width: 30px;
+  padding: 4px var(--sp-2);
+  background: var(--surface);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  line-height: 1;
+}
+.rich-tool.italic {
+  font-style: italic;
+}
+.rich-tool.underline {
+  text-decoration: underline;
+}
+.rich-tool[aria-pressed="true"] {
+  border-color: var(--blue-line);
+  background: var(--esr-accent-soft);
+  color: var(--esr-accent-text);
+}
+.rich-text {
+  min-height: 96px;
+  padding: 10px var(--sp-3);
+  outline: none;
+  font-size: var(--fs-base);
+  font-weight: 400;
+  line-height: 1.7;
+  color: var(--ink);
+  white-space: pre-wrap;
+}
+.rich-text.is-empty::before {
+  content: attr(data-placeholder);
+  color: var(--ink-4);
+  font-style: italic;
+}
+.rich-error {
+  margin: 6px 0 0;
+  color: var(--red-text);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+</style>

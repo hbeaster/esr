@@ -57,3 +57,47 @@ const { state, tab, historySnapshot, current, record } = useWorkspaceContext();
     </div>
   </template>
 </template>
+
+<style scoped>
+.revision-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  border-bottom: 1px solid var(--line-soft);
+  padding: var(--sp-4) 0;
+}
+.revision-mark {
+  display: flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  background: var(--esr-accent-soft);
+  color: var(--esr-accent-text);
+  font-size: var(--fs-md);
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.revision-row div {
+  flex: 1;
+}
+.revision-row h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+}
+.revision-row p {
+  font-size: var(--fs-sm);
+  margin: var(--sp-1) 0;
+}
+.revision-row .muted {
+  font-size: var(--fs-xs);
+}
+@container (max-width: 560px) {
+  .revision-row {
+    flex-wrap: wrap;
+  }
+}
+</style>

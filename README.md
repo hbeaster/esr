@@ -57,7 +57,7 @@ For Vue hosts, configure `compilerOptions.isCustomElement` for `esr-workspace`. 
 ```css
 esr-workspace {
   --esr-accent: #196b57;
-  --esr-bg: #f5f7f8;
+  --esr-bg: #f4f6f8;
 }
 ```
 
@@ -151,7 +151,7 @@ All frontend application code, browser tests, and Vite/Playwright configurations
 
 ESLint uses the unmodified recommended configurations from ESLint, typescript-eslint, and eslint-plugin-vue. `npm run lint` rejects warnings; `npm run lint:fix` applies available fixes. `npm run format` formats the frontend with Prettier and then applies ESLint’s Vue formatting defaults.
 
-UI sections share a typed, instance-local Vue injection context. No state is shared across custom-element instances. Small presentation components, such as the signature record, use typed props. Styles remain inside the outer custom element’s shadow root so ordinary child Vue components inherit the same theme.
+UI sections share a typed, instance-local Vue injection context. No state is shared across custom-element instances. Small presentation components, such as the signature record, use typed props. Each SFC carries its own `<style scoped>` block on top of a shared base sheet of tokens and primitives. Every SFC compiles in custom-element mode, so all of these styles land inside the element's shadow root and none reach the host page.
 
 ## Design and decisions
 
@@ -174,7 +174,7 @@ UI sections share a typed, instance-local Vue injection context. No state is sha
 | `src/components/` | Request workspace, record tabs, dialogs, forms, signatures, and permissions |
 | `src/composables/useWorkspace.ts` | Typed state, API actions, draft and workflow coordination |
 | `src/composables/useDialogFocus.ts` | Modal focus trapping and keyboard lifecycle |
-| `src/styles/workspace.css` | Shared theme, injected once into the custom element shadow root |
+| `src/styles/workspace.css` | Shared base (tokens, element defaults, primitives), loaded by `Workspace.ce.vue`; component rules live in each SFC's `<style scoped>` |
 | `src/api.ts` | Typed host-token API adapter |
 | `src/presentation.ts` | Search filtering, status tones, and display helpers |
 | `src/types.ts` | Shared domain DTOs and public component types |

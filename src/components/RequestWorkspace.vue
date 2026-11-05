@@ -54,15 +54,19 @@ function toggleSort(id: EsrTableColumnId) {
   sortColumn.value = id;
   sortDirection.value = "asc";
 }
+const stepHint: Record<string, string> = {
+  Unassigned: "Needs an engineer",
+  "In Process": "Resolution in progress",
+  "Awaiting Approval": "Needs supervisor review",
+  "ESR Issued": "Released to the shop",
+  "ESR Closed": "Fully dispositioned",
+};
 </script>
 
 <template>
   <template v-if="state.user">
     <div class="page-heading">
       <div>
-        <div class="eyebrow">
-          ENGINEERING OPERATIONS
-        </div>
         <h1>
           {{
             scope === "history"
@@ -70,13 +74,15 @@ function toggleSort(id: EsrTableColumnId) {
               : scope === "mine"
                 ? "My work"
                 : "Service requests"
-          }}<span class="heading-dot">.</span>
+          }}
         </h1>
         <p>
           {{
             scope === "history"
-              ? "Find prior resolutions and explore the complete engineering record."
-              : "A clear path from finding to resolution."
+              ? "Closed records and their resolutions, for reference."
+              : scope === "mine"
+                ? "Requests assigned to you or submitted by you."
+                : "Every request at your facility, from finding to closeout."
           }}
         </p>
       </div>
@@ -86,10 +92,10 @@ function toggleSort(id: EsrTableColumnId) {
             state.user.role,
           )
         "
-        class="primary"
+        class="primary new-request"
         @click="newRequest"
       >
-        <span>＋</span> New request
+        <span class="plus">＋</span> New request
       </button>
     </div>
     <section
@@ -97,73 +103,22 @@ function toggleSort(id: EsrTableColumnId) {
       aria-label="Workflow counts"
     >
       <button
-        v-for="(step, i) in steps"
+        v-for="step in steps"
         :key="step"
-        :class="['stat', { selected: status === step }]"
+        :class="['stat', statusTone(step), { selected: status === step }]"
+        :aria-pressed="status === step"
         @click="status = status === step ? '' : step"
       >
-        <span class="stat-label"><span :class="['status-dot', statusTone(step)]" />{{ step }}</span><strong>{{ counts[step] }}</strong><span class="stat-foot">{{
-                                                                                                                                                                 [
-                                                                                                                                                                   "Ready for assignment",
-                                                                                                                                                                   "Engineering in progress",
-                                                                                                                                                                   "Ready for technical review",
-                                                                                                                                                                   "Released to the shop",
-                                                                                                                                                                   "Work fully dispositioned",
-                                                                                                                                                                 ][i]
-                                                                                                                                                               }}
-          <span>↗</span></span>
-      </button>
-    </section>
-    <section
-      v-if="scope === 'mine'"
-      class="focus-banner"
-    >
-      <div class="focus-symbol">
-        ⌁
-      </div>
-      <div>
-        <span class="eyebrow">KEEP WORK MOVING</span>
-        <h2>
-          {{
-            counts["Awaiting Approval"]
-              ? `${counts["Awaiting Approval"]} request${counts["Awaiting Approval"] === 1 ? "" : "s"} ready for technical review`
-              : "Every detail, in one engineering record"
-          }}
-        </h2>
-        <p>
-          Review the resolution, verify references, and sign with confidence.
-        </p>
-      </div>
-      <button
-        class="text-button"
-        @click="status = 'Awaiting Approval'"
-      >
-        View approval queue <span>→</span>
+        <span class="stat-label"><span :class="['status-dot', statusTone(step)]" />{{ step }}</span><strong>{{ counts[step] }}</strong><span class="stat-foot">{{ stepHint[step] }}</span>
       </button>
     </section>
     <section class="card workspace-card">
-      <div class="table-title">
-        <div>
-          <h2>
-            {{
-              scope === "history"
-                ? "Resolved engineering records"
-                : scope === "mine"
-                  ? "Assigned to you & your requests"
-                  : "Request workspace"
-            }}
-          </h2>
-          <span>{{ filtered.length }} records
-            <span class="muted">· Live demo data</span></span>
-        </div>
-        <span class="small-tag">{{ state.user.site.toUpperCase() }}</span>
-      </div>
       <div class="filters">
-        <label class="search"><span>⌕</span><input
+        <label class="search"><span aria-hidden="true">⌕</span><input
           v-model="query"
           aria-label="Search requests"
           placeholder="Search serial, JCN, requester, shop, or condition…"
-        ><kbd>⌕</kbd></label><select
+        ></label><select
           v-model="status"
           aria-label="Filter by status"
         >
@@ -188,8 +143,10 @@ function toggleSort(id: EsrTableColumnId) {
             query = '';
           "
         >
-          Clear
+          Clear filters
         </button>
+        <span class="result-count"><strong>{{ filtered.length }}</strong> of
+          {{ state.records.length }}</span>
         <details class="column-picker">
           <summary>
             <span>Columns</span><span
@@ -259,12 +216,12 @@ function toggleSort(id: EsrTableColumnId) {
                   class="record-link"
                   @click="openRecord(r)"
                 >
-                  <span class="serial">{{ r.serial || "PENDING ASSIGNMENT" }}
-                    <span v-if="esrRevision(r.serial) && esrRevision(r.serial) !== 'A'">· REV {{ esrRevision(r.serial) }}</span></span>
-                  <span
+                  <span :class="['serial', { pending: !r.serial }]">{{ r.serial || "Pending assignment" }}
+                    <span v-if="esrRevision(r.serial) && esrRevision(r.serial) !== 'A'">· Rev {{ esrRevision(r.serial) }}</span></span>
+                  <em
                     v-if="r.rejected"
-                    class="muted"
-                  >Returned to requestor</span>
+                    class="returned"
+                  >Returned to requestor</em>
                 </button>
               </td>
               <td v-if="visible('jcn')">
@@ -306,10 +263,10 @@ function toggleSort(id: EsrTableColumnId) {
                     initials(owner(r.engineerId))
                   }}</span><span>{{ owner(r.engineerId) }}</span>
                 </div>
-                <span
+                <em
                   v-else
                   class="muted"
-                >Unassigned</span>
+                >Unassigned</em>
               </td>
               <td
                 v-if="visible('initiated')"
@@ -319,7 +276,7 @@ function toggleSort(id: EsrTableColumnId) {
               </td>
               <td>
                 <button
-                  class="icon-button"
+                  class="icon-button row-open"
                   :aria-label="`Open ${r.serial || 'unassigned request'}`"
                   @click="openRecord(r)"
                 >
@@ -338,12 +295,416 @@ function toggleSort(id: EsrTableColumnId) {
         <p>Adjust your filters or create a new request.</p>
       </div>
       <footer class="table-footer">
-        <span>Showing {{ filtered.length }} of
-          {{ state.records.length }} accessible requests</span><span><span class="live-dot" /> All changes are recorded</span>
+        <span>Synthetic demo data · every change is recorded in the audit
+          trail</span>
       </footer>
     </section>
-    <div class="workspace-footer">
-      <span>TRIDENT REFIT FACILITY <span> / </span> ENGINEERING SERVICES</span><span>Synthetic demonstration · v0.1</span>
-    </div>
   </template>
 </template>
+
+<style scoped>
+.plus {
+  display: inline-block;
+  font-size: var(--fs-lg);
+  line-height: 1;
+  transition: transform 0.25s var(--ease);
+}
+.new-request:hover .plus {
+  transform: rotate(90deg);
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-6);
+}
+.stat {
+  --tone: var(--gray-dot);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--sp-1);
+  padding: var(--sp-4);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--tone);
+  border-radius: var(--radius);
+  text-align: left;
+  font-weight: 400;
+  min-width: 0;
+}
+.stat.blue {
+  --tone: var(--blue-dot);
+}
+.stat.amber {
+  --tone: var(--amber-dot);
+}
+.stat.green {
+  --tone: var(--green-dot);
+}
+.stat.selected {
+  border-color: var(--esr-accent);
+  border-top-color: var(--tone);
+  background: var(--esr-accent-soft);
+  box-shadow: 0 0 0 1px var(--esr-accent);
+}
+.stat-label {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.stat strong {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.15;
+  color: var(--ink);
+}
+.stat-foot {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  font-style: italic;
+}
+.workspace-card {
+  min-width: 0;
+  max-width: 100%;
+}
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  align-items: center;
+  padding: var(--sp-4) var(--sp-5);
+  border-bottom: 1px solid var(--line);
+}
+.search {
+  display: flex;
+  align-items: center;
+  position: relative;
+  flex: 1;
+  max-width: 520px;
+  margin: 0;
+}
+.search > span {
+  position: absolute;
+  left: 11px;
+  font-size: var(--fs-lg);
+  color: var(--ink-4);
+  pointer-events: none;
+}
+.search input {
+  margin: 0;
+  padding-left: 34px;
+}
+.filters select {
+  width: 210px;
+  margin: 0;
+}
+/* Column picker: a native <details> popover of column toggles. */
+.column-picker {
+  position: relative;
+  z-index: 4;
+}
+.column-picker summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  list-style: none;
+  cursor: pointer;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 8px var(--sp-3);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.column-picker summary:hover {
+  background: var(--surface-2);
+  border-color: #b9c2ce;
+}
+.column-picker summary::-webkit-details-marker {
+  display: none;
+}
+.column-picker summary::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  margin-left: 2px;
+  border-right: 1.5px solid var(--ink-4);
+  border-bottom: 1.5px solid var(--ink-4);
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 0.2s var(--ease);
+}
+.column-picker[open] summary::after {
+  transform: translateY(1px) rotate(225deg);
+}
+.column-count {
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--gray-bg);
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+.column-count.partial {
+  background: var(--esr-accent-soft);
+  color: var(--esr-accent-text);
+}
+.column-picker fieldset {
+  position: absolute;
+  z-index: 3;
+  right: 0;
+  top: calc(100% + 6px);
+  width: 340px;
+  margin: 0;
+  padding: var(--sp-2);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 32px #0f1a2a1f;
+}
+.column-picker legend {
+  grid-column: 1 / -1;
+  margin: var(--sp-1) var(--sp-2) 6px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.column-picker label {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 7px var(--sp-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.column-picker label:hover {
+  background: var(--surface-2);
+}
+.column-picker input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  padding: 0;
+  flex: none;
+  accent-color: var(--esr-accent);
+  box-shadow: none;
+}
+.column-picker input:focus-visible {
+  outline: 2px solid var(--esr-accent);
+  outline-offset: 2px;
+}
+.cell-clip {
+  display: block;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.result-count {
+  margin-left: auto;
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+.result-count strong {
+  color: var(--ink);
+}
+.table-scroll {
+  overflow-x: auto;
+  /* Contains the absolutely positioned .sr-only header inside the scroller. */
+  position: relative;
+  max-width: 100%;
+  min-width: 0;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+  text-align: left;
+  font-size: var(--fs-sm);
+}
+thead {
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+}
+th {
+  padding: 10px var(--sp-4);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+.sort-button {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  gap: var(--sp-1);
+}
+.sort-button:hover,
+th[aria-sort="ascending"] .sort-button,
+th[aria-sort="descending"] .sort-button {
+  background: transparent;
+  border-color: transparent;
+  color: var(--ink);
+}
+.sort-button:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.sort-mark {
+  color: var(--esr-accent);
+}
+th:first-child,
+td:first-child {
+  padding-left: var(--sp-5);
+}
+td {
+  padding: 14px var(--sp-4);
+  border-bottom: 1px solid var(--line-soft);
+  vertical-align: middle;
+}
+tbody tr {
+  transition: background 0.12s;
+}
+tbody tr:hover {
+  background: #f6f9fe;
+}
+tbody tr:last-child td {
+  border-bottom: none;
+}
+.record-link {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  border: 0;
+  padding: 0;
+  background: none;
+  text-align: left;
+  gap: 2px;
+  min-width: 150px;
+  font-weight: 400;
+}
+.record-link:hover {
+  background: transparent;
+}
+.record-link:hover .serial:not(.pending) {
+  color: var(--esr-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.serial.pending {
+  font-weight: 500;
+  font-style: italic;
+  color: var(--ink-4);
+}
+.returned {
+  color: var(--red-text);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+}
+.tags {
+  display: flex;
+  gap: var(--sp-1);
+  flex-wrap: wrap;
+  min-width: 100px;
+}
+.nowrap {
+  white-space: nowrap;
+  font-size: var(--fs-xs);
+}
+.row-open {
+  transition:
+    transform 0.2s var(--ease),
+    color 0.15s,
+    background 0.15s;
+}
+tbody tr:hover .row-open {
+  color: var(--esr-accent);
+  transform: translateX(2px);
+}
+.table-footer {
+  padding: var(--sp-3) var(--sp-5);
+  border-top: 1px solid var(--line);
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
+  font-style: italic;
+}
+@container (max-width: 1150px) {
+  .stats {
+    gap: var(--sp-2);
+  }
+  .stat {
+    padding: var(--sp-3);
+  }
+  .stat-foot {
+    display: none;
+  }
+}
+@container (max-width: 850px) {
+  .stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@container (max-width: 560px) {
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .stat:last-child {
+    grid-column: span 2;
+  }
+  .filters {
+    padding: var(--sp-3) var(--sp-4);
+  }
+  .search {
+    flex-basis: 100%;
+    max-width: none;
+  }
+  .filters select {
+    flex: 1;
+    width: auto;
+  }
+  .column-picker fieldset {
+    left: 0;
+    right: auto;
+    width: min(340px, calc(100vw - 32px));
+  }
+  th:first-child,
+  td:first-child {
+    padding-left: var(--sp-4);
+  }
+  .table-footer {
+    padding: var(--sp-3) var(--sp-4);
+  }
+}
+</style>

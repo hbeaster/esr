@@ -151,6 +151,22 @@ test("built package bundle boots independently of Vue host source", async ({
     page.getByRole("heading", { name: "Service requests" }),
   ).toBeVisible();
   await expect(page.locator("tbody tr")).toHaveCount(6);
+  // Child SFC <style scoped> blocks land in the shadow root, never the host page.
+  const styles = await page.evaluate(() => {
+    const root = document.querySelector("esr-workspace")!.shadowRoot!;
+    const text = (nodes: Iterable<Element>) =>
+      [...nodes].map((n) => n.textContent ?? "").join("\n");
+    return {
+      shadow: text(root.querySelectorAll("style")),
+      document: text(document.querySelectorAll("style")),
+      statBorder: getComputedStyle(root.querySelector(".stat")!)
+        .borderTopWidth,
+    };
+  });
+  expect(styles.shadow).toMatch(/\.stat\[data-v-[0-9a-f]{8}\]/);
+  expect(styles.shadow).toMatch(/\.workspace-tabs\[data-v-[0-9a-f]{8}\]/);
+  expect(styles.document).not.toMatch(/data-v-/);
+  expect(styles.statBorder).toBe("3px");
 });
 
 test("top tabs expose permitted views and support keyboard navigation", async ({

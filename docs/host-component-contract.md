@@ -160,10 +160,14 @@ The current theme defines these CSS custom properties:
 
 | Property | Default |
 | --- | --- |
-| `--esr-accent` | `#2563eb` |
-| `--esr-accent-hover` | `#1d4ed8` |
-| `--esr-accent-soft` | `#eff6ff` |
-| `--esr-bg` | `#f5f7f8` |
+| `--esr-accent` | `#1f5fd6` |
+| `--esr-accent-hover` | `#174bb0` |
+| `--esr-accent-soft` | `#eaf1fd` |
+| `--esr-accent-text` | `#163f8f` |
+| `--esr-bg` | `#f4f6f8` |
+| `--esr-font` | `"ESR JetBrains Mono", "JetBrains Mono", ui-monospace, …, monospace` |
+
+The component bundles JetBrains Mono (SIL Open Font License 1.1, Latin subset, variable weight, upright and italic). Browsers ignore `@font-face` rules inside a shadow root, so registering the element also adds the family `ESR JetBrains Mono` to `document.fonts`, once per document. The family name is specific to the component and does not replace host fonts. A host that sets `--esr-font` to another stack still loads the bundled faces but does not use them.
 
 Override them on the element, for example `esr-workspace { --esr-accent: #1d4ed8; }`. They affect selected surfaces and controls, not every color in the theme. There are no public slots or CSS parts. Component state is independent per instance; instances do not synchronize automatically.
 

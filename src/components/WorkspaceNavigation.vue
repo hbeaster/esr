@@ -69,3 +69,71 @@ function onKeydown(event: KeyboardEvent, index: number) {
     </button>
   </div>
 </template>
+
+<style scoped>
+/* Tabs fill the topbar height so the active underline sits on its border. */
+.workspace-tabs {
+  display: flex;
+  align-self: stretch;
+  min-width: 0;
+  gap: var(--sp-5);
+  margin-bottom: -1px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+[role="tab"] {
+  flex-shrink: 0;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-1);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    color 0.15s,
+    border-color 0.2s var(--ease);
+}
+[role="tab"]:hover {
+  background: transparent;
+  color: var(--ink);
+}
+[role="tab"]:focus-visible {
+  outline: 2px solid var(--esr-accent);
+  outline-offset: -2px;
+}
+[aria-selected="true"] {
+  color: var(--esr-accent-text);
+  font-weight: 700;
+  border-bottom-color: var(--esr-accent);
+}
+small {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0 6px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--ink-3);
+}
+[aria-selected="true"] small {
+  border-color: var(--esr-accent);
+  background: var(--esr-accent-soft);
+  color: var(--esr-accent-text);
+}
+/* Full-width row under 620px: a fixed height keeps the underline aligned. */
+@container (max-width: 620px) {
+  .workspace-tabs {
+    flex-basis: 100%;
+    height: 48px;
+    margin-bottom: var(--sp-2);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  [role="tab"] {
+    margin-bottom: -1px;
+  }
+}
+</style>

@@ -156,3 +156,25 @@ const {
     </form>
   </template>
 </template>
+
+<style scoped>
+.signing-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  background: var(--esr-accent-soft);
+  border: 1px solid var(--blue-line);
+  border-radius: var(--radius);
+  padding: var(--sp-4);
+  margin-bottom: var(--sp-5);
+}
+.signing-identity strong {
+  display: block;
+  font-size: var(--fs-md);
+}
+.signing-identity div > span {
+  display: block;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+</style>

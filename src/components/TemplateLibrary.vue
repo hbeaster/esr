@@ -6,10 +6,7 @@ const { state } = useWorkspaceContext();
 <template>
   <div class="page-heading">
     <div>
-      <div class="eyebrow">
-        APPROVED BASELINES
-      </div>
-      <h1>Template library<span class="heading-dot">.</span></h1>
+      <h1>Template library</h1>
       <p>Consistent starting points for clear engineering direction.</p>
     </div>
     <span class="badge green">Supervisor-approved only</span>
@@ -20,7 +17,7 @@ const { state } = useWorkspaceContext();
       :key="t.id"
       class="card padded template-card"
     >
-      <span class="template-symbol">▤</span><span class="small-tag">{{ t.category }}</span>
+      <span class="small-tag">{{ t.category }}</span>
       <h2>{{ t.title }}</h2>
       <p class="prose">
         {{ t.resolution }}
@@ -35,3 +32,40 @@ const { state } = useWorkspaceContext();
     </article>
   </div>
 </template>
+
+<style scoped>
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--sp-5);
+}
+.template-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.template-card h2 {
+  margin-top: var(--sp-3);
+}
+.template-card .prose {
+  font-size: var(--fs-sm);
+}
+.template-card details {
+  font-size: var(--fs-sm);
+  margin-top: auto;
+}
+.template-card summary {
+  cursor: pointer;
+  color: var(--esr-accent);
+  font-weight: 600;
+}
+.template-card summary:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+@container (max-width: 560px) {
+  .template-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

@@ -72,3 +72,76 @@ const {
     </div>
   </template>
 </template>
+
+<style scoped>
+.upload-box {
+  border: 1px dashed #b7c3d3;
+  background: var(--surface-2);
+  border-radius: var(--radius);
+  text-align: center;
+  padding: var(--sp-6) var(--sp-5);
+  margin-bottom: var(--sp-2);
+}
+.upload-icon {
+  font-size: 26px;
+  color: var(--esr-accent);
+}
+.upload-box h3 {
+  margin: var(--sp-2) 0;
+}
+.upload-box p {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+.upload-box .action-row {
+  justify-content: center;
+}
+.inline-label {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: center;
+  margin: 0;
+}
+.inline-label select {
+  margin: 0;
+  width: auto;
+}
+.upload-button {
+  position: relative;
+  overflow: hidden;
+  margin: 0;
+}
+.upload-button input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+.file-row {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: center;
+  border-bottom: 1px solid var(--line-soft);
+  padding: var(--sp-4) 0;
+}
+.file-icon {
+  font-size: var(--fs-xl);
+  color: var(--ink-3);
+}
+.file-row div {
+  flex: 1;
+  min-width: 0;
+}
+.file-row strong {
+  font-size: var(--fs-base);
+  display: block;
+  overflow-wrap: anywhere;
+}
+.file-row div > span {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+</style>

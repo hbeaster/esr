@@ -23,7 +23,7 @@ Human docs, which these instructions do not restate:
 - The npm `files` allowlist is `dist/component/`, `README.md`, `LICENSE`, `docs/api.md`, and `docs/host-component-contract.md`. Leave the host, backend, seed data, tests, and these agent files out of the package. Publishing to a registry is out of scope.
 - Kubernetes stays at one replica. Demo records and the JWT signing key are process-local.
 - Historical search is deterministic term overlap. Keep it labeled as a mock.
-- Component styles enter the shadow root only through `src/index.ts` and `src/styles/workspace.css`. Workspace state is instance-local via `useWorkspaceContext`. Each `<esr-workspace>` has its own state.
+- Styles live in the shadow root only. `src/styles/workspace.css` holds tokens and shared primitives and enters through `<style src>` in `src/Workspace.ce.vue`. A rule that one component uses goes in that SFC's `<style scoped>` block. Every SFC compiles in custom-element mode (`vite.config.ts`), so scoped blocks never reach `document.head`. Do not pass `styles` to `defineCustomElement`, because it replaces the root component's styles. Workspace state is instance-local via `useWorkspaceContext`. Each `<esr-workspace>` has its own state.
 - Vue custom-element listeners receive `event.detail` as a one-element array. The payload is `event.detail[0]`.
 - `tokenProvider` is a JavaScript property, not an HTML attribute. Assigning a new function reloads bootstrap. Changing `apiBase` alone does not.
 - ESLint uses the unmodified recommended presets. `npm run lint` fails on any warning. Leave those presets unchanged.

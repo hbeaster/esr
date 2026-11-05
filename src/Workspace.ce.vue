@@ -17,8 +17,18 @@ const props = withDefaults(defineProps<WorkspaceProps>(), {
 const emit = defineEmits<WorkspaceEvents>();
 const workspace = useWorkspace(props, emit);
 provide(workspaceKey, workspace);
-const { state, busy, error, notice, view, scope, dialog, record, run, reload } =
-  workspace;
+const {
+  state,
+  busy,
+  error,
+  notice,
+  view,
+  scope,
+  dialog,
+  record,
+  run,
+  reload,
+} = workspace;
 const navigationId = useId();
 const panelId = `${navigationId}-panel`;
 const activeTab = computed(() =>
@@ -27,6 +37,16 @@ const activeTab = computed(() =>
     : view.value === "workspace" && scope.value === "mine"
       ? "mine"
       : "all",
+);
+/** Changes when the visible page changes, not when the same page re-renders. */
+const pageKey = computed(() =>
+  !state.user
+    ? "connecting"
+    : view.value === "workspace"
+      ? `workspace:${scope.value}`
+      : view.value === "record"
+        ? `record:${record.value?.id ?? ""}`
+        : view.value,
 );
 </script>
 <template>
@@ -46,7 +66,7 @@ const activeTab = computed(() =>
         />
         <div class="topbar-right">
           <span class="live-dot" />
-          {{ state.user?.site || "TRF" }} workspace
+          <span>TRF <strong>{{ state.user?.site || "—" }}</strong></span>
           <button
             class="icon-button"
             aria-label="Refresh workspace"
@@ -91,29 +111,141 @@ const activeTab = computed(() =>
               ×
             </button>
           </div>
-          <div
-            v-if="!state.user"
-            class="empty"
+          <Transition
+            name="page"
+            mode="out-in"
           >
-            <div class="empty-icon">
-              ▦
+            <div
+              :key="pageKey"
+              class="page"
+            >
+              <div
+                v-if="!state.user"
+                class="empty"
+              >
+                <div class="empty-icon">
+                  ▦
+                </div>
+                <h1>Engineering service requests</h1>
+                <p>
+                  {{
+                    props.tokenProvider
+                      ? "Connecting to the workspace…"
+                      : "Provide a tokenProvider to connect the component to your API."
+                  }}
+                </p>
+              </div>
+              <RequestWorkspace v-else-if="view === 'workspace'" />
+              <RecordDetail v-else-if="view === 'record' && record" />
+              <TemplateLibrary v-else-if="view === 'templates'" />
+              <PermissionSettings v-else-if="view === 'admin'" />
             </div>
-            <h1>Engineering service requests</h1>
-            <p>
-              {{
-                props.tokenProvider
-                  ? "Connecting to the workspace…"
-                  : "Provide a tokenProvider to connect the component to your API."
-              }}
-            </p>
-          </div>
-          <RequestWorkspace v-else-if="view === 'workspace'" />
-          <RecordDetail v-else-if="view === 'record' && record" />
-          <TemplateLibrary v-else-if="view === 'templates'" />
-          <PermissionSettings v-else-if="view === 'admin'" />
+          </Transition>
         </div>
       </main>
     </div>
     <WorkspaceDialogs />
   </div>
 </template>
+
+<style src="./styles/workspace.css"></style>
+
+<style scoped>
+.app {
+  min-height: calc(100vh - 47px);
+  background: var(--esr-bg);
+}
+/* Layout responds to the embedding container, not the host viewport. */
+.main-shell {
+  min-width: 0;
+  container-type: inline-size;
+}
+.topbar {
+  min-height: 56px;
+  border-bottom: 1px solid var(--line);
+  background: #ffffffd9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-5);
+  padding: 0 var(--sp-8);
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+}
+.topbar-right {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.topbar-right strong {
+  color: var(--ink);
+}
+.live-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green-dot);
+  box-shadow: 0 0 0 3px var(--green-bg);
+  flex-shrink: 0;
+}
+main {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: var(--sp-8);
+}
+.workspace-panel:focus-visible {
+  outline: 2px solid var(--esr-accent);
+  outline-offset: 4px;
+  border-radius: var(--radius-sm);
+}
+/*
+ * Page change: the old page fades quickly, the new one rises 6px into place.
+ * The base sheet's reduced-motion rule shortens both to an instant swap.
+ */
+.page-leave-active {
+  transition: opacity 0.12s ease-in;
+  pointer-events: none;
+}
+.page-enter-active {
+  transition:
+    opacity 0.24s var(--ease),
+    transform 0.24s var(--ease);
+}
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+.page-leave-to {
+  opacity: 0;
+}
+.empty-icon {
+  font-size: 40px;
+  margin-bottom: var(--sp-3);
+  color: var(--ink-4);
+}
+@container (max-width: 1150px) {
+  main {
+    padding: var(--sp-6);
+  }
+  .topbar {
+    padding-inline: var(--sp-6);
+  }
+}
+/* Tabs take a full row; status and refresh drop below them. */
+@container (max-width: 620px) {
+  .topbar {
+    flex-wrap: wrap;
+    gap: 0;
+    padding: 0 var(--sp-4) var(--sp-2);
+  }
+  .topbar-right {
+    margin-left: auto;
+    font-size: var(--fs-xs);
+  }
+  main {
+    padding: var(--sp-5) var(--sp-4);
+  }
+}
+</style>
