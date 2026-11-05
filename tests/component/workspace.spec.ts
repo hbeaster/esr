@@ -182,9 +182,7 @@ test("top tabs expose permitted views and support keyboard navigation", async ({
         record.engineerId === "engineer" || record.requestorId === "engineer",
     ).length,
   );
-  await page
-    .getByRole("button", { name: "Open Auxiliary seawater pump" })
-    .click();
+  await page.getByRole("button", { name: "Open 260037A" }).click();
   await expect(all).toHaveAttribute("aria-selected", "true");
   await page.getByRole("button", { name: "Back to requests" }).click();
   await all.focus();
