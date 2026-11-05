@@ -2,7 +2,13 @@
 import { computed, onBeforeUnmount, onMounted, ref, useId, watch } from "vue";
 import HullOutline from "./HullOutline.vue";
 import FleetReplay from "./FleetReplay.vue";
-import { date, hullZone, hullZones, statusAge } from "../presentation";
+import {
+  agingThresholdsDays,
+  date,
+  hullZone,
+  hullZones,
+  statusAge,
+} from "../presentation";
 import type { HullZone } from "../presentation";
 import {
   HULL_CENTER_Y,
@@ -28,6 +34,10 @@ const title = computed(
       .map((z) => `${z.label} ${zoneCounts.value[z.id]}`)
       .join(", ")}; ${zoneCounts.value.unlocated} without a location`,
 );
+/** Stale limits for the legend, e.g. "Unassigned 7 days · In Process 30 days". */
+const staleLimits = Object.entries(agingThresholdsDays)
+  .map(([status, [, stale]]) => `${status} ${stale} days`)
+  .join(" · ");
 function toggle(id: HullZone) {
   zone.value = zone.value === id ? "" : id;
 }
@@ -45,7 +55,7 @@ const staleByZone = computed(() => {
 const staleTitle = (id: HullZone) => {
   const serials = staleByZone.value[id] ?? [];
   const shown = serials.slice(0, 6).join(", ");
-  return `${hullZones.find((z) => z.id === id)!.label}: ${serials.length} stale — ${shown}${serials.length > 6 ? ", …" : ""}`;
+  return `${hullZones.find((z) => z.id === id)!.label}: ${serials.length} stale (past the time limit for their status) — ${shown}${serials.length > 6 ? ", …" : ""}`;
 };
 
 // ---- Pings: sonar contacts (stale) and replay events ----
@@ -310,6 +320,17 @@ onBeforeUnmount(() => {
       <span class="unlocated">No location
         <strong>{{ zoneCounts.unlocated }}</strong></span>
     </div>
+    <p
+      class="legend"
+      :title="`Stale after: ${staleLimits}`"
+    >
+      <span
+        class="legend-badge"
+        aria-hidden="true"
+      >3</span>
+      <span><strong>Stale records</strong> in that compartment, past the time limit
+        for their status. Stale after: {{ staleLimits }}.</span>
+    </p>
   </section>
 </template>
 
@@ -481,6 +502,32 @@ onBeforeUnmount(() => {
 .unlocated {
   color: var(--ink-3);
   padding: 0 var(--sp-2);
+}
+.legend {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--sp-2);
+  margin: var(--sp-2) auto 0;
+  max-width: 760px;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  text-align: left;
+}
+.legend strong {
+  color: var(--ink-2);
+}
+.legend-badge {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--red-solid);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
 }
 @keyframes ping {
   0% {
