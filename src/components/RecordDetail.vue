@@ -33,9 +33,12 @@ const {
     </button>
     <div class="page-heading detail-heading">
       <div>
-        <div class="eyebrow">
-          {{ record.serial || "AWAITING SERIAL NUMBER" }}
-          <span v-if="esrRevision(record.serial) && esrRevision(record.serial) !== 'A'">· REVISION {{ esrRevision(record.serial) }}</span>
+        <div :class="['detail-serial', { pending: !record.serial }]">
+          {{ record.serial || "Awaiting ESR number" }}
+          <span
+            v-if="esrRevision(record.serial) && esrRevision(record.serial) !== 'A'"
+            class="rev"
+          >Revision {{ esrRevision(record.serial) }}</span>
         </div>
         <h1>{{ record.title }}</h1>
         <div class="detail-meta">
@@ -48,7 +51,10 @@ const {
               ...(record.tvd === 'yes' ? ['TVD'] : []),
             ]"
             :key="a"
-            class="tag"
+            :class="[
+              'tag',
+              { critical: a === 'SUBSAFE', special: a === 'DFS' || a === 'TVD' },
+            ]"
           >{{ a }}</span>
         </div>
       </div>
@@ -77,7 +83,8 @@ const {
       v-if="historySnapshot"
       class="alert info"
     >
-      Viewing immutable revision {{ historySnapshot.serial }}.
+      <span>Viewing immutable revision
+        <strong>{{ historySnapshot.serial }}</strong>.</span>
       <button
         @click="
           historySnapshot = null;
@@ -102,7 +109,8 @@ const {
       v-if="record.rejected"
       class="alert error"
     >
-      Returned to the requestor. See the review comments before resubmitting.
+      <span><strong>Returned to the requestor.</strong> See the review comments
+        before resubmitting.</span>
     </div>
     <div
       class="stepper"

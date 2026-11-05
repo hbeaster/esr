@@ -96,7 +96,7 @@ function onJcnInput(event: Event) {
         class="primary"
         :disabled="busy"
       >
-        Submit request →
+        Submit request <span class="arrow">→</span>
       </button>
     </div>
   </form>

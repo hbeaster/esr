@@ -12,15 +12,19 @@ const {
   openRecord,
   newRequest,
 } = useWorkspaceContext();
+const stepHint: Record<string, string> = {
+  Unassigned: "Needs an engineer",
+  "In Process": "Resolution in progress",
+  "Awaiting Approval": "Needs supervisor review",
+  "ESR Issued": "Released to the shop",
+  "ESR Closed": "Fully dispositioned",
+};
 </script>
 
 <template>
   <template v-if="state.user">
     <div class="page-heading">
       <div>
-        <div class="eyebrow">
-          ENGINEERING OPERATIONS
-        </div>
         <h1>
           {{
             scope === "history"
@@ -28,13 +32,15 @@ const {
               : scope === "mine"
                 ? "My work"
                 : "Service requests"
-          }}<span class="heading-dot">.</span>
+          }}
         </h1>
         <p>
           {{
             scope === "history"
-              ? "Find prior resolutions and explore the complete engineering record."
-              : "A clear path from finding to resolution."
+              ? "Closed records and their resolutions, for reference."
+              : scope === "mine"
+                ? "Requests assigned to you or submitted by you."
+                : "Every request at your facility, from finding to closeout."
           }}
         </p>
       </div>
@@ -44,10 +50,10 @@ const {
             state.user.role,
           )
         "
-        class="primary"
+        class="primary new-request"
         @click="newRequest"
       >
-        <span>＋</span> New request
+        <span class="plus">＋</span> New request
       </button>
     </div>
     <section
@@ -55,73 +61,22 @@ const {
       aria-label="Workflow counts"
     >
       <button
-        v-for="(step, i) in steps"
+        v-for="step in steps"
         :key="step"
-        :class="['stat', { selected: status === step }]"
+        :class="['stat', statusTone(step), { selected: status === step }]"
+        :aria-pressed="status === step"
         @click="status = status === step ? '' : step"
       >
-        <span class="stat-label"><span :class="['status-dot', statusTone(step)]" />{{ step }}</span><strong>{{ counts[step] }}</strong><span class="stat-foot">{{
-                                                                                                                                                                 [
-                                                                                                                                                                   "Ready for assignment",
-                                                                                                                                                                   "Engineering in progress",
-                                                                                                                                                                   "Ready for technical review",
-                                                                                                                                                                   "Released to the shop",
-                                                                                                                                                                   "Work fully dispositioned",
-                                                                                                                                                                 ][i]
-                                                                                                                                                               }}
-          <span>↗</span></span>
-      </button>
-    </section>
-    <section
-      v-if="scope !== 'history'"
-      class="focus-banner"
-    >
-      <div class="focus-symbol">
-        ⌁
-      </div>
-      <div>
-        <span class="eyebrow">KEEP WORK MOVING</span>
-        <h2>
-          {{
-            counts["Awaiting Approval"]
-              ? `${counts["Awaiting Approval"]} request${counts["Awaiting Approval"] === 1 ? "" : "s"} ready for technical review`
-              : "Every detail, in one engineering record"
-          }}
-        </h2>
-        <p>
-          Review the resolution, verify references, and sign with confidence.
-        </p>
-      </div>
-      <button
-        class="text-button"
-        @click="status = 'Awaiting Approval'"
-      >
-        View approval queue <span>→</span>
+        <span class="stat-label"><span :class="['status-dot', statusTone(step)]" />{{ step }}</span><strong>{{ counts[step] }}</strong><span class="stat-foot">{{ stepHint[step] }}</span>
       </button>
     </section>
     <section class="card workspace-card">
-      <div class="table-title">
-        <div>
-          <h2>
-            {{
-              scope === "history"
-                ? "Resolved engineering records"
-                : scope === "mine"
-                  ? "Assigned to you & your requests"
-                  : "Request workspace"
-            }}
-          </h2>
-          <span>{{ filtered.length }} records
-            <span class="muted">· Live demo data</span></span>
-        </div>
-        <span class="small-tag">{{ state.user.site.toUpperCase() }}</span>
-      </div>
       <div class="filters">
-        <label class="search"><span>⌕</span><input
+        <label class="search"><span aria-hidden="true">⌕</span><input
           v-model="query"
           aria-label="Search requests"
           placeholder="Search serial, title, JCN, or attribute…"
-        ><kbd>⌕</kbd></label><select
+        ></label><select
           v-model="status"
           aria-label="Filter by status"
         >
@@ -146,18 +101,20 @@ const {
             query = '';
           "
         >
-          Clear
+          Clear filters
         </button>
+        <span class="result-count"><strong>{{ filtered.length }}</strong> of
+          {{ state.records.length }}</span>
       </div>
       <div class="table-scroll">
         <table>
           <thead>
             <tr>
-              <th>REQUEST / SERIAL</th>
-              <th>STATUS</th>
-              <th>ENGINEER</th>
-              <th>ATTRIBUTES</th>
-              <th>UPDATED</th>
+              <th>Request</th>
+              <th>Status</th>
+              <th>Engineer</th>
+              <th>Attributes</th>
+              <th>Updated</th>
               <th><span class="sr-only">Open</span></th>
             </tr>
           </thead>
@@ -171,9 +128,12 @@ const {
                   class="record-link"
                   @click="openRecord(r)"
                 >
-                  <span class="serial">{{ r.serial || "PENDING ASSIGNMENT" }}
-                    <span v-if="esrRevision(r.serial) && esrRevision(r.serial) !== 'A'">· REV {{ esrRevision(r.serial) }}</span></span><strong>{{ r.title }}</strong><span class="muted">{{ r.jcn }}
-                    <span v-if="r.rejected">· Returned to requestor</span></span>
+                  <span :class="['serial', { pending: !r.serial }]">{{ r.serial || "Pending assignment" }}
+                    <span v-if="esrRevision(r.serial) && esrRevision(r.serial) !== 'A'">· Rev {{ esrRevision(r.serial) }}</span></span><strong>{{ r.title }}</strong><span class="muted">{{ r.jcn }}
+                    <em
+                      v-if="r.rejected"
+                      class="returned"
+                    >· Returned to requestor</em></span>
                 </button>
               </td>
               <td>
@@ -188,10 +148,10 @@ const {
                     initials(owner(r.engineerId))
                   }}</span><span>{{ owner(r.engineerId) }}</span>
                 </div>
-                <span
+                <em
                   v-else
                   class="muted"
-                >— Unassigned</span>
+                >Unassigned</em>
               </td>
               <td>
                 <div class="tags">
@@ -204,7 +164,7 @@ const {
                   >TVD</span><span
                     v-for="a in r.attributes"
                     :key="a"
-                    class="tag"
+                    :class="['tag', { critical: a === 'SUBSAFE' }]"
                   >{{
                     a
                   }}</span><span
@@ -220,7 +180,7 @@ const {
               </td>
               <td>
                 <button
-                  class="icon-button"
+                  class="icon-button row-open"
                   :aria-label="`Open ${r.title}`"
                   @click="openRecord(r)"
                 >
@@ -239,12 +199,9 @@ const {
         <p>Adjust your filters or create a new request.</p>
       </div>
       <footer class="table-footer">
-        <span>Showing {{ filtered.length }} of
-          {{ state.records.length }} accessible requests</span><span><span class="live-dot" /> All changes are recorded</span>
+        <span>Synthetic demo data · every change is recorded in the audit
+          trail</span>
       </footer>
     </section>
-    <div class="workspace-footer">
-      <span>TRIDENT REFIT FACILITY <span> / </span> ENGINEERING SERVICES</span><span>Synthetic demonstration · v0.1</span>
-    </div>
   </template>
 </template>

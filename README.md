@@ -57,7 +57,7 @@ For Vue hosts, configure `compilerOptions.isCustomElement` for `esr-workspace`. 
 ```css
 esr-workspace {
   --esr-accent: #196b57;
-  --esr-bg: #f5f7f8;
+  --esr-bg: #f4f6f8;
 }
 ```
 

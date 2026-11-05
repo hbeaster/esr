@@ -7,10 +7,7 @@ const { state, current, record } = useWorkspaceContext();
 <template>
   <template v-if="record && current && state.user">
     <div class="card padded">
-      <div class="section-heading">
-        <h2>Condition & finding</h2>
-        <span class="small-tag">REQUEST DETAILS</span>
-      </div>
+      <h2>Condition & finding</h2>
       <p class="prose">
         {{ record.condition }}
       </p>
@@ -36,17 +33,31 @@ const { state, current, record } = useWorkspaceContext();
           <span>JOB CONTROL NUMBER</span><strong>{{ record.jcn }}</strong>
         </div>
         <div>
-          <span>REFIT</span><strong>{{ record.refit || "Not provided" }}</strong>
+          <span>REFIT</span><strong v-if="record.refit">{{ record.refit }}</strong><em
+            v-else
+            class="muted"
+          >Not provided</em>
         </div>
         <div>
-          <span>COMPONENT / TSN</span><strong>{{ record.component || "Not provided" }}</strong>
+          <span>COMPONENT / TSN</span><strong v-if="record.component">{{ record.component }}</strong><em
+            v-else
+            class="muted"
+          >Not provided</em>
         </div>
         <div>
-          <span>LOCATION</span><strong>{{ record.location || "Not provided" }}</strong>
+          <span>LOCATION</span><strong v-if="record.location">{{ record.location }}</strong><em
+            v-else
+            class="muted"
+          >Not provided</em>
         </div>
       </div>
       <label class="read-label">WORK STATEMENT</label>
-      <p>{{ record.workStatement || "No LDS work statement linked." }}</p>
+      <p v-if="record.workStatement">
+        {{ record.workStatement }}
+      </p>
+      <p v-else>
+        <em class="muted">No LDS work statement linked.</em>
+      </p>
       <label class="read-label">REFERENCES</label>
       <p class="prose">
         {{ record.references }}

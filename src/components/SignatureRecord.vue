@@ -29,7 +29,7 @@ const blocks = computed(() =>
           <span>{{ block.signature.name }}</span>
           <small>{{ time(block.signature.time) }}</small>
         </template>
-        <span v-else>Awaiting signature</span>
+        <em v-else>Awaiting signature</em>
       </div>
     </div>
     <p class="footnote">

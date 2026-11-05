@@ -6,10 +6,7 @@ const { state } = useWorkspaceContext();
 <template>
   <div class="page-heading">
     <div>
-      <div class="eyebrow">
-        APPROVED BASELINES
-      </div>
-      <h1>Template library<span class="heading-dot">.</span></h1>
+      <h1>Template library</h1>
       <p>Consistent starting points for clear engineering direction.</p>
     </div>
     <span class="badge green">Supervisor-approved only</span>
@@ -20,7 +17,7 @@ const { state } = useWorkspaceContext();
       :key="t.id"
       class="card padded template-card"
     >
-      <span class="template-symbol">▤</span><span class="small-tag">{{ t.category }}</span>
+      <span class="small-tag">{{ t.category }}</span>
       <h2>{{ t.title }}</h2>
       <p class="prose">
         {{ t.resolution }}

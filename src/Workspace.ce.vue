@@ -31,7 +31,7 @@ const { state, busy, error, notice, view, dialog, record, run, reload } =
       :inert="!!dialog"
     >
       <header class="topbar">
-        <div>
+        <div class="crumbs">
           Engineering <span>/</span>
           {{
             view === "record"
@@ -45,7 +45,7 @@ const { state, busy, error, notice, view, dialog, record, run, reload } =
         </div>
         <div class="topbar-right">
           <span class="live-dot" />
-          {{ state.user?.site || "TRF" }} workspace
+          <span>TRF <strong>{{ state.user?.site || "—" }}</strong></span>
           <button
             class="icon-button"
             aria-label="Refresh workspace"

@@ -314,7 +314,7 @@ describe("typed workspace controller", () => {
     });
     wrappers.push(wrapper);
     await flushPromises();
-    expect(wrapper.find("h1").text()).toBe("Service requests.");
+    expect(wrapper.find("h1").text()).toBe("Service requests");
     expect(fetch).toHaveBeenCalledWith(
       "/api/bootstrap",
       expect.objectContaining({
