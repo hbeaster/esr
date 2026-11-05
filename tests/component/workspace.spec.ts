@@ -96,6 +96,11 @@ test("editor inserts approved template, answers sequential prompts, and saves", 
       name: "Mock illustration: Pump",
     }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("img", {
+      name: "Mock hull map: Auxiliary machinery space (Auxiliary)",
+    }),
+  ).toBeVisible();
   await page.getByRole("tab", { name: "Resolution", exact: true }).click();
   await page.getByRole("button", { name: "Insert template" }).click();
   await page

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { equipmentClass, equipmentClassLabel } from "../../src/presentation";
+import {
+  equipmentClass,
+  equipmentClassLabel,
+  hullZone,
+  hullZoneLabel,
+} from "../../src/presentation";
 
 const blank = { component: "", title: "", workStatement: "", condition: "" };
 
@@ -44,5 +49,21 @@ describe("equipmentClass", () => {
     );
     expect(equipmentClass(blank)).toBe("generic");
     expect(equipmentClassLabel("generic")).toBe("Equipment");
+  });
+});
+
+describe("hullZone", () => {
+  it("maps LDS locations to mock hull zones", () => {
+    expect(hullZone("Auxiliary machinery space")).toBe("auxiliary");
+    expect(hullZone("Forward equipment space")).toBe("forward");
+    expect(hullZone("Engine room lower level")).toBe("engineering");
+    expect(hullZone("Control room")).toBe("operations");
+    expect(hullZoneLabel("auxiliary")).toBe("Auxiliary");
+  });
+
+  it("returns null for blank or unrecognized locations", () => {
+    expect(hullZone("")).toBeNull();
+    expect(hullZone(null)).toBeNull();
+    expect(hullZone("Pier 4")).toBeNull();
   });
 });

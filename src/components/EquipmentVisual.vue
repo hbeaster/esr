@@ -129,7 +129,9 @@ const label = computed(() => equipmentClassLabel(kind.value));
         />
       </g>
     </svg>
-    <figcaption>{{ label }} · mock</figcaption>
+    <figcaption>
+      {{ label }}<span class="mock">Mock</span>
+    </figcaption>
   </figure>
 </template>
 
@@ -157,6 +159,14 @@ const label = computed(() => equipmentClassLabel(kind.value));
   color: var(--ink-3);
   text-align: center;
   line-height: 1.2;
+}
+.mock {
+  display: block;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-4);
 }
 @container (max-width: 560px) {
   .equipment-visual,

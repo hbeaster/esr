@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import RecordFiles from "./RecordFiles.vue";
 import RichTextView from "./RichTextView.vue";
+import HullLocationMap from "./HullLocationMap.vue";
 import { date } from "../presentation";
 import { useWorkspaceContext } from "../composables/workspaceContext";
 const { state, current, record } = useWorkspaceContext();
@@ -28,6 +29,7 @@ const { state, current, record } = useWorkspaceContext();
     </div>
     <div class="card padded">
       <h2>Equipment & work context</h2>
+      <HullLocationMap :location="record.location" />
       <div class="fields-grid read-fields">
         <div>
           <span>JOB CONTROL NUMBER</span><strong>{{ record.jcn }}</strong>

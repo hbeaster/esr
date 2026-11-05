@@ -18,6 +18,7 @@ This is a synthetic, end-to-end demonstration. “Implemented” describes demo 
 | High-resolution attachments / preview | Original file bytes, authenticated previews, section classification | HTTP byte roundtrip; browser upload |
 | DFS / TVD sequential questions | Conditional prompts and references, server validation | Missing DFS reference unit test; browser entry |
 | Mock equipment visual | The record header shows a labeled mock SVG for the equipment class (pump, valve, heat exchanger, electrical, sensor, ventilation, tank, engine, or generic). The class comes from keywords in the LDS component, then the title, work statement, and condition, so the component takes precedence | Classifier unit tests; component browser check |
+| Mock hull location map | The Overview equipment card shows a labeled, not-to-scale mock hull silhouette with the LDS location's zone (forward, operations, midships, auxiliary, engineering, aft) highlighted and pinned. A blank or unrecognized location renders a muted hull with no pin | Zone classifier unit tests; component browser check |
 | Attributes / document labels | Record header and PDF metadata | Browser SUBSAFE/DFS; PDF unit test |
 | ESR table | Serial, JCN, Refit, Requester, Shop Code, Condition, Resolution, SWBS, Status, Assigned Engineer, and Date Initiated. Each column can be shown or hidden, and clicking its header sorts the visible rows | Column toggle and sort unit tests; browser layout |
 | JWT identity signatures | Server-verified demo JWT supplies identity | Tampering and spoofed payload tests |

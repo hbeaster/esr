@@ -85,6 +85,39 @@ export const equipmentClassLabel = (value: EquipmentClass): string =>
     engine: "Engine",
     generic: "Equipment",
   })[value];
+/** Mock hull compartments, bow to stern. */
+export const hullZones = [
+  { id: "forward", label: "Forward" },
+  { id: "operations", label: "Operations" },
+  { id: "midships", label: "Midships" },
+  { id: "auxiliary", label: "Auxiliary" },
+  { id: "engineering", label: "Engineering" },
+  { id: "aft", label: "Aft" },
+] as const;
+export type HullZone = (typeof hullZones)[number]["id"];
+/** Ordered: auxiliary first so "Auxiliary machinery space" stays auxiliary. */
+const hullZonePatterns: [HullZone, RegExp][] = [
+  ["auxiliary", /\baux(?:iliary)?\b/],
+  [
+    "engineering",
+    /\bengine room\b|\bpropulsion\b|\bturbines?\b|\bmotor room\b|\bmaneuvering\b/,
+  ],
+  ["aft", /\baft\b|\bstern\b|\bshafts?\b/],
+  [
+    "operations",
+    /\bcontrol\b|\bsail\b|\boperations\b|\battack center\b|\bnavigation\b/,
+  ],
+  ["midships", /\bmidships?\b|\bberthing\b|\bmess\b|\bgalley\b/],
+  ["forward", /\bforward\b|\bfwd\b|\bbow\b|\btorpedo\b/],
+];
+/** Mock hull zone for an LDS location, or null when blank or unrecognized. */
+export function hullZone(location?: string | null): HullZone | null {
+  const text = (location || "").trim().toLowerCase();
+  if (!text) return null;
+  return hullZonePatterns.find(([, pattern]) => pattern.test(text))?.[0] ?? null;
+}
+export const hullZoneLabel = (zone: HullZone): string =>
+  hullZones.find((z) => z.id === zone)!.label;
 export const initials = (name?: string | null): string =>
   (name || "")
     .split(" ")
