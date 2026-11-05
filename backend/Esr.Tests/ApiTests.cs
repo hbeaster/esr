@@ -2,18 +2,41 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json.Nodes;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
 namespace Esr.Tests;
 public sealed class DefaultDataTests
 {
+    static async Task SignIn(HttpClient client, string id)
+    {
+        var session = await (await client.PostAsJsonAsync("/api/demo/session", new { userId = id })).Content.ReadFromJsonAsync<JsonObject>();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", session!["token"]!.GetValue<string>());
+    }
     [Fact] public async Task ApiStartsWithoutRecordsOrTemplates()
     {
         await using var factory = new WebApplicationFactory<Program>(); var client = factory.CreateClient();
-        var session = await (await client.PostAsJsonAsync("/api/demo/session", new { userId = "engineer" })).Content.ReadFromJsonAsync<JsonObject>();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", session!["token"]!.GetValue<string>());
+        await SignIn(client, "engineer");
         var bootstrap = await client.GetFromJsonAsync<JsonObject>("/api/bootstrap");
         Assert.Empty(bootstrap!["records"]!.AsArray()); Assert.Empty(bootstrap["templates"]!.AsArray()); Assert.NotEmpty(bootstrap["users"]!.AsArray());
+    }
+    [Fact] public async Task FirstAssignedEsrIsNumberOne()
+    {
+        await using var factory = new WebApplicationFactory<Program>(); var client = factory.CreateClient();
+        await SignIn(client, "requestor");
+        var created = await (await client.PostAsJsonAsync("/api/records", new { title = "First request", name = "Alex Morgan", shop = "31", phone = "555-0131", references = "DEMO-1", condition = "Coupling wear", jcn = "N/A" })).Content.ReadFromJsonAsync<JsonObject>();
+        await SignIn(client, "supervisor");
+        var assigned = await (await client.PostAsJsonAsync($"/api/records/{created!["id"]}/assign", new { engineerId = "engineer" })).Content.ReadFromJsonAsync<JsonObject>();
+        Assert.Equal($"{DateTime.UtcNow:yy}0001A", assigned!["serial"]!.GetValue<string>());
+    }
+    [Theory, InlineData("Production", 0), InlineData("Testing", 6)]
+    public async Task DataFileOverrideOnlyAppliesOutsideDeployedEnvironments(string environment, int expectedRecords)
+    {
+        await using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(b => b.UseEnvironment(environment).UseSetting("Demo:DataFile", "test-data.json"));
+        var client = factory.CreateClient();
+        await SignIn(client, "engineer");
+        var bootstrap = await client.GetFromJsonAsync<JsonObject>("/api/bootstrap");
+        Assert.Equal(expectedRecords, bootstrap!["records"]!.AsArray().Count);
     }
 }
 public sealed class ApiTests : IClassFixture<CracnFactory>

@@ -70,6 +70,43 @@ test("switches between API data and read-only simulated data", async ({
   await expect(page.locator(".profile")).toContainText("Casey Rivera");
 });
 
+test("inserts templates and historical matches into a simulated draft", async ({
+  page,
+}) => {
+  const draft = records.find(
+    (r) =>
+      r.status === "In Process" &&
+      r.site === "Bangor" &&
+      r.engineerId === "engineer",
+  )!;
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Use fake data" }).click();
+  await expect(page.locator(".simulated-badge")).toBeVisible();
+  await page.getByLabel("Search requests").fill(draft.serial!);
+  await page.getByRole("button", { name: `Open ${draft.title}` }).click();
+  await page.getByRole("tab", { name: "Resolution", exact: true }).click();
+
+  await page.getByRole("button", { name: "Insert template" }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Insert template" })
+    .first()
+    .click();
+  await expect(page.getByLabel("Resolution", { exact: true })).toHaveValue(
+    /Isolate the affected component/,
+  );
+
+  await page.getByRole("button", { name: "Summarize & search" }).click();
+  await page.getByRole("button", { name: "Use in draft" }).first().click();
+  await expect(
+    page.getByRole("status").filter({ hasText: "Historical text inserted" }),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText(READ_ONLY_MESSAGE);
+});
+
 test("stays on simulated data when the API cannot be reached", async ({
   page,
 }) => {

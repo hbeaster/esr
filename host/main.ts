@@ -48,8 +48,14 @@ async function connect(apiBase: string): Promise<void> {
   identitySelector.disabled = true;
   try {
     const response = await fetch(`${apiBase}/demo/users`);
-    if (!response.ok) throw Error("Start the ASP.NET API on port 5080.");
+    if (!response.ok)
+      throw Error(
+        apiBase === API_BASE
+          ? "Start the ASP.NET API on port 5080."
+          : "The simulated data source did not respond. Restart the dev server.",
+      );
     const users: Actor[] = await response.json();
+    if (!users.length) throw Error("No demo users are available.");
     const current = identitySelector.value || DEFAULT_USER;
     const selected = users.some((user) => user.id === current)
       ? current

@@ -113,7 +113,7 @@ describe("simulated API", () => {
   });
 
   it("provides its own templates because the API ships none", () => {
-    expect(seed).toMatchObject({ records: [], templates: [] });
+    expect(seed).toMatchObject({ records: [], templates: [], sequence: 0 });
     expect(json<Bootstrap>(call("/bootstrap")).templates).toHaveLength(3);
   });
 
@@ -178,8 +178,9 @@ describe("simulated API", () => {
         body: { condition: "Surface corrosion around the flange" },
       }),
     );
-    expect(result.matches.length).toBeGreaterThan(0);
-    expect(result.matches.length).toBeLessThanOrEqual(3);
+    expect(result.matches.map((match) => match.similarity)).toEqual([
+      90, 75, 60,
+    ]);
     for (const match of result.matches) {
       const source = records.find((r) => r.id === match.id)!;
       expect(source.status).toBe("ESR Closed");

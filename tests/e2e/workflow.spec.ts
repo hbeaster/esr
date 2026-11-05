@@ -19,6 +19,36 @@ const createRequest = async (page: Page, title: string) => {
   await page.getByRole("button", { name: "Submit request" }).click();
   await expect(page.getByRole("heading", { name: title })).toBeVisible();
 };
+/** Runs record actions directly against the API to set up state for a UI test. */
+const apiAs = async (page: Page, userId: string) => {
+  const session = await page.request.post("/api/demo/session", {
+    data: { userId },
+  });
+  const { token } = await session.json();
+  return async (path: string, data: object = {}) => {
+    const response = await page.request.post(`/api${path}`, {
+      data,
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(response.ok(), `POST ${path}`).toBe(true);
+    return response.json();
+  };
+};
+const submitRequest = async (page: Page, title: string, condition: string) => {
+  const asRequestor = await apiAs(page, "requestor");
+  const { id } = await asRequestor("/records", {
+    title,
+    name: "Alex Morgan",
+    shop: "31",
+    phone: "555-0131",
+    references: "SYNTHETIC-REF-2",
+    condition,
+    jcn: "N/A",
+  });
+  const asSupervisor = await apiAs(page, "supervisor");
+  await asSupervisor(`/records/${id}/assign`, { engineerId: "engineer" });
+  return { id, asSupervisor };
+};
 const confirm = async (page: Page) => {
   await page
     .getByRole("button", { name: "Confirm & sign", exact: true })
@@ -166,4 +196,49 @@ test("cross-facility review allows comments but no engineering actions", async (
     .fill("Cross-facility technical review complete.");
   await page.getByRole("button", { name: "Post comment" }).click();
   await expect(page.locator(".comment")).toContainText("Riley Parker");
+});
+test("a closed record's resolution can be inserted into a new draft", async ({
+  page,
+}) => {
+  const condition = "Bearing housing vibration exceeded acceptance limits.";
+  const resolution = "Replace the bearing housing per the approved procedure.";
+  const stamp = Date.now();
+  const title = `E2E open bearing request ${stamp}`;
+
+  await page.goto("/");
+  const closed = await submitRequest(
+    page,
+    `E2E closed bearing request ${stamp}`,
+    condition,
+  );
+  const asEngineer = await apiAs(page, "engineer");
+  await asEngineer(`/records/${closed.id}/draft`, {
+    resolution,
+    rationale: "The replacement restores the design tolerance.",
+    dfs: "no",
+    tvd: "no",
+    attributes: [],
+  });
+  await asEngineer(`/records/${closed.id}/resolve`);
+  await closed.asSupervisor(`/records/${closed.id}/approve`);
+  const asShop = await apiAs(page, "shop");
+  await asShop(`/records/${closed.id}/complete`, {
+    status: "Completed",
+    shop: "31",
+  });
+  const asDivision = await apiAs(page, "division");
+  await asDivision(`/records/${closed.id}/close`);
+  await submitRequest(page, title, condition);
+
+  await page.reload();
+  await page.getByRole("button", { name: `Open ${title}` }).click();
+  await page.getByRole("tab", { name: "Resolution", exact: true }).click();
+  await page.getByRole("button", { name: "Summarize & search" }).click();
+  await page.getByRole("button", { name: "Use in draft" }).first().click();
+  await expect(page.getByRole("status")).toContainText(
+    "Historical text inserted",
+  );
+  await expect(page.getByLabel("Resolution", { exact: true })).toHaveValue(
+    resolution,
+  );
 });

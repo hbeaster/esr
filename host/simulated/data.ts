@@ -139,8 +139,12 @@ export function simulatedTextFile(name: string): string {
 }
 
 /** Smallest valid PNG, so image previews render without storing real bytes. */
-export const SIMULATED_PNG_BASE64 =
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+export const SIMULATED_PNG_BYTES = Uint8Array.from(
+  atob(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+  ),
+  (char) => char.charCodeAt(0),
+);
 
 /** Deterministic: the same seed always produces the same records. */
 export function createSimulatedRecords(seed: SimulatedSeed): EsrRecord[] {
@@ -245,7 +249,7 @@ export function createSimulatedRecords(seed: SimulatedSeed): EsrRecord[] {
         name: `photo-${index + 1}.png`,
         type: "image/png",
         section: "Reference",
-        size: atob(SIMULATED_PNG_BASE64).length,
+        size: SIMULATED_PNG_BYTES.length,
         uploadedBy: requestor.name,
         time: time(0),
       });

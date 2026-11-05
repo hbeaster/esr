@@ -1,7 +1,7 @@
 import type { Actor, EsrRecord } from "../../src/types";
 import {
   createSimulatedRecords,
-  SIMULATED_PNG_BASE64,
+  SIMULATED_PNG_BYTES,
   simulatedLds,
   simulatedTemplates,
   simulatedTextFile,
@@ -23,6 +23,7 @@ export type SimulatedResponse =
 export const READ_ONLY_MESSAGE =
   "Simulated data is read-only. Switch to API data to run workflow actions.";
 const TOKEN_PREFIX = "simulated.";
+const CANNED_SIMILARITY = [90, 75, 60];
 
 const failure = (status: number, error: string): SimulatedResponse => ({
   status,
@@ -33,8 +34,6 @@ const field = (body: unknown, key: string): string => {
   const value = (body as Record<string, unknown> | null | undefined)?.[key];
   return typeof value === "string" ? value : "";
 };
-const tokens = (text: string) =>
-  new Set(text.toLowerCase().match(/[a-z]{4,}/g) ?? []);
 
 /**
  * Read-only stand-in for the API in docs/api.md. Workflow rules deliberately
@@ -67,7 +66,7 @@ export function createSimulatedApi(seed: SimulatedSeed) {
       type: file.type,
       bytes:
         file.type === "image/png"
-          ? Uint8Array.from(atob(SIMULATED_PNG_BASE64), (c) => c.charCodeAt(0))
+          ? SIMULATED_PNG_BYTES
           : new TextEncoder().encode(simulatedTextFile(file.name)),
     };
   }
@@ -108,23 +107,18 @@ export function createSimulatedApi(seed: SimulatedSeed) {
     if (method === "POST" && path === "/history/search") {
       const condition = field(body, "condition").trim();
       if (!condition) return failure(400, "condition is required.");
-      const terms = tokens(condition);
+      // Canned scores: ranking rules belong to Workflow.cs and are not copied here.
       const matches = visibleTo(actor)
         .filter((record) => record.status === "ESR Closed")
-        .map((record) => {
-          const other = tokens(record.condition);
-          const shared = [...terms].filter((term) => other.has(term)).length;
-          return {
-            id: record.id,
-            serial: record.serial,
-            title: record.title,
-            resolution: record.resolution,
-            rationale: record.rationale,
-            similarity: Math.round((100 * shared) / Math.max(terms.size, 1)),
-          };
-        })
-        .sort((a, b) => b.similarity - a.similarity)
-        .slice(0, 3);
+        .slice(0, CANNED_SIMILARITY.length)
+        .map((record, position) => ({
+          id: record.id,
+          serial: record.serial,
+          title: record.title,
+          resolution: record.resolution,
+          rationale: record.rationale,
+          similarity: CANNED_SIMILARITY[position],
+        }));
       return ok({
         summary: `Inspection finding: ${condition.slice(0, 210)}`,
         matches,

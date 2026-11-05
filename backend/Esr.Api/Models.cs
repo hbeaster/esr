@@ -119,7 +119,7 @@ public sealed class StoreData
     public List<Actor> Users { get; set; } = [];
     public Dictionary<string, Permission> Permissions { get; set; } = [];
     public List<EngineeringTemplate> Templates { get; set; } = [];
-    public int Sequence { get; set; } = 42;
+    public int Sequence { get; set; }
     public int SequenceYear { get; set; } = 2026;
 }
 public sealed class RuleException(string message, int status = 400) : Exception(message)
