@@ -38,24 +38,24 @@ test("switches between API data and read-only simulated data", async ({
   await page.goto("/");
   await expect(useFakeData).toHaveAttribute("aria-pressed", "false");
   await expect(badge).toBeHidden();
-  await expect(page.locator(".profile")).toContainText("Jordan Lee");
+  await expect(page.locator("#identity option:checked")).toHaveText(
+    /Jordan Lee/,
+  );
   await expect(simulated).toHaveCount(0);
-  await page.getByRole("button", { name: "Template library" }).click();
-  await expect(page.locator(".template-card")).toHaveCount(0);
 
   await useFakeData.click();
   await expect(badge).toHaveText("SIMULATED DATA");
   await expect(useApiData).toHaveAttribute("aria-pressed", "true");
   await expect(simulated.first()).toBeVisible();
-  await page.getByRole("button", { name: "Template library" }).click();
-  await expect(page.locator(".template-card")).toHaveCount(3);
 
   await page.reload();
   await expect(badge).toBeVisible();
   await expect(simulated.first()).toBeVisible();
 
   await page.getByLabel("Demo identity").selectOption("supervisor");
-  await expect(page.locator(".profile")).toContainText("Casey Rivera");
+  await expect(page.locator("#identity option:checked")).toHaveText(
+    /Casey Rivera/,
+  );
   await expect(badge).toBeVisible();
   await simulated.first().click();
   await page.getByRole("button", { name: "Delete request" }).click();
@@ -70,7 +70,9 @@ test("switches between API data and read-only simulated data", async ({
   await expect(badge).toBeHidden();
   await expect(useFakeData).toBeVisible();
   await expect(simulated).toHaveCount(0);
-  await expect(page.locator(".profile")).toContainText("Casey Rivera");
+  await expect(page.locator("#identity option:checked")).toHaveText(
+    /Casey Rivera/,
+  );
 });
 
 test("inserts templates and historical matches into a simulated draft", async ({
@@ -91,11 +93,11 @@ test("inserts templates and historical matches into a simulated draft", async ({
   await page.getByRole("tab", { name: "Resolution", exact: true }).click();
 
   await page.getByRole("button", { name: "Insert template" }).click();
-  await page
+  const templates = page
     .getByRole("dialog")
-    .getByRole("button", { name: "Insert template" })
-    .first()
-    .click();
+    .getByRole("button", { name: "Insert template" });
+  await expect(templates).toHaveCount(3);
+  await templates.first().click();
   await expect(page.getByLabel("Resolution", { exact: true })).toContainText(
     "Isolate the affected component",
   );
@@ -124,7 +126,9 @@ test("stays on simulated data when the API cannot be reached", async ({
   await page.getByRole("button", { name: "Use fake data" }).click();
   await expect(page.locator(".simulated-badge")).toBeVisible();
   await expect(page.getByText("Unable to connect to demo API.")).toBeHidden();
-  await expect(page.locator(".profile")).toContainText("Jordan Lee");
+  await expect(page.locator("#identity option:checked")).toHaveText(
+    /Jordan Lee/,
+  );
 
   await page.getByRole("button", { name: "Use API data" }).click();
   await expect(page.getByText("Unable to connect to demo API.")).toBeVisible();

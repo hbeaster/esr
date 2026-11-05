@@ -377,7 +377,19 @@ describe("typed workspace controller", () => {
     resolveFirst(jsonResponse(makeBootstrap()));
     await flushPromises();
     expect(fetch).toHaveBeenCalledTimes(2);
-    expect(wrapper.get(".profile").text()).toContain("Alex Morgan");
+    await wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("New request"))!
+      .trigger("click");
+    await flushPromises();
+    expect(
+      (
+        wrapper
+          .findAll("label")
+          .find((label) => label.text() === "Name")!
+          .get("input").element as HTMLInputElement
+      ).value,
+    ).toBe("Alex Morgan");
     expect(fetch.mock.calls[1][1].headers.Authorization).toBe(
       "Bearer requestor-token",
     );
