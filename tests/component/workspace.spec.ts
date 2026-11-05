@@ -1,12 +1,21 @@
 import { test, expect } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import type { Bootstrap, LdsData } from "../../src/types";
-const fixture: Bootstrap & { lds: Record<string, LdsData> } = JSON.parse(
+const fixture: Bootstrap = JSON.parse(
   readFileSync(
     new URL("../../backend/Esr.Api/seed.json", import.meta.url),
     "utf8",
   ),
 );
+/** What the backend returns from CRACN for the demo JCN (see mocks/cracn). */
+const lds: Record<string, LdsData> = {
+  "JCN-260184": {
+    workStatement: "Inspect auxiliary seawater pump coupling",
+    refit: "A014",
+    component: "ASW-P-02 / TSN-10482",
+    location: "Auxiliary machinery space",
+  },
+};
 test.beforeEach(async ({ page }) => {
   const data = structuredClone(fixture);
   let user = data.users.find((u) => u.id === "engineer")!;
@@ -21,7 +30,7 @@ test.beforeEach(async ({ page }) => {
       result = { user, token: "synthetic-test-token" };
     } else if (path === "/api/bootstrap") result = { ...data, user };
     else if (path === "/api/lds")
-      result = data.lds[new URL(request.url()).searchParams.get("jcn") || ""];
+      result = lds[new URL(request.url()).searchParams.get("jcn") || ""];
     else if (path === "/api/history/search")
       result = {
         summary: "Synthetic test summary of coupling wear.",

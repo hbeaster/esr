@@ -13,7 +13,7 @@ paths:
 # Workflow and API
 
 - Add or change an action in the `Execute` switch in `backend/Esr.Api/Workflow.cs`. Run `Execute`, `Create`, and `SetPermission` under `workflow.Sync`. Validate a deep copy, then replace the stored record. A failed check leaves the stored record unchanged.
-- Role and state checks throw `RuleException`. Error JSON is `{ "error": "..." }` with 400 validation, 401 identity, 403 permission, 404 missing, or 409 workflow or stale version.
+- Role and state checks throw `RuleException`. Error JSON is `{ "error": "..." }` with 400 validation, 401 identity, 403 permission, 404 missing, 409 workflow or stale version, or 502 when CRACN (`backend/Esr.Api/Lds.cs`) is unreachable or failing.
 - The deferred status string is `ESR Issued – Deferred` (en dash). Reject keeps `Unassigned` and sets `Rejected`.
 - Assigned numbers are `YY` + `0001`–`9999` + revision `A`–`ZZ`. Assignment issues `A`. `260001ZZ` is the last revision of the first 2026 number. Allocate the sequence in `Workflow.AllocateSequence`.
 - Signatures use the authenticated actor. The action body supplies the comment, not the signer's name or user id.

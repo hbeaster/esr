@@ -69,11 +69,20 @@ Requires the [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10
 
 ```sh
 npm ci
-npm run dev:api  # terminal 1: ASP.NET on http://127.0.0.1:5080
-npm run dev      # terminal 2: Vue host on http://127.0.0.1:5173
+npm run dev:cracn  # terminal 1: mock CRACN API on http://127.0.0.1:4010
+npm run dev:api    # terminal 2: ASP.NET on http://127.0.0.1:5080
+npm run dev        # terminal 3: Vue host on http://127.0.0.1:5173
 ```
 
-Use the identity selector above the workspace to follow each role. Start with **Requestor**, create a request, switch to **Supervisor** to assign it, then **Engineer**, **Supervisor**, **Shop**, and **Division Head** for the full workflow. Administrator can grant cross-TRF review and delegated signatures. Demo JCNs are `JCN-260184` and `JCN-260207`; `N/A` is supported.
+### CRACN API and mock data
+
+JCN context (work statement, refit, component, location) comes from the **CRACN API** described by `cracn_openapi.json`. The backend reads `GET /api/v1/jobs/{jcn}` for the work statement and refit, then the job's configuration item for the component and location. It does this both for **Import LDS** and when a request is submitted, so saved records and PDFs carry the CRACN values.
+
+`Cracn:BaseUrl` (environment variable `Cracn__BaseUrl`) defaults to the local mock at `http://127.0.0.1:4010`. Point it at a real CRACN deployment and set `Cracn:Token` to its service bearer token. If CRACN is unreachable, lookups fail with 502 and requests can still be submitted with `N/A`.
+
+`mocks/cracn/` turns the spec into a stateful mock server. It routes every operation in the spec. It serves list, get, create, update and delete from in-memory state seeded with `mocks/cracn/data.json`, supports `limit`, `offset`, `filters` and `orderBy` (as JSON query values), allows every `auth/*` check, and generates responses for other operations from their schemas. It accepts any non-empty bearer token, and `POST /__mock/reset` restores the seed data. The data is generated deterministically from the spec, with the demo records in `mocks/cracn/curated.mjs` merged in. After changing either the spec or that file, run `npm run mock:generate`; `npm run mock:check` (part of `validate`) fails when `data.json` is stale.
+
+Use the identity selector above the workspace to follow each role. Start with **Requestor**, create a request, switch to **Supervisor** to assign it, then **Engineer**, **Supervisor**, **Shop**, and **Division Head** for the full workflow. Administrator can grant cross-TRF review and delegated signatures. Demo JCNs are `JCN-260184` and `JCN-260207`; every other job in the mock data (for example `JCN-264668`) also resolves, and `N/A` is supported.
 
 A host-only build is available with `npm run build:host`, producing `dist/host/`. The Docker build copies this into ASP.NET's `wwwroot` so one server serves both the host and API.
 
@@ -86,7 +95,7 @@ docker run --rm -p 127.0.0.1:8080:8080 esr-demo:local
 docker compose up --build
 ```
 
-Open `http://localhost:8080`. The multi-stage image builds Vue with Node and the backend with .NET, then runs only the ASP.NET runtime as a non-root user. Health endpoints are `/health/live` and `/health/ready`.
+Open `http://localhost:8080`. Compose also builds and starts the CRACN mock (`mocks/cracn/Dockerfile`) and points the backend at it. With plain `docker run`, pass `-e Cracn__BaseUrl=…` for a reachable CRACN, otherwise JCN lookups fail and only `N/A` requests can be submitted. The multi-stage image builds Vue with Node and the backend with .NET, then runs only the ASP.NET runtime as a non-root user. Health endpoints are `/health/live` and `/health/ready`.
 
 ## Kubernetes
 
@@ -94,13 +103,14 @@ Build and load `esr-demo:local` into your local cluster, or push it to your own 
 
 ```sh
 # Local kind example:
-kind load docker-image esr-demo:local
+docker build -f mocks/cracn/Dockerfile -t cracn-mock:local .
+kind load docker-image esr-demo:local cracn-mock:local
 kubectl apply -k deploy/k8s
 kubectl rollout status deployment/esr-demo
 kubectl port-forward service/esr-demo 8080:80
 ```
 
-For a registry, use a kustomize overlay or `kubectl set image deployment/esr-demo esr=YOUR_REGISTRY/esr-demo:TAG`. Add your ingress/TLS policy in the deployment environment. No cluster changes or remote publication are performed by the build commands.
+The pod runs the CRACN mock as a sidecar on `localhost:4010`. For a real CRACN, remove the sidecar and set `Cracn__BaseUrl` on the `esr` container. For a registry, use a kustomize overlay or `kubectl set image deployment/esr-demo esr=YOUR_REGISTRY/esr-demo:TAG`. Add your ingress/TLS policy in the deployment environment. No cluster changes or remote publication are performed by the build commands.
 
 The manifest includes startup/readiness/liveness probes, CPU/memory requests and limits, a read-only root filesystem, dropped capabilities, and a temporary volume. **Keep one replica**: demo records and JWT signing keys are process-local. Production scaling requires shared persistence and a real identity provider. `Recreate` avoids concurrent mock stores during rollout.
 
@@ -113,7 +123,7 @@ npm test                       # Vitest + Vue Test Utils component/controller un
 npm run test:component          # browser integration with isolated API fixtures
 npm run test:backend            # xUnit domain and ASP.NET HTTP integration tests
 npx playwright install chromium
-npm run test:e2e                # actual Vue host + actual .NET backend in Chromium
+npm run test:e2e                # actual Vue host + actual .NET backend + CRACN mock in Chromium
 npm run validate               # unit tests, component browser tests, both builds, backend tests, full-flow browser tests
 ```
 

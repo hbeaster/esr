@@ -22,6 +22,9 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "dev:api": "dotnet run --project backend/Esr.Api --urls http://127.0.0.1:5080",
+    "dev:cracn": "node mocks/cracn/server.mjs --port 4010",
+    "mock:generate": "node mocks/cracn/generate.mjs",
+    "mock:check": "node mocks/cracn/generate.mjs --check",
     "build": "npm run build:component",
     "build:component": "vue-tsc --noEmit -p tsconfig.component.json && vite build --mode component && vue-tsc -p tsconfig.build.json",
     "build:host": "vue-tsc --noEmit && vite build",
@@ -30,7 +33,7 @@
     "test": "vitest run",
     "test:backend": "dotnet test backend/Esr.Tests",
     "test:e2e": "playwright test",
-    "validate": "npm run lint && npm run typecheck && npm test && npm run test:component && npm run build:host && npm run test:backend && npm run test:e2e",
+    "validate": "npm run lint && npm run typecheck && npm run mock:check && npm test && npm run test:component && npm run build:host && npm run test:backend && npm run test:e2e",
     "test:component": "npm run build:component && playwright test --config playwright.component.config.ts",
     "typecheck": "vue-tsc --noEmit",
     "lint": "eslint . --max-warnings 0",

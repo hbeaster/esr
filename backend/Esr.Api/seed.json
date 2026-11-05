@@ -10,7 +10,7 @@
       "condition": "Uneven wear observed on auxiliary seawater pump coupling during scheduled inspection. Witness marks are visible on the coupling face.",
       "jcn": "JCN-260184",
       "workStatement": "Inspect auxiliary seawater pump coupling",
-      "refit": "RF-26-014",
+      "refit": "A014",
       "component": "ASW-P-02 / TSN-10482",
       "location": "Auxiliary machinery space",
       "site": "Bangor",
@@ -471,19 +471,5 @@
       "resolution": "1. Record measurements and inspection evidence.\n2. Compare findings against the referenced acceptance criteria.\n3. Document the engineering disposition and required follow-up actions.",
       "rationale": "Disposition is based on documented evidence and applicable acceptance criteria."
     }
-  ],
-  "lds": {
-    "JCN-260184": {
-      "workStatement": "Inspect auxiliary seawater pump coupling",
-      "refit": "RF-26-014",
-      "component": "ASW-P-02 / TSN-10482",
-      "location": "Auxiliary machinery space"
-    },
-    "JCN-260207": {
-      "workStatement": "Restore valve actuator mounting hardware",
-      "refit": "RF-26-018",
-      "component": "VLV-214 / TSN-20871",
-      "location": "Forward equipment space"
-    }
-  }
+  ]
 }

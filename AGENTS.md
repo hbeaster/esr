@@ -1,6 +1,6 @@
 # ESR workspace
 
-Embeddable Vue 3 + TypeScript custom element (`src/`), demo-only host (`host/`), and an in-memory ASP.NET Core / .NET 10 demo API (`backend/Esr.Api`). Records, JWTs, LDS data, historical matches, identities, signatures, and approvals are synthetic. Restarting the API resets the store.
+Embeddable Vue 3 + TypeScript custom element (`src/`), demo-only host (`host/`), and an in-memory ASP.NET Core / .NET 10 demo API (`backend/Esr.Api`). Records, JWTs, historical matches, identities, signatures, and approvals are synthetic. JCN (LDS) context comes from the CRACN API in `cracn_openapi.json`, served locally by the mock in `mocks/cracn/` on `http://127.0.0.1:4010`. Restarting the API resets the store.
 
 Human docs, which these instructions do not restate:
 
@@ -37,7 +37,7 @@ Match the check to the files you changed.
 - Role handoff in the browser: `npm run test:e2e`
 - Full validation, when asked or before a pull request that crosses layers: `npm run validate`
 
-`npm run test:component` rebuilds the component first. Playwright end-to-end tests start the API at `http://127.0.0.1:5080` and Vite at `http://127.0.0.1:5173` unless `ESR_BASE_URL` is set. Set `DOTNET_BIN` when `dotnet` is not on `PATH`. End-to-end tests use one worker because the store is process-local. Outside CI, Playwright reuses an API or Vite server that is already running.
+`npm run test:component` rebuilds the component first. Playwright end-to-end tests start the CRACN mock at `http://127.0.0.1:4010`, the API at `http://127.0.0.1:5080`, and Vite at `http://127.0.0.1:5173` unless `ESR_BASE_URL` is set. After changing `cracn_openapi.json` or `mocks/cracn/curated.mjs`, run `npm run mock:generate`. Set `DOTNET_BIN` when `dotnet` is not on `PATH`. End-to-end tests use one worker because the store is process-local. Outside CI, Playwright reuses an API or Vite server that is already running.
 
 ## Playbooks
 

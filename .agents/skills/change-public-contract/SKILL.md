@@ -18,7 +18,7 @@ description: Updates the public esr-workspace host contract and the API contract
 ## API
 
 - Endpoint and action changes update the tables in `docs/api.md`.
-- Errors stay `{ "error": "..." }` with 400, 401, 403, 404, or 409.
+- Errors stay `{ "error": "..." }` with 400, 401, 403, 404, or 409, plus 502 when the upstream CRACN lookup fails.
 - Record DTOs omit attachment bytes. Authenticated download routes return the original bytes.
 
 ## Package boundary

@@ -17,6 +17,7 @@ jobs:
       - run: npm run validate
       - run: npm run package:component
       - run: docker build -t esr-demo:ci .
+      - run: docker build -f mocks/cracn/Dockerfile -t cracn-mock:ci .
       - uses: actions/upload-artifact@v4
         if: always()
         with:
