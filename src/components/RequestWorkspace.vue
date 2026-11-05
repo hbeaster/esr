@@ -1,5 +1,16 @@
 <script setup lang="ts">
-import { esrRevision, initials, date, steps, statusTone } from "../presentation";
+import { computed, ref } from "vue";
+import {
+  esrRevision,
+  esrTableColumns,
+  initials,
+  date,
+  plainText,
+  sortRecords,
+  steps,
+  statusTone,
+} from "../presentation";
+import type { EsrTableColumnId, SortDirection } from "../presentation";
 import { useWorkspaceContext } from "../composables/workspaceContext";
 const {
   state,
@@ -12,6 +23,37 @@ const {
   openRecord,
   newRequest,
 } = useWorkspaceContext();
+const hiddenColumns = ref<EsrTableColumnId[]>([]);
+function visible(id: EsrTableColumnId) {
+  return !hiddenColumns.value.includes(id);
+}
+function toggleColumn(id: EsrTableColumnId) {
+  hiddenColumns.value = visible(id)
+    ? [...hiddenColumns.value, id]
+    : hiddenColumns.value.filter((column) => column !== id);
+}
+function text(value?: string | null) {
+  const trimmed = plainText(value);
+  return trimmed || "—";
+}
+const visibleCount = computed(
+  () => esrTableColumns.length - hiddenColumns.value.length,
+);
+const sortColumn = ref<EsrTableColumnId | null>(null);
+const sortDirection = ref<SortDirection>("asc");
+const rows = computed(() =>
+  sortRecords(filtered.value, sortColumn.value, sortDirection.value, (id) =>
+    owner(id),
+  ),
+);
+function toggleSort(id: EsrTableColumnId) {
+  if (sortColumn.value === id) {
+    sortDirection.value = sortDirection.value === "asc" ? "desc" : "asc";
+    return;
+  }
+  sortColumn.value = id;
+  sortDirection.value = "asc";
+}
 </script>
 
 <template>
@@ -73,7 +115,7 @@ const {
       </button>
     </section>
     <section
-      v-if="scope !== 'history'"
+      v-if="scope === 'mine'"
       class="focus-banner"
     >
       <div class="focus-symbol">
@@ -120,7 +162,7 @@ const {
         <label class="search"><span>⌕</span><input
           v-model="query"
           aria-label="Search requests"
-          placeholder="Search serial, title, JCN, or attribute…"
+          placeholder="Search serial, JCN, requester, shop, or condition…"
         ><kbd>⌕</kbd></label><select
           v-model="status"
           aria-label="Filter by status"
@@ -148,38 +190,114 @@ const {
         >
           Clear
         </button>
+        <details class="column-picker">
+          <summary>
+            <span>Columns</span><span
+              class="column-count"
+              :class="{ partial: visibleCount < esrTableColumns.length }"
+            >{{ visibleCount }}</span>
+          </summary>
+          <fieldset>
+            <legend>Visible columns</legend>
+            <label
+              v-for="column in esrTableColumns"
+              :key="column.id"
+            >
+              <input
+                type="checkbox"
+                :checked="visible(column.id)"
+                :aria-label="`Show ${column.label}`"
+                @change="toggleColumn(column.id)"
+              ><span>{{ column.label }}</span>
+            </label>
+          </fieldset>
+        </details>
       </div>
       <div class="table-scroll">
         <table>
           <thead>
             <tr>
-              <th>REQUEST / SERIAL</th>
-              <th>STATUS</th>
-              <th>ENGINEER</th>
-              <th>ATTRIBUTES</th>
-              <th>UPDATED</th>
+              <template
+                v-for="column in esrTableColumns"
+                :key="column.id"
+              >
+                <th
+                  v-if="visible(column.id)"
+                  :aria-sort="
+                    sortColumn === column.id
+                      ? sortDirection === 'asc'
+                        ? 'ascending'
+                        : 'descending'
+                      : 'none'
+                  "
+                >
+                  <button
+                    type="button"
+                    class="sort-button"
+                    :aria-label="`Sort by ${column.label}`"
+                    @click="toggleSort(column.id)"
+                  >
+                    {{ column.label
+                    }}<span
+                      v-if="sortColumn === column.id"
+                      class="sort-mark"
+                      aria-hidden="true"
+                    >{{ sortDirection === "asc" ? "↑" : "↓" }}</span>
+                  </button>
+                </th>
+              </template>
               <th><span class="sr-only">Open</span></th>
             </tr>
           </thead>
           <tbody>
             <tr
-              v-for="r in filtered"
+              v-for="r in rows"
               :key="r.id"
             >
-              <td>
+              <td v-if="visible('serial')">
                 <button
                   class="record-link"
                   @click="openRecord(r)"
                 >
                   <span class="serial">{{ r.serial || "PENDING ASSIGNMENT" }}
-                    <span v-if="esrRevision(r.serial) && esrRevision(r.serial) !== 'A'">· REV {{ esrRevision(r.serial) }}</span></span><strong>{{ r.title }}</strong><span class="muted">{{ r.jcn }}
-                    <span v-if="r.rejected">· Returned to requestor</span></span>
+                    <span v-if="esrRevision(r.serial) && esrRevision(r.serial) !== 'A'">· REV {{ esrRevision(r.serial) }}</span></span>
+                  <span
+                    v-if="r.rejected"
+                    class="muted"
+                  >Returned to requestor</span>
                 </button>
               </td>
-              <td>
+              <td v-if="visible('jcn')">
+                {{ text(r.jcn) }}
+              </td>
+              <td v-if="visible('refit')">
+                {{ text(r.refit) }}
+              </td>
+              <td v-if="visible('requester')">
+                {{ text(r.name) }}
+              </td>
+              <td v-if="visible('shop')">
+                {{ text(r.shop) }}
+              </td>
+              <td v-if="visible('condition')">
+                <span
+                  class="cell-clip"
+                  :title="r.condition"
+                >{{ text(r.condition) }}</span>
+              </td>
+              <td v-if="visible('resolution')">
+                <span
+                  class="cell-clip"
+                  :title="r.resolution"
+                >{{ text(r.resolution) }}</span>
+              </td>
+              <td v-if="visible('swbs')">
+                {{ text(r.swbs) }}
+              </td>
+              <td v-if="visible('status')">
                 <span :class="['badge', statusTone(r.status)]"><span class="status-dot" />{{ r.status }}</span>
               </td>
-              <td>
+              <td v-if="visible('engineer')">
                 <div
                   v-if="r.engineerId"
                   class="person"
@@ -191,37 +309,18 @@ const {
                 <span
                   v-else
                   class="muted"
-                >— Unassigned</span>
+                >Unassigned</span>
               </td>
-              <td>
-                <div class="tags">
-                  <span
-                    v-if="r.dfs === 'yes'"
-                    class="tag special"
-                  >DFS</span><span
-                    v-if="r.tvd === 'yes'"
-                    class="tag special"
-                  >TVD</span><span
-                    v-for="a in r.attributes"
-                    :key="a"
-                    class="tag"
-                  >{{
-                    a
-                  }}</span><span
-                    v-if="
-                      !r.attributes.length && r.dfs !== 'yes' && r.tvd !== 'yes'
-                    "
-                    class="muted"
-                  >—</span>
-                </div>
-              </td>
-              <td class="nowrap muted">
-                {{ date(r.updatedAt) }}
+              <td
+                v-if="visible('initiated')"
+                class="nowrap"
+              >
+                {{ date(r.createdAt) }}
               </td>
               <td>
                 <button
                   class="icon-button"
-                  :aria-label="`Open ${r.title}`"
+                  :aria-label="`Open ${r.serial || 'unassigned request'}`"
                   @click="openRecord(r)"
                 >
                   →

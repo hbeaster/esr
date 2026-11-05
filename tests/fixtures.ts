@@ -21,6 +21,7 @@ export function makeRecord(overrides: Partial<EsrRecord> = {}): EsrRecord {
     refit: "",
     component: "",
     location: "",
+    swbs: "",
     site: "Bangor",
     requestorId: "requestor",
     status: "In Process",

@@ -1,8 +1,19 @@
 <script setup lang="ts">
+import RichTextField from "./RichTextField.vue";
 import { useWorkspaceContext } from "../composables/workspaceContext";
 import { isJcn, JCN_PATTERN, normalizeJcn } from "../presentation";
-const { busy, form, ldsResult, importLds, createRequest, closeDialog } =
-  useWorkspaceContext();
+const {
+  busy,
+  form,
+  ldsResult,
+  requestSection,
+  pendingFiles,
+  importLds,
+  createRequest,
+  queueFiles,
+  removePending,
+  closeDialog,
+} = useWorkspaceContext();
 function onJcnInput(event: Event) {
   form.jcn = normalizeJcn((event.target as HTMLInputElement).value);
   ldsResult.value = null;
@@ -11,13 +22,6 @@ function onJcnInput(event: Event) {
 
 <template>
   <form @submit.prevent="createRequest">
-    <label>Request title<input
-      v-model="form.title"
-      required
-      placeholder="A concise description of the engineering issue"
-      autofocus
-      maxlength="180"
-    ></label>
     <div class="lds-box">
       <div class="section-heading">
         <h3>Link a work package</h3>
@@ -41,6 +45,7 @@ function onJcnInput(event: Event) {
           title="13 characters: 5 digits, 4 letters or digits, then 0001–9999"
           autocapitalize="characters"
           spellcheck="false"
+          autofocus
           @input="onJcnInput"
         ></label><button
           type="button"
@@ -71,21 +76,58 @@ function onJcnInput(event: Event) {
         type="tel"
       ></label>
     </div>
-    <label>References<textarea
+    <RichTextField
       v-model="form.references"
-      rows="2"
+      label="References"
       required
+      min-height="64px"
       placeholder="Reference numbers, drawings, or applicable procedures"
-    /></label><label>Condition / finding<textarea
+    />
+    <RichTextField
       v-model="form.condition"
-      rows="4"
+      label="Condition / finding"
       required
+      min-height="120px"
       placeholder="Describe the observed issue and the engineering support needed."
     />
-    </label>
-    <p class="footnote">
-      Submit the request, then attach photos and documents in the Files tab.
-    </p>
+    <div class="request-files">
+      <div class="upload-box">
+        <span class="upload-icon">↑</span>
+        <h3>Add supporting files</h3>
+        <p>PNG, JPEG, WebP, PDF or TXT · Up to 15 MB each · 20 files</p>
+        <div class="action-row">
+          <label class="inline-label">Section<select v-model="requestSection">
+            <option>Condition</option>
+            <option>Reference</option>
+            <option>Continuation</option>
+          </select></label><label class="button primary upload-button">Choose files<input
+            type="file"
+            multiple
+            aria-label="Upload supporting files"
+            accept="image/png,image/jpeg,image/webp,application/pdf,text/plain,.txt"
+            :disabled="busy"
+            @change="queueFiles"
+          ></label>
+        </div>
+      </div>
+      <div
+        v-for="file in pendingFiles"
+        :key="file.key"
+        class="file-row"
+      >
+        <span class="file-icon">▤</span>
+        <div>
+          <strong>{{ file.name }}</strong><span>{{ file.section }} · {{ Math.ceil(file.size / 1024) }} KB</span>
+        </div>
+        <button
+          type="button"
+          :disabled="busy"
+          @click="removePending(file.key)"
+        >
+          Remove
+        </button>
+      </div>
+    </div>
     <div class="form-footer">
       <button
         type="button"

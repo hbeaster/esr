@@ -5,20 +5,20 @@ const selectRole = async (page: Page, id: string, name: string) => {
   await expect(page.locator(".profile")).toContainText(name);
 };
 /** The API ships without records, so each test creates what it uses. */
-const createRequest = async (page: Page, title: string) => {
+const createRequest = async (page: Page, condition: string) => {
   await selectRole(page, "requestor", "Alex Morgan");
   await page.getByRole("button", { name: "New request", exact: false }).click();
-  await page.getByLabel("Request title").fill(title);
   await page.getByLabel("Job Control Number").fill("21036WX010184");
   await page.getByRole("button", { name: "Import LDS" }).click();
   await expect(page.locator(".lds-result")).toContainText("ASW-P-02");
   await page.getByLabel("References", { exact: true }).fill("SYNTHETIC-REF-1");
-  await page
-    .getByLabel("Condition / finding", { exact: true })
-    .fill("Uneven wear on seawater pump coupling face during inspection.");
+  await page.getByLabel("Condition / finding", { exact: true }).fill(condition);
   await page.getByRole("button", { name: "Submit request" }).click();
-  await expect(page.getByRole("heading", { name: title })).toBeVisible();
+  await expect(page.getByRole("heading", { name: condition })).toBeVisible();
 };
+/** Unassigned requests share an "Open" label, so find the row by its condition. */
+const rowFor = (page: Page, condition: string) =>
+  page.locator("tbody tr").filter({ hasText: condition });
 /** Runs record actions directly against the API to set up state for a UI test. */
 const apiAs = async (page: Page, userId: string) => {
   const session = await page.request.post("/api/demo/session", {
@@ -34,10 +34,9 @@ const apiAs = async (page: Page, userId: string) => {
     return response.json();
   };
 };
-const submitRequest = async (page: Page, title: string, condition: string) => {
+const submitRequest = async (page: Page, condition: string) => {
   const asRequestor = await apiAs(page, "requestor");
   const { id } = await asRequestor("/records", {
-    title,
     name: "Alex Morgan",
     shop: "31",
     phone: "555-0131",
@@ -46,8 +45,10 @@ const submitRequest = async (page: Page, title: string, condition: string) => {
     jcn: "N/A",
   });
   const asSupervisor = await apiAs(page, "supervisor");
-  await asSupervisor(`/records/${id}/assign`, { engineerId: "engineer" });
-  return { id, asSupervisor };
+  const { serial } = await asSupervisor(`/records/${id}/assign`, {
+    engineerId: "engineer",
+  });
+  return { id, serial, asSupervisor };
 };
 const confirm = async (page: Page) => {
   await page
@@ -61,7 +62,6 @@ test("request → assignment → resolution → approval → shop → division �
   await page.goto("/");
   await selectRole(page, "requestor", "Alex Morgan");
   await page.getByRole("button", { name: "New request", exact: false }).click();
-  await page.getByLabel("Request title").fill("E2E coupling inspection");
   await page.getByLabel("Job Control Number").fill("21036WX010184");
   await page.getByRole("button", { name: "Import LDS" }).click();
   await expect(page.locator(".lds-result")).toContainText("ASW-P-02");
@@ -73,7 +73,9 @@ test("request → assignment → resolution → approval → shop → division �
     .fill("Uneven wear on seawater pump coupling face during inspection.");
   await page.getByRole("button", { name: "Submit request" }).click();
   await expect(
-    page.getByRole("heading", { name: "E2E coupling inspection" }),
+    page.getByRole("heading", {
+      name: "Uneven wear on seawater pump coupling face during inspection.",
+    }),
   ).toBeVisible();
   await page.getByRole("tab", { name: "Files" }).click();
   await page.getByLabel("Upload supporting file").setInputFiles({
@@ -154,10 +156,10 @@ test("workspace search, template library and mobile layout", async ({
   await expect(
     page.getByRole("heading", { name: "Service requests" }),
   ).toBeVisible();
-  const title = `E2E searchable request ${Date.now()}`;
-  await createRequest(page, title);
+  const condition = `E2E searchable request ${Date.now()}`;
+  await createRequest(page, condition);
   await page.getByRole("button", { name: "All requests" }).click();
-  await page.getByLabel("Search requests").fill(title);
+  await page.getByLabel("Search requests").fill(condition);
   await expect(page.locator("tbody tr")).toHaveCount(1);
   await page.getByRole("button", { name: "Template library" }).click();
   await expect(page.locator(".template-card")).toHaveCount(0);
@@ -176,8 +178,8 @@ test("cross-facility review allows comments but no engineering actions", async (
   page,
 }) => {
   await page.goto("/");
-  const title = `E2E cross-facility request ${Date.now()}`;
-  await createRequest(page, title);
+  const condition = `E2E cross-facility request ${Date.now()}`;
+  await createRequest(page, condition);
   await selectRole(page, "admin", "Drew Ellis");
   await page.getByRole("button", { name: "Permissions", exact: false }).click();
   await page.getByLabel("Access to the other TRF").selectOption("review");
@@ -185,7 +187,9 @@ test("cross-facility review allows comments but no engineering actions", async (
   await expect(page.getByRole("status")).toContainText("Permissions updated");
   await selectRole(page, "remote", "Riley Parker");
   await page.getByRole("button", { name: "All requests" }).click();
-  await page.getByRole("button", { name: `Open ${title}` }).click();
+  await rowFor(page, condition)
+    .getByRole("button", { name: /^Open / })
+    .click();
   await expect(page.getByText("Cross-facility review access")).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Sign & submit for approval" }),
@@ -202,15 +206,9 @@ test("a closed record's resolution can be inserted into a new draft", async ({
 }) => {
   const condition = "Bearing housing vibration exceeded acceptance limits.";
   const resolution = "Replace the bearing housing per the approved procedure.";
-  const stamp = Date.now();
-  const title = `E2E open bearing request ${stamp}`;
 
   await page.goto("/");
-  const closed = await submitRequest(
-    page,
-    `E2E closed bearing request ${stamp}`,
-    condition,
-  );
+  const closed = await submitRequest(page, condition);
   const asEngineer = await apiAs(page, "engineer");
   await asEngineer(`/records/${closed.id}/draft`, {
     resolution,
@@ -228,17 +226,17 @@ test("a closed record's resolution can be inserted into a new draft", async ({
   });
   const asDivision = await apiAs(page, "division");
   await asDivision(`/records/${closed.id}/close`);
-  await submitRequest(page, title, condition);
+  const open = await submitRequest(page, condition);
 
   await page.reload();
-  await page.getByRole("button", { name: `Open ${title}` }).click();
+  await page.getByRole("button", { name: `Open ${open.serial}` }).click();
   await page.getByRole("tab", { name: "Resolution", exact: true }).click();
   await page.getByRole("button", { name: "Summarize & search" }).click();
   await page.getByRole("button", { name: "Use in draft" }).first().click();
   await expect(page.getByRole("status")).toContainText(
     "Historical text inserted",
   );
-  await expect(page.getByLabel("Resolution", { exact: true })).toHaveValue(
+  await expect(page.getByLabel("Resolution", { exact: true })).toContainText(
     resolution,
   );
 });

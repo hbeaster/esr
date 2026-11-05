@@ -65,6 +65,7 @@ public sealed class EsrRecord
     public string Refit { get; set; } = "";
     public string Component { get; set; } = "";
     public string Location { get; set; } = "";
+    public string Swbs { get; set; } = "";
     public string Site { get; set; } = "Bangor";
     public string RequestorId { get; set; } = "";
     public string Status { get; set; } = "Unassigned";
@@ -112,6 +113,7 @@ public sealed class LdsData
     public string Refit { get; set; } = "";
     public string Component { get; set; } = "";
     public string Location { get; set; } = "";
+    public string Swbs { get; set; } = "";
 }
 public sealed class StoreData
 {

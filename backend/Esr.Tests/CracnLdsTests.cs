@@ -55,6 +55,7 @@ public sealed class CracnLdsTests
         Assert.Equal("A014", lds.Refit);
         Assert.Equal("ASW-P-02 / TSN-10482", lds.Component);
         Assert.Equal("Auxiliary machinery space", lds.Location);
+        Assert.Equal("6286FCA00000", lds.Swbs);
         Assert.Equal(["/api/v1/jobs/21036WX010184", "/api/v1/boats/21036/configurationItems/6286FCA00000"], handler.Requests.Select(r => r.RequestUri!.AbsolutePath));
         Assert.All(handler.Requests, r => Assert.Equal("esr-demo-service-token", r.Headers.Authorization?.Parameter));
     }

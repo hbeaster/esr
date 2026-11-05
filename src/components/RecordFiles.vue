@@ -36,10 +36,11 @@ const {
             <option>Condition</option>
             <option>Reference</option>
             <option>Continuation</option>
-          </select></label><label class="button primary upload-button">Choose file<input
+          </select></label>          <label class="button primary upload-button">Choose files<input
             type="file"
+            multiple
             aria-label="Upload supporting file"
-            accept="image/png,image/jpeg,image/webp,application/pdf,text/plain"
+            accept="image/png,image/jpeg,image/webp,application/pdf,text/plain,.txt"
             :disabled="busy"
             @change="upload"
           ></label>

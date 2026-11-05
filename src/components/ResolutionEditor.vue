@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import RichTextField from "./RichTextField.vue";
+import RichTextView from "./RichTextView.vue";
 import { useWorkspaceContext } from "../composables/workspaceContext";
 const {
   state,
@@ -90,29 +92,42 @@ const {
           ▤ Insert template
         </button>
       </div>
-      <label>Resolution<textarea
+      <RichTextField
         v-if="editable"
         v-model="draft.resolution"
-        rows="10"
+        label="Resolution"
+        min-height="180px"
         placeholder="Document the steps required to resolve the finding…"
       />
-        <div
-          v-else
-          class="prose readonly-text"
-        >
-          {{ record.resolution || "Not yet drafted." }}
-        </div></label><label>Engineering rationale<textarea
+      <div
+        v-else
+        class="read-block"
+      >
+        <span class="rich-label">Resolution</span>
+        <RichTextView
+          class="readonly-text"
+          :value="record.resolution"
+          empty="Not yet drafted."
+        />
+      </div>
+      <RichTextField
         v-if="editable"
         v-model="draft.rationale"
-        rows="5"
+        label="Engineering rationale"
+        min-height="120px"
         placeholder="Explain the technical basis for this resolution…"
       />
-        <div
-          v-else
-          class="prose readonly-text"
-        >
-          {{ record.rationale || "Not yet drafted." }}
-        </div></label>
+      <div
+        v-else
+        class="read-block"
+      >
+        <span class="rich-label">Engineering rationale</span>
+        <RichTextView
+          class="readonly-text"
+          :value="record.rationale"
+          empty="Not yet drafted."
+        />
+      </div>
       <div
         v-if="editable"
         class="reference-prompts"

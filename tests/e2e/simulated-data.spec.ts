@@ -27,10 +27,13 @@ test("switches between API data and read-only simulated data", async ({
   const useFakeData = page.getByRole("button", { name: "Use fake data" });
   const useApiData = page.getByRole("button", { name: "Use API data" });
   const badge = page.locator(".simulated-badge");
-  const simulated = page.getByRole("button", {
-    name: `Open ${unassigned.title}`,
-    exact: true,
-  });
+  // Unassigned rows share an "Open" label, so find one by its simulated condition.
+  const simulated = page
+    .locator("tbody tr")
+    .filter({ hasText: unassigned.condition })
+    .filter({ hasText: "PENDING ASSIGNMENT" })
+    .filter({ hasNotText: "Returned to requestor" })
+    .getByRole("button", { name: "Open unassigned request" });
 
   await page.goto("/");
   await expect(useFakeData).toHaveAttribute("aria-pressed", "false");
@@ -84,7 +87,7 @@ test("inserts templates and historical matches into a simulated draft", async ({
   await page.getByRole("button", { name: "Use fake data" }).click();
   await expect(page.locator(".simulated-badge")).toBeVisible();
   await page.getByLabel("Search requests").fill(draft.serial!);
-  await page.getByRole("button", { name: `Open ${draft.title}` }).click();
+  await page.getByRole("button", { name: `Open ${draft.serial}` }).click();
   await page.getByRole("tab", { name: "Resolution", exact: true }).click();
 
   await page.getByRole("button", { name: "Insert template" }).click();
@@ -93,8 +96,8 @@ test("inserts templates and historical matches into a simulated draft", async ({
     .getByRole("button", { name: "Insert template" })
     .first()
     .click();
-  await expect(page.getByLabel("Resolution", { exact: true })).toHaveValue(
-    /Isolate the affected component/,
+  await expect(page.getByLabel("Resolution", { exact: true })).toContainText(
+    "Isolate the affected component",
   );
 
   await page.getByRole("button", { name: "Summarize & search" }).click();

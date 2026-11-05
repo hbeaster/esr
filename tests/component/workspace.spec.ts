@@ -14,6 +14,7 @@ const lds: Record<string, LdsData> = {
     refit: "A014",
     component: "ASW-P-02 / TSN-10482",
     location: "Auxiliary machinery space",
+    swbs: "6286FCA00000",
   },
 };
 test.beforeEach(async ({ page }) => {
@@ -88,7 +89,7 @@ test("editor inserts approved template, answers sequential prompts, and saves", 
 }) => {
   await page.goto("/");
   await page
-    .getByRole("button", { name: "Open Auxiliary seawater pump" })
+    .getByRole("button", { name: "Open 260037A" })
     .click();
   await page.getByRole("tab", { name: "Resolution", exact: true }).click();
   await page.getByRole("button", { name: "Insert template" }).click();
@@ -97,8 +98,8 @@ test("editor inserts approved template, answers sequential prompts, and saves", 
     .getByRole("button", { name: "Insert template" })
     .first()
     .click();
-  await expect(page.getByLabel("Resolution", { exact: true })).toHaveValue(
-    /Isolate the affected component/,
+  await expect(page.getByLabel("Resolution", { exact: true })).toContainText(
+    "Isolate the affected component",
   );
   await page.getByLabel("1. DFS Required?").selectOption("no");
   await page.getByLabel("2. TVD Required?").selectOption("yes");
@@ -125,7 +126,7 @@ test("new request LDS import, modal keyboard and API errors", async ({
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toBeHidden();
   await page
-    .getByRole("button", { name: "Open Auxiliary seawater pump" })
+    .getByRole("button", { name: "Open 260037A" })
     .click();
   await page
     .getByRole("button", { name: "Sign & submit for approval" })

@@ -25,12 +25,14 @@ export const simulatedLds: Record<string, LdsData> = {
     refit: "A014",
     component: "ASW-P-02 / TSN-10482",
     location: "Auxiliary machinery space",
+    swbs: "6286FCA00000",
   },
   "21036WX020207": {
     workStatement: "Restore valve actuator mounting hardware",
     refit: "A018",
     component: "VLV-214 / TSN-20871",
     location: "Forward equipment space",
+    swbs: "4521VLV21400",
   },
 };
 
@@ -308,6 +310,7 @@ export function createSimulatedRecords(seed: SimulatedSeed): EsrRecord[] {
       refit: lds?.refit ?? "",
       component: lds?.component ?? "",
       location: lds?.location ?? "",
+      swbs: lds?.swbs ?? "",
       site: requestor.site,
       requestorId: requestor.id,
       status,
