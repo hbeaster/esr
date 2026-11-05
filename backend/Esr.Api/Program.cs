@@ -3,7 +3,9 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 22 * 1024 * 1024);
-var seed = JsonSerializer.Deserialize<StoreData>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "seed.json")), JsonConfig.Options)!;
+// Only local runs and tests can load other data; deployed environments always use the shipped seed.
+var dataFile = builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("Testing") ? builder.Configuration["Demo:DataFile"] : null;
+var seed = JsonSerializer.Deserialize<StoreData>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, dataFile ?? "seed.json")), JsonConfig.Options)!;
 var workflow = new Workflow(seed); var identity = new DemoIdentity();
 builder.Services.AddSingleton(workflow); builder.Services.AddSingleton(identity);
 // JCN context comes from the CRACN API (cracn_openapi.json); locally that is the mock in mocks/cracn.
