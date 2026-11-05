@@ -121,6 +121,7 @@ public sealed class StoreData
     public List<EngineeringTemplate> Templates { get; set; } = [];
     public Dictionary<string, LdsData> Lds { get; set; } = [];
     public int Sequence { get; set; } = 42;
+    public int SequenceYear { get; set; } = 2026;
 }
 public sealed class RuleException(string message, int status = 400) : Exception(message)
 {

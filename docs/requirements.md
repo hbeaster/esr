@@ -10,7 +10,7 @@ This is a synthetic, end-to-end demonstration. “Implemented” describes demo 
 | ESLint defaults | Recommended ESLint, typescript-eslint, and Vue presets without rule overrides | Lint passes with zero warnings |
 | Docker / Kubernetes | Multi-stage image, Compose, Kustomize deployment/service | Passed Docker build and hardened-container smoke test; Kustomize rendering (no cluster rollout) |
 | Initiation required fields / JCN optional | Required form fields; two synthetic LDS JCNs or N/A | Browser creation/import; HTTP LDS test |
-| Assignment / serial | Supervisor assigns local engineer, generates YYNNNN | Workflow tests; full browser flow |
+| Assignment / serial | Supervisor assigns a local engineer and issues `YY` + `0001`–`9999` + revision `A` | Workflow tests; full browser flow |
 | Reject/delete | Commented return with requestor resubmit; confirmed deletion of unassigned request | Domain resubmission test; role validation |
 | Manual resolution / rationale | Draft editor with saved technical text | Workflow tests; browser editor |
 | Assisted summary / matches / copying | Labeled deterministic mock summary, ranked historical matches, clipboard and insertion | HTTP search; browser search/insertion |
@@ -33,7 +33,7 @@ This is a synthetic, end-to-end demonstration. “Implemented” describes demo 
 ## Explicit decisions and remaining production work
 
 - User selected supervisor-approved templates and copy-forward revisions with retained history.
-- Serial ambiguity resolved as six-digit base `YYNNNN`, with revision suffix `A` through `ZZ`.
+- ESR numbers are `[2-digit year][0001-9999][A-ZZ]`. Assignment issues revision `A`. `260001ZZ` is the last revision of the first 2026 number.
 - The MLP demonstrated here is the complete synthetic role handoff. Production rollout scope still requires stakeholder agreement.
 - Live LDS, semantic/AI infrastructure, production identity/digital signing, persistence, certified PDF blocks/layout and durable audit storage are intentionally mocked or deferred.
 - The generated PDF prints JPEG and standard non-interlaced 8-bit PNG continuation images and embeds every original. WebP and other PNG variants retain UI preview and original-download support.

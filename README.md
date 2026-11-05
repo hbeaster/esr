@@ -145,7 +145,7 @@ UI sections share a typed, instance-local Vue injection context. No state is sha
 - Supervisor-approved templates only, per the agreed policy. Templates are maintained in the synthetic catalog.
 - New revisions copy prior content, retain frozen prior versions, and require fresh signatures.
 - Rejected initiation requests stay `Unassigned` with a returned flag/comment, preserving the five-state primary workflow. The requestor can update and resubmit.
-- Base serials are `YYNNNN`; revisions append `A`–`ZZ`. This resolves the PRD's ambiguous initial suffix using the explicit revision requirement.
+- ESR numbers are a two-digit year, a sequence from `0001` to `9999`, and a revision from `A` to `ZZ`. Assignment issues revision `A`. `260001ZZ` is the last revision of the first number in 2026.
 - Shop deferral sets `ESR Issued – Deferred`. Division Head must explicitly acknowledge that disposition before closing.
 - PDF export is a paginated engineering record with references, attributes, signatures, comments, audit trail, and embedded original attachments. JPEG and standard non-interlaced 8-bit PNG images are rendered on printable continuation pages. All original files are also embedded; WebP and other PNG variants are retained as originals with UI previews. The PDF is a demonstration layout, not a certified facility form.
 - Historical “AI” results use deterministic term overlap and a synthetic summary. They are not real generative or semantic search results and are labeled accordingly.
