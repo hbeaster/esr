@@ -1,6 +1,6 @@
 # PRD implementation and validation matrix
 
-This is a synthetic, end-to-end demonstration. “Implemented” describes demo behavior, not production certification.
+This is a synthetic, end-to-end demonstration. “Implemented” describes demo behavior, not production certification. The source PRD is split per section in `docs/prd/`.
 
 | PRD requirement | Implementation | Verification |
 | --- | --- | --- |
