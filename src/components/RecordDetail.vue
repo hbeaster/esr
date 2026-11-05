@@ -8,7 +8,11 @@ import WorkflowActions from "./WorkflowActions.vue";
 import SignatureRecord from "./SignatureRecord.vue";
 import EquipmentVisual from "./EquipmentVisual.vue";
 import WorkflowTimeline from "./WorkflowTimeline.vue";
-import { esrRevision, plainText, statusTone } from "../presentation";
+import SplitFlap from "./SplitFlap.vue";
+import RecordStamp from "./RecordStamp.vue";
+import { ref, watch } from "vue";
+import { date, esrRevision, plainText, statusTone } from "../presentation";
+import type { WorkflowStatus } from "../types";
 import { useWorkspaceContext } from "../composables/workspaceContext";
 const {
   state,
@@ -23,6 +27,53 @@ const {
   action,
   downloadPdf,
 } = useWorkspaceContext();
+
+// Ceremony for milestones reached while this record is on screen: a stamp
+// when it is issued or closed, and a flip when its ESR number changes.
+interface Stamp {
+  key: number;
+  label: string;
+  tone: "issued" | "deferred" | "closed";
+  serial: string | null;
+  stampedAt: string;
+}
+const stamp = ref<Stamp | null>(null);
+const shaking = ref(false);
+const flipSerial = ref(false);
+let stampKey = 0;
+const milestone = (
+  status: WorkflowStatus,
+  before: WorkflowStatus,
+): Pick<Stamp, "label" | "tone"> | null => {
+  if (status === "ESR Closed" && before !== "ESR Closed")
+    return { label: "ESR Closed", tone: "closed" };
+  if (status === "ESR Issued – Deferred" && before !== status)
+    return { label: "Deferred", tone: "deferred" };
+  if (status === "ESR Issued" && before === "Awaiting Approval")
+    return { label: "ESR Issued", tone: "issued" };
+  return null;
+};
+watch(
+  () =>
+    record.value && !historySnapshot.value
+      ? ([record.value.id, record.value.status, record.value.serial] as const)
+      : null,
+  (now, before) => {
+    flipSerial.value = false;
+    if (!now || !before || now[0] !== before[0]) return;
+    flipSerial.value = !!now[2] && now[2] !== before[2];
+    const reached = milestone(now[1], before[1]);
+    if (!reached) return;
+    stamp.value = {
+      key: ++stampKey,
+      ...reached,
+      serial: now[2],
+      stampedAt: date(new Date().toISOString()),
+    };
+    shaking.value = false;
+    requestAnimationFrame(() => (shaking.value = true));
+  },
+);
 </script>
 
 <template>
@@ -33,12 +84,31 @@ const {
     >
       ← Back to requests
     </button>
-    <div class="page-heading detail-heading">
+    <div :class="['page-heading', 'detail-heading', { shaking }]">
+      <RecordStamp
+        v-if="stamp"
+        :key="stamp.key"
+        :label="stamp.label"
+        :tone="stamp.tone"
+        :serial="stamp.serial"
+        :stamped-at="stamp.stampedAt"
+        @done="stamp = null"
+      />
+      <div
+        v-if="stamp"
+        class="sr-only"
+        aria-live="polite"
+      >
+        {{ stamp.label }}: {{ stamp.serial }}
+      </div>
       <div class="detail-identity">
         <EquipmentVisual :record="record" />
         <div class="detail-text">
           <div :class="['detail-serial', { pending: !record.serial }]">
-            {{ record.serial || "Awaiting ESR number" }}
+            <SplitFlap
+              :value="record.serial || 'Awaiting ESR number'"
+              :animate="flipSerial"
+            />
             <span
               v-if="
                 esrRevision(record.serial) && esrRevision(record.serial) !== 'A'
@@ -184,8 +254,28 @@ const {
   text-underline-offset: 3px;
 }
 .detail-heading {
+  position: relative;
   align-items: flex-start;
   margin-bottom: var(--sp-5);
+}
+.detail-heading.shaking {
+  animation: shake 0.32s ease-out 0.24s;
+}
+@keyframes shake {
+  20% {
+    transform: translate(-3px, 2px);
+  }
+  45% {
+    transform: translate(3px, -2px);
+  }
+  70% {
+    transform: translate(-2px, 1px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .detail-heading.shaking {
+    animation: none;
+  }
 }
 .detail-identity {
   display: flex;

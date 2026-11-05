@@ -313,6 +313,124 @@ export function agingDescription(
         : `warns after ${thresholds[0]} days`;
   return `${record.status} for ${span}, ${limit}`;
 }
+const at = (value: string) => Date.parse(value);
+/**
+ * The record as it stood at `time`, rebuilt from its audit trail and
+ * signatures, or null if it did not exist yet. Before a revision it is the
+ * prior revision's snapshot. Approximate where history was cleared: a
+ * returned record's earlier resolve is no longer signed, so it reads as
+ * In Process.
+ */
+export function recordAsOf(record: EsrRecord, time: number): EsrRecord | null {
+  if (at(record.createdAt) > time) return null;
+  const revised = record.audit.filter((a) => a.action.startsWith("Revision "));
+  const prior = record.revisions[record.revisions.length - 1];
+  if (prior && revised.length && at(revised[revised.length - 1].time) > time)
+    return recordAsOf(prior, time);
+  const audit = record.audit.filter((a) => at(a.time) <= time);
+  const signatures = record.signatures.filter((s) => at(s.time) <= time);
+  const signed = new Set(signatures.map((s) => s.block));
+  const lastOf = (match: (action: string) => boolean) =>
+    Math.max(
+      -Infinity,
+      ...audit.filter((a) => match(a.action)).map((a) => at(a.time)),
+    );
+  let status: WorkflowStatus;
+  if (signed.has("Division Head")) status = "ESR Closed";
+  else if (signed.has("Approved By"))
+    status =
+      record.status === "ESR Issued – Deferred" &&
+      signed.has("Shop Representative")
+        ? "ESR Issued – Deferred"
+        : "ESR Issued";
+  else if (signed.has("Resolved By")) status = "Awaiting Approval";
+  else
+    status =
+      lastOf(inProcessAction) > lastOf((a) => a === "reject")
+        ? "In Process"
+        : "Unassigned";
+  const assigned = audit.some((a) => a.action === "assign");
+  return {
+    ...record,
+    status,
+    audit,
+    signatures,
+    serial: assigned || status !== "Unassigned" ? record.serial : null,
+    engineerId: status === "Unassigned" ? null : record.engineerId,
+  };
+}
+export interface ActivityEvent {
+  id: string;
+  time: string;
+  actor: string;
+  text: string;
+  recordId: string;
+  location: string;
+}
+const auditVerbs: Record<string, string> = {
+  "Request submitted": "submitted",
+  assign: "assigned",
+  return: "returned",
+  reject: "rejected",
+  resubmit: "resubmitted",
+};
+const signatureVerbs: Record<string, string> = {
+  "Resolved By": "resolved",
+  "Approved By": "approved",
+  "Shop Representative": "signed shop work on",
+  "Division Head": "closed",
+};
+/**
+ * Workflow events across records, oldest first. Audit covers routing and
+ * signatures cover signed steps, so neither double-counts the other.
+ */
+export function activityFeed(records: EsrRecord[]): ActivityEvent[] {
+  const events: ActivityEvent[] = [];
+  for (const r of records) {
+    const label = r.serial || "a new request";
+    const event = (id: string, time: string, actor: string, text: string) =>
+      events.push({
+        id,
+        time,
+        actor,
+        text,
+        recordId: r.id,
+        location: r.location,
+      });
+    if (!r.audit.some((a) => a.action === "Request submitted"))
+      event(
+        `${r.id}-created`,
+        r.createdAt,
+        r.name,
+        `${r.name} submitted a request`,
+      );
+    for (const a of r.audit) {
+      const verb = a.action.startsWith("Revision ")
+        ? "opened a revision of"
+        : auditVerbs[a.action];
+      if (!verb) continue;
+      event(
+        a.id,
+        a.time,
+        a.actor,
+        a.action === "Request submitted"
+          ? `${a.actor} submitted a request`
+          : `${a.actor} ${verb} ${label}`,
+      );
+    }
+    const seen = new Set<string>();
+    for (const s of [
+      ...r.revisions.flatMap((v) => v.signatures),
+      ...r.signatures,
+    ]) {
+      const verb = signatureVerbs[s.block];
+      if (!verb || seen.has(s.id)) continue;
+      seen.add(s.id);
+      event(s.id, s.time, s.name, `${s.name} ${verb} ${label}`);
+    }
+  }
+  return events.sort((a, b) => at(a.time) - at(b.time));
+}
 export type EsrTableColumnId = (typeof esrTableColumns)[number]["id"];
 export type SortDirection = "asc" | "desc";
 const statusSortOrder: WorkflowStatus[] = [

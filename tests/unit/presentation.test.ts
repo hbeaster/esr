@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  activityFeed,
+  recordAsOf,
   agingDescription,
   formatDuration,
   sortRecords,
@@ -237,5 +239,68 @@ describe("status aging", () => {
       "old",
       "closed",
     ]);
+  });
+});
+
+describe("recordAsOf", () => {
+  const issued = makeRecord({
+    status: "ESR Issued",
+    serial: "260050A",
+    createdAt: at(1),
+    audit: [audit("Request submitted", 1, "Alex Morgan"), audit("assign", 2)],
+    signatures: [signature("Resolved By", 4), signature("Approved By", 6)],
+  });
+  const asOf = (day: number) => recordAsOf(issued, Date.parse(at(day, 12)));
+  it("rebuilds the status and serial at each point in time", () => {
+    expect(recordAsOf(issued, Date.parse(at(0)))).toBeNull();
+    expect(asOf(1)).toMatchObject({ status: "Unassigned", serial: null });
+    expect(asOf(3)).toMatchObject({ status: "In Process", serial: "260050A" });
+    expect(asOf(5)?.status).toBe("Awaiting Approval");
+    expect(asOf(7)?.status).toBe("ESR Issued");
+    expect(asOf(5)?.signatures.map((s) => s.block)).toEqual(["Resolved By"]);
+  });
+  it("uses the prior revision's snapshot before a revision", () => {
+    const prior = makeRecord({
+      status: "ESR Closed",
+      serial: "260050A",
+      createdAt: at(1),
+      signatures: [signature("Approved By", 3), signature("Division Head", 5)],
+    });
+    const revised = makeRecord({
+      status: "In Process",
+      serial: "260050B",
+      createdAt: at(1),
+      audit: [audit("assign", 2), audit("Revision B: Update", 9)],
+      revisions: [prior],
+    });
+    expect(recordAsOf(revised, Date.parse(at(6)))).toMatchObject({
+      status: "ESR Closed",
+      serial: "260050A",
+    });
+    expect(recordAsOf(revised, Date.parse(at(10)))?.status).toBe("In Process");
+  });
+});
+
+describe("activityFeed", () => {
+  it("narrates routing and signatures once each, oldest first", () => {
+    const record = makeRecord({
+      serial: "260051A",
+      location: "Control room",
+      createdAt: at(1),
+      audit: [
+        audit("Request submitted", 1, "Alex Morgan"),
+        audit("assign", 2, "Casey Rivera"),
+        // Simulated data also logs signature blocks in the audit trail.
+        audit("Resolved By", 4, "Jordan Lee"),
+        audit("comment", 4),
+      ],
+      signatures: [signature("Resolved By", 4)],
+    });
+    expect(activityFeed([record]).map((e) => e.text)).toEqual([
+      "Alex Morgan submitted a request",
+      "Casey Rivera assigned 260051A",
+      "Jordan Lee resolved 260051A",
+    ]);
+    expect(activityFeed([record])[0].location).toBe("Control room");
   });
 });

@@ -1,16 +1,19 @@
 import { computed, onBeforeUnmount, reactive, ref, watch } from "vue";
 import { createApi } from "../api";
 import {
+  activityFeed,
   appendRichText,
   filterRecords,
   hullZone,
   hullZones,
+  recordAsOf,
   normalizeJcn,
   plainText,
   steps,
 } from "../presentation";
 import type { HullZone } from "../presentation";
 import { useDialogFocus } from "./useDialogFocus";
+import { useNow } from "./useNow";
 import type {
   ActionForm,
   Attachment,
@@ -92,6 +95,21 @@ export function useWorkspace(
     query = ref(""),
     status = ref(""),
     zone = ref<HullZone | "">("");
+  /** Fleet replay position (epoch ms). Null shows live data. */
+  const replayAt = ref<number | null>(null);
+  const clock = useNow();
+  /** The time the fleet views describe: the replay position, or now. */
+  const fleetNow = computed(() => replayAt.value ?? clock.value);
+  /** Workflow events across all records, oldest first, for the replay ticker. */
+  const activity = computed(() => activityFeed(state.records));
+  /** Records as they stood at the replay position, or live records. */
+  const fleet = computed(() => {
+    const t = replayAt.value;
+    if (t === null) return state.records;
+    return state.records
+      .map((r) => recordAsOf(r, t))
+      .filter((r): r is EsrRecord => r !== null);
+  });
   const selectedId = ref<string | null>(null),
     tab = ref<RecordTab>("overview"),
     dialog = ref<Dialog | null>(null);
@@ -187,7 +205,7 @@ export function useWorkspace(
       [...hullZones.map((z) => z.id), "unlocated"].map((id) => [id, 0]),
     ) as Record<HullZone | "unlocated", number>;
     for (const r of filterRecords(
-      state.records,
+      fleet.value,
       query.value,
       status.value,
       scope.value,
@@ -200,7 +218,7 @@ export function useWorkspace(
     Object.fromEntries(
       steps.map((s) => [
         s,
-        state.records.filter(
+        fleet.value.filter(
           (r) =>
             r.status === s ||
             (s === "ESR Issued" && r.status.startsWith("ESR Issued")),
@@ -286,6 +304,7 @@ export function useWorkspace(
     view.value = target;
     scope.value = nextScope;
     selectedId.value = null;
+    replayAt.value = null;
     status.value = "";
     query.value = "";
     zone.value = "";
@@ -568,6 +587,10 @@ export function useWorkspace(
     query,
     status,
     zone,
+    replayAt,
+    fleet,
+    fleetNow,
+    activity,
     selectedId,
     tab,
     dialog,

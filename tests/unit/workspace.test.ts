@@ -18,6 +18,7 @@ import RecordFiles from "../../src/components/RecordFiles.vue";
 import RecordOverview from "../../src/components/RecordOverview.vue";
 import RequestForm from "../../src/components/RequestForm.vue";
 import RequestWorkspace from "../../src/components/RequestWorkspace.vue";
+import RecordDetail from "../../src/components/RecordDetail.vue";
 import Workspace from "../../src/Workspace.ce.vue";
 import WorkspaceDialogs from "../../src/components/WorkspaceDialogs.vue";
 
@@ -557,5 +558,62 @@ describe("status aging in the table", () => {
       "Unassigned for 10 days, past the 7-day stale limit",
     );
     expect(wrapper.get(".stat-foot.stale").text()).toBe("1 stale");
+  });
+});
+
+describe("milestone ceremony", () => {
+  it("stamps a record issued on screen, not one opened already issued", async () => {
+    const { wrapper, context } = mountSection(
+      RecordDetail,
+      makeBootstrap({
+        records: [makeRecord({ status: "Awaiting Approval" })],
+      }),
+    );
+    await flushPromises();
+    expect(wrapper.find(".record-stamp").exists()).toBe(false);
+    context.state.records[0] = {
+      ...context.state.records[0],
+      status: "ESR Issued",
+    };
+    await flushPromises();
+    expect(wrapper.get(".record-stamp").text()).toContain("ESR Issued");
+    expect(wrapper.get("[aria-live]").text()).toContain("ESR Issued: 260043A");
+  });
+});
+
+describe("fleet replay", () => {
+  it("rewinds the stat counts and returns to live", async () => {
+    const { wrapper, context } = mountSection(
+      RequestWorkspace,
+      makeBootstrap({
+        records: [
+          makeRecord({
+            id: "early",
+            status: "In Process",
+            createdAt: "2026-10-01T00:00:00Z",
+          }),
+          makeRecord({
+            id: "late",
+            status: "In Process",
+            createdAt: "2026-10-20T00:00:00Z",
+          }),
+        ],
+      }),
+    );
+    expect(context.counts.value["In Process"]).toBe(2);
+    context.replayAt.value = Date.parse("2026-10-10T00:00:00Z");
+    await flushPromises();
+    // Neither has an assignment on record, so as of Oct 10 only one exists, unassigned.
+    expect(context.fleet.value.map((r) => r.id)).toEqual(["early"]);
+    expect(context.counts.value).toMatchObject({
+      Unassigned: 1,
+      "In Process": 0,
+    });
+    expect(wrapper.find('[aria-label="Replay date"]').exists()).toBe(true);
+    await wrapper
+      .findAll("button")
+      .find((b) => b.text() === "Back to live")!
+      .trigger("click");
+    expect(context.replayAt.value).toBeNull();
   });
 });

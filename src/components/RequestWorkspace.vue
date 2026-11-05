@@ -25,6 +25,8 @@ const {
   query,
   status,
   zone,
+  fleet,
+  fleetNow,
   filtered,
   counts,
   owner,
@@ -36,11 +38,11 @@ const ages = computed(
   () =>
     new Map(state.records.map((r) => [r.id, statusAge(r, now.value)])),
 );
-/** Stale records per stepper step, for the stat card triage line. */
+/** Stale records per stepper step, for the stat card triage line. Follows the fleet replay. */
 const staleCounts = computed(() => {
   const result: Record<string, number> = {};
-  for (const r of state.records)
-    if (ages.value.get(r.id)?.tone === "stale")
+  for (const r of fleet.value)
+    if (statusAge(r, fleetNow.value)?.tone === "stale")
       result[stepOf(r.status)] = (result[stepOf(r.status)] || 0) + 1;
   return result;
 });
