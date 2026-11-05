@@ -8,7 +8,7 @@
       "phone": "555-0131",
       "references": "SYNTHETIC-REF-100, drawing DEMO-42",
       "condition": "Uneven wear observed on auxiliary seawater pump coupling during scheduled inspection. Witness marks are visible on the coupling face.",
-      "jcn": "JCN-260184",
+      "jcn": "21036WX010184",
       "workStatement": "Inspect auxiliary seawater pump coupling",
       "refit": "A014",
       "component": "ASW-P-02 / TSN-10482",

@@ -1,6 +1,6 @@
 import { computed, onBeforeUnmount, reactive, ref, watch } from "vue";
 import { createApi } from "../api";
-import { filterRecords, steps } from "../presentation";
+import { filterRecords, normalizeJcn, steps } from "../presentation";
 import { useDialogFocus } from "./useDialogFocus";
 import type {
   ActionForm,
@@ -245,7 +245,7 @@ export function useWorkspace(
   async function importLds() {
     await run(async () => {
       ldsResult.value = await api()<LdsData>(
-        `/lds?jcn=${encodeURIComponent(form.jcn)}`,
+        `/lds?jcn=${encodeURIComponent(normalizeJcn(form.jcn))}`,
       );
     });
   }
@@ -253,7 +253,7 @@ export function useWorkspace(
     await run(async () => {
       const r = await api()<EsrRecord>("/records", {
         ...form,
-        jcn: form.noJcn ? "N/A" : form.jcn,
+        jcn: form.noJcn ? "N/A" : normalizeJcn(form.jcn),
       });
       await reload();
       dialog.value = null;

@@ -7,7 +7,7 @@ Base URL defaults to `/api`. All endpoints except `/demo/*` and `/health/*` requ
 | `GET /demo/users` | None | Synthetic actors |
 | `POST /demo/session` | `{userId}` | `{user,token}`; demo only |
 | `GET /bootstrap` | None | `{user,users,templates,permissions,records}` |
-| `GET /lds?jcn=JCN-260184` | None | `{workStatement,refit,component,location}` |
+| `GET /lds?jcn=21036WX010184` | None | `{workStatement,refit,component,location}` |
 | `POST /history/search` | `{condition}` | `{summary,matches:[{id,serial,title,resolution,rationale,similarity}]}` |
 | `POST /records` | `{title,name,shop,phone,references,condition,jcn}` | Created record |
 | `GET /records/:id` | None | Accessible record |
@@ -36,7 +36,7 @@ Action bodies:
 
 `dfs` and `tvd` are `yes` or `no`, with references mandatory for `yes`. `attributes` accepts `Level 1`, `Requires Rev`, `SOC`, `SUBSAFE`. Completion accepts `Completed`, `Deferred`, `Other`, `Canceled`. All but Completed require an explanation. `section` accepts `Condition`, `Reference`, `Continuation`. Files are PNG, JPEG, WebP, PDF or TXT, maximum 15 MB per file and 20 files per record.
 
-`GET /lds` and `POST /records` resolve the JCN through the CRACN API (`cracn_openapi.json`, at the backend's `Cracn:BaseUrl`): `workStatement` comes from the job's `csmpSummary`, `refit` from its refit number, and `component`/`location` from its configuration item (`equipmentName / equipmentSerialNumber`). An unknown JCN returns 404; an unreachable or failing CRACN returns 502. `jcn: "N/A"` skips the lookup.
+`GET /lds` and `POST /records` resolve the JCN through the CRACN API (`cracn_openapi.json`, at the backend's `Cracn:BaseUrl`): `workStatement` comes from the job's `csmpSummary`, `refit` from its refit number, and `component`/`location` from its configuration item (`equipmentName / equipmentSerialNumber`). A JCN is 13 characters: five digits, four letters or digits, then a sequence from `0001` to `9999` (for example `12345WX019999`). The backend trims and upper-cases it, and a malformed JCN returns 400 before any CRACN call. An unknown JCN returns 404; an unreachable or failing CRACN returns 502. `jcn: "N/A"` skips the lookup.
 
 Records carry a monotonically increasing `version`. The component submits it on actions; a stale version fails with 409. Mutations are validated on a deep copy and committed under a store lock. Record DTOs omit the binary attachment payload; downloads require authenticated access. Snapshots preserve attachment bytes and all signature evidence.
 
