@@ -50,24 +50,24 @@ public sealed class CracnLdsTests
     [Fact] public async Task MapsJobRefitAndConfigurationItem()
     {
         var handler = new CracnDataHandler();
-        var lds = await Source(handler).Lookup("JCN-260184", CancellationToken.None);
+        var lds = await Source(handler).Lookup("21036WX010184", CancellationToken.None);
         Assert.Equal("Inspect auxiliary seawater pump coupling", lds.WorkStatement);
         Assert.Equal("A014", lds.Refit);
         Assert.Equal("ASW-P-02 / TSN-10482", lds.Component);
         Assert.Equal("Auxiliary machinery space", lds.Location);
-        Assert.Equal(["/api/v1/jobs/JCN-260184", "/api/v1/boats/21036/configurationItems/6286FCA00000"], handler.Requests.Select(r => r.RequestUri!.AbsolutePath));
+        Assert.Equal(["/api/v1/jobs/21036WX010184", "/api/v1/boats/21036/configurationItems/6286FCA00000"], handler.Requests.Select(r => r.RequestUri!.AbsolutePath));
         Assert.All(handler.Requests, r => Assert.Equal("esr-demo-service-token", r.Headers.Authorization?.Parameter));
     }
 
     [Fact] public async Task UnknownJcnIsNotFound()
     {
-        var error = await Assert.ThrowsAsync<RuleException>(() => Source(new CracnDataHandler()).Lookup("JCN-000000", CancellationToken.None));
+        var error = await Assert.ThrowsAsync<RuleException>(() => Source(new CracnDataHandler()).Lookup("00000ZZZZ0001", CancellationToken.None));
         Assert.Equal(404, error.Status);
     }
 
     [Fact] public async Task UpstreamFailureIsBadGateway()
     {
-        var error = await Assert.ThrowsAsync<RuleException>(() => Source(new CracnDataHandler { Fail = HttpStatusCode.InternalServerError }).Lookup("JCN-260184", CancellationToken.None));
+        var error = await Assert.ThrowsAsync<RuleException>(() => Source(new CracnDataHandler { Fail = HttpStatusCode.InternalServerError }).Lookup("21036WX010184", CancellationToken.None));
         Assert.Equal(502, error.Status);
     }
 }

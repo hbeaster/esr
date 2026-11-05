@@ -9,7 +9,7 @@ This is a synthetic, end-to-end demonstration. “Implemented” describes demo 
 | UI component boundaries | 17 focused child components, typed instance context, dialog focus composable | Vue Test Utils unit tests and browser regressions |
 | ESLint defaults | Recommended ESLint, typescript-eslint, and Vue presets without rule overrides | Lint passes with zero warnings |
 | Docker / Kubernetes | Multi-stage image, Compose, Kustomize deployment/service | Passed Docker build and hardened-container smoke test; Kustomize rendering (no cluster rollout) |
-| Initiation required fields / JCN optional | Required form fields; JCNs resolved from the mock CRACN API (`cracn_openapi.json`) or N/A | Browser creation/import; CRACN mapping and record-creation HTTP tests |
+| Initiation required fields / JCN optional | Required form fields; 13-character JCNs (`12345WX019999`: 5 digits, 4 alphanumerics, `0001`–`9999`) validated, then resolved from the mock CRACN API (`cracn_openapi.json`), or N/A | Browser creation/import; CRACN mapping and record-creation HTTP tests |
 | Assignment / serial | Supervisor assigns a local engineer and issues `YY` + `0001`–`9999` + revision `A` | Workflow tests; full browser flow |
 | Reject/delete | Commented return with requestor resubmit; confirmed deletion of unassigned request | Domain resubmission test; role validation |
 | Manual resolution / rationale | Draft editor with saved technical text | Workflow tests; browser editor |
