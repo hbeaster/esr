@@ -1,8 +1,19 @@
 import { test, expect } from "@playwright/test";
 import type { Page } from "@playwright/test";
 const selectRole = async (page: Page, id: string, name: string) => {
+  const loaded = page.waitForResponse(
+    async (response) =>
+      response.url().endsWith("/api/bootstrap") &&
+      response.ok() &&
+      (await response.json()).user.name === name,
+  );
   await page.getByLabel("Demo identity").selectOption(id);
-  await expect(page.locator(".profile")).toContainText(name);
+  const response = await loaded;
+  expect((await response.json()).user.name).toBe(name);
+  await expect(page.locator("esr-workspace .app")).toHaveAttribute(
+    "aria-busy",
+    "false",
+  );
 };
 const confirm = async (page: Page) => {
   await page
@@ -97,19 +108,17 @@ test("request → assignment → resolution → approval → shop → division �
   await expect(page.getByText("Viewing immutable revision")).toBeVisible();
   await expect(page.locator(".detail-meta")).toContainText("ESR Closed");
 });
-test("workspace search, template library and mobile layout", async ({
-  page,
-}) => {
+test("workspace search, top navigation and mobile layout", async ({ page }) => {
   await page.goto("/");
   await expect(
     page.getByRole("heading", { name: "Service requests" }),
   ).toBeVisible();
   await page.getByLabel("Search requests").fill("auxiliary seawater");
   await expect(page.locator("tbody tr")).toHaveCount(1);
-  await page.getByRole("button", { name: "Template library" }).click();
-  await expect(page.locator(".template-card")).toHaveCount(3);
+  await page.getByRole("tab", { name: "My work", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "My work" })).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole("button", { name: "All requests" }).click();
+  await page.getByRole("tab", { name: "All requests" }).click();
   await expect(
     page.getByRole("heading", { name: "Service requests" }),
   ).toBeVisible();
@@ -124,12 +133,12 @@ test("cross-facility review allows comments but no engineering actions", async (
 }) => {
   await page.goto("/");
   await selectRole(page, "admin", "Drew Ellis");
-  await page.getByRole("button", { name: "Permissions", exact: false }).click();
+  await page.getByRole("tab", { name: "Permissions", exact: true }).click();
   await page.getByLabel("Access to the other TRF").selectOption("review");
   await page.getByRole("button", { name: "Save permissions" }).click();
   await expect(page.getByRole("status")).toContainText("Permissions updated");
   await selectRole(page, "remote", "Riley Parker");
-  await page.getByRole("button", { name: "All requests" }).click();
+  await page.getByRole("tab", { name: "All requests" }).click();
   await page
     .getByRole("button", { name: "Open Auxiliary seawater pump" })
     .click();

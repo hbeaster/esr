@@ -154,7 +154,7 @@ Record mutations include the record's current `version`. A 409 conflict is shown
 
 ## Appearance and layout
 
-The host supplies the mounting container and surrounding application layout. The component supplies its navigation, dialogs, and responsive workspace. Host CSS selectors do not reach its shadow-root content; internal selectors and Vue refs are not a supported integration surface.
+The host supplies the mounting container and surrounding application layout, including any application sidebar, branding, and user profile. ESR has no left navigation pane: its header contains All requests, My work, and administrator-only Permissions tabs, plus workspace status and refresh. At narrow component widths, the tabs scroll horizontally and status/refresh move below them. Historical ESRs and Template library navigation are hidden; resolution-editor template insertion and historical search remain available. The component supplies its navigation, dialogs, and responsive workspace. Host CSS selectors do not reach its shadow-root content; internal selectors and Vue refs are not a supported integration surface.
 
 The current theme defines these CSS custom properties:
 
