@@ -26,6 +26,12 @@ public sealed class Workflow(StoreData data)
         Require(index is >= 1 and <= 702, "Revision limit reached.");
         return index <= 26 ? ((char)(64 + index)).ToString() : $"{(char)(64 + (index - 1) / 26)}{(char)(65 + (index - 1) % 26)}";
     }
+    int AllocateSequence(int year)
+    {
+        if (Data.SequenceYear != year) { Data.SequenceYear = year; Data.Sequence = 0; }
+        Require(Data.Sequence < 9999, "Annual serial limit reached.");
+        return ++Data.Sequence;
+    }
     /// <param name="lds">CRACN context for the request's JCN; null only when the JCN is N/A.</param>
     public EsrRecord Create(Actor actor, JsonObject d, LdsData? lds = null)
     {
@@ -45,8 +51,9 @@ public sealed class Workflow(StoreData data)
         {
             case "assign":
                 Local(a, r); Role(a, "Supervisor"); Require(r.Status == "Unassigned", "Only unassigned requests can be assigned.", 409);
-                var engineer = Data.Users.Find(u => u.Id == Get(d, "engineerId") && u.Site == r.Site && u.Role == "Engineer"); Require(engineer is not null, "Select a local engineer."); Require(Data.Sequence < 9999, "Annual serial limit reached.");
-                r.EngineerId = engineer!.Id; r.SerialBase = $"{DateTime.UtcNow:yy}{++Data.Sequence:D4}"; r.Serial = r.SerialBase; r.Status = "In Process"; r.Rejected = false; break;
+                var engineer = Data.Users.Find(u => u.Id == Get(d, "engineerId") && u.Site == r.Site && u.Role == "Engineer"); Require(engineer is not null, "Select a local engineer.");
+                var year = DateTime.UtcNow.Year; var sequence = AllocateSequence(year);
+                r.EngineerId = engineer!.Id; r.SerialBase = EsrNumber.Base(year, sequence); r.Revision = 1; r.Serial = EsrNumber.Format(r.SerialBase, r.Revision); r.Status = "In Process"; r.Rejected = false; break;
             case "reject":
                 Local(a, r); Role(a, "Supervisor"); Require(r.Status == "Unassigned", "Only unassigned requests can be returned.", 409); Required(d, "comment"); r.Rejected = true; r.Comments.Add(new() { Name = a.Name, UserId = a.Id, Text = comment }); break;
             case "resubmit":
@@ -81,7 +88,8 @@ public sealed class Workflow(StoreData data)
                 r.Signatures.Add(Sign(a, "Division Head", comment)); r.Status = "ESR Closed"; break;
             case "revise":
                 Local(a, r); Role(a, "Engineer", "Supervisor"); Require(r.Status.StartsWith("ESR Issued") || r.Status == "ESR Closed", "Only issued or closed records can be revised.", 409); var reason = Required(d, "reason");
-                var suffix = RevisionSuffix(r.Revision + 1); var snapshot = JsonConfig.Clone(r); snapshot.Revisions.Clear(); r.Revisions.Add(snapshot); r.Revision++; r.Serial = r.SerialBase + suffix; r.RevisionReason = reason;
+                Require(!string.IsNullOrEmpty(r.SerialBase), "Assigned records carry an ESR number.", 409);
+                var next = r.Revision + 1; var suffix = RevisionSuffix(next); var snapshot = JsonConfig.Clone(r); snapshot.Revisions.Clear(); r.Revisions.Add(snapshot); r.Revision = next; r.Serial = r.SerialBase + suffix; r.RevisionReason = reason;
                 if (a.Role == "Engineer") r.EngineerId = a.Id; r.Status = "In Process"; r.Signatures.Clear(); r.Completion = null; break;
             case "comment":
                 Require(Access(a, r) != "read", "Read-only users cannot comment.", 403); r.Comments.Add(new() { UserId = a.Id, Name = a.Name, Text = Required(d, "text") }); break;

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { initials, date, steps, statusTone } from "../presentation";
+import { esrRevision, initials, date, steps, statusTone } from "../presentation";
 import { useWorkspaceContext } from "../composables/workspaceContext";
 const {
   state,
@@ -172,7 +172,7 @@ const {
                   @click="openRecord(r)"
                 >
                   <span class="serial">{{ r.serial || "PENDING ASSIGNMENT" }}
-                    <span v-if="r.revision">· REV {{ r.serial?.slice(6) }}</span></span><strong>{{ r.title }}</strong><span class="muted">{{ r.jcn }}
+                    <span v-if="esrRevision(r.serial) && esrRevision(r.serial) !== 'A'">· REV {{ esrRevision(r.serial) }}</span></span><strong>{{ r.title }}</strong><span class="muted">{{ r.jcn }}
                     <span v-if="r.rejected">· Returned to requestor</span></span>
                 </button>
               </td>

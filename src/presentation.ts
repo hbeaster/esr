@@ -29,6 +29,9 @@ export const date = (value: string): string =>
   });
 export const time = (value?: string): string =>
   value ? new Date(value).toLocaleString() : "";
+/** Revision letters of a YYNNNN + A–ZZ number. Empty until a record is assigned. */
+export const esrRevision = (serial?: string | null): string =>
+  serial?.match(/^[0-9]{6}([A-Z]{1,2})$/)?.[1] ?? "";
 type SearchableRecord = Pick<
   EsrRecord,
   | "title"
