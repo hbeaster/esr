@@ -9,6 +9,20 @@ public sealed class WorkflowTests
     Actor User(string id) => w.Data.Users.First(u => u.Id == id);
     static JsonObject D(string json) => JsonNode.Parse(json)!.AsObject();
     EsrRecord Create() => w.Create(User("requestor"), D("""{"title":"Test request","name":"Alex Morgan","shop":"31","phone":"555-0131","references":"DEMO-1","condition":"Coupling wear","jcn":"N/A"}"""));
+    static JsonObject Request(string jcn) => D($$"""{"title":"Test request","name":"Alex Morgan","shop":"31","phone":"555-0131","references":"DEMO-1","condition":"Coupling wear","jcn":"{{jcn}}"}""");
+    [Fact] public void CreateCopiesCracnContextForJcn()
+    {
+        var lds = new LdsData { WorkStatement = "Inspect coupling", Refit = "A014", Component = "ASW-P-02 / TSN-10482", Location = "Auxiliary machinery space" };
+        var r = w.Create(User("requestor"), Request("JCN-260184"), lds);
+        Assert.Equal(("Inspect coupling", "A014", "ASW-P-02 / TSN-10482", "Auxiliary machinery space"), (r.WorkStatement, r.Refit, r.Component, r.Location));
+    }
+    [Fact] public void CreateRejectsJcnWithoutCracnContext()
+    {
+        var count = w.Data.Records.Count;
+        Assert.Equal(400, Assert.Throws<RuleException>(() => w.Create(User("requestor"), Request("JCN-260184"))).Status);
+        Assert.Equal(count, w.Data.Records.Count);
+        Assert.Equal("", w.Create(User("requestor"), Request("N/A"), new LdsData { Refit = "A014" }).Refit);
+    }
     EsrRecord Draft()
     {
         var r = Create(); w.Execute(User("supervisor"), r.Id, "assign", D("""{"engineerId":"engineer"}"""));

@@ -67,6 +67,28 @@ spec:
           volumeMounts:
             - name: tmp
               mountPath: /tmp
+        # Mock CRACN API on localhost:4010, the backend's default Cracn:BaseUrl.
+        # Replace with Cracn__BaseUrl on the esr container for a real CRACN.
+        - name: cracn-mock
+          image: cracn-mock:local
+          imagePullPolicy: IfNotPresent
+          args: ["--host", "127.0.0.1", "--port", "4010"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          readinessProbe:
+            exec:
+              command: ["wget", "-q", "-O", "/dev/null", "http://127.0.0.1:4010/__mock/health"]
+            periodSeconds: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
       volumes:
         - name: tmp
           emptyDir:

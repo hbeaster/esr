@@ -26,6 +26,12 @@ export default defineConfig({
     ? undefined
     : [
         {
+          // Mock CRACN API (openapi.json); the backend resolves JCNs through it.
+          command: "node mocks/cracn/server.mjs --port 4010",
+          url: "http://127.0.0.1:4010/__mock/health",
+          reuseExistingServer: !process.env.CI,
+        },
+        {
           command: `${process.env.DOTNET_BIN || "dotnet"} run --project backend/Esr.Api --urls http://127.0.0.1:5080`,
           url: "http://127.0.0.1:5080/health/ready",
           reuseExistingServer: !process.env.CI,

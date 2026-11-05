@@ -26,12 +26,13 @@ public sealed class Workflow(StoreData data)
         Require(index is >= 1 and <= 702, "Revision limit reached.");
         return index <= 26 ? ((char)(64 + index)).ToString() : $"{(char)(64 + (index - 1) / 26)}{(char)(65 + (index - 1) % 26)}";
     }
-    public EsrRecord Create(Actor actor, JsonObject d)
+    /// <param name="lds">CRACN context for the request's JCN; null only when the JCN is N/A.</param>
+    public EsrRecord Create(Actor actor, JsonObject d, LdsData? lds = null)
     {
         Role(actor, "Requestor", "Shop", "Engineer", "Supervisor");
         var r = new EsrRecord { Title = Required(d, "title"), Name = Required(d, "name"), Shop = Required(d, "shop"), Phone = Required(d, "phone"), References = Required(d, "references"), Condition = Required(d, "condition"), Jcn = Required(d, "jcn"), RequestorId = actor.Id, Site = actor.Site };
-        Require(r.Jcn == "N/A" || Data.Lds.ContainsKey(r.Jcn), "Use a known synthetic JCN or select N/A.");
-        if (Data.Lds.TryGetValue(r.Jcn, out var lds)) { r.WorkStatement = lds.WorkStatement; r.Refit = lds.Refit; r.Component = lds.Component; r.Location = lds.Location; }
+        Require(r.Jcn == "N/A" || lds is not null, "Import a JCN from CRACN or select N/A.");
+        if (r.Jcn != "N/A" && lds is not null) { r.WorkStatement = lds.WorkStatement; r.Refit = lds.Refit; r.Component = lds.Component; r.Location = lds.Location; }
         Audit(r, actor, "Request submitted"); Data.Records.Insert(0, r); return r;
     }
     /// <summary>Validate a deep copy before commit so failed actions cannot partially alter records.</summary>
