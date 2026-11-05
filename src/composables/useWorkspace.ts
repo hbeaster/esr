@@ -1,6 +1,12 @@
 import { computed, onBeforeUnmount, reactive, ref, watch } from "vue";
 import { createApi } from "../api";
-import { filterRecords, normalizeJcn, steps } from "../presentation";
+import {
+  appendRichText,
+  filterRecords,
+  normalizeJcn,
+  plainText,
+  steps,
+} from "../presentation";
 import { useDialogFocus } from "./useDialogFocus";
 import type {
   ActionForm,
@@ -36,7 +42,6 @@ const emptyDraft = (): Draft => ({
   attributes: [],
 });
 const emptyRequest = (): RequestForm => ({
-  title: "",
   jcn: "",
   noJcn: false,
   name: "",
@@ -55,6 +60,14 @@ const emptyAction = (): ActionForm => ({
   shop: "",
   acknowledgeDeferred: false,
 });
+export interface PendingFile {
+  key: string;
+  name: string;
+  type: string;
+  size: number;
+  section: AttachmentSection;
+  base64: string;
+}
 
 /** One controller per custom-element instance; no module-global state or credentials. */
 export function useWorkspace(
@@ -86,7 +99,35 @@ export function useWorkspace(
     historySnapshot = ref<EsrRecord | null>(null);
   const comment = ref(""),
     attachmentSection = ref<AttachmentSection>("Continuation"),
+    requestSection = ref<AttachmentSection>("Condition"),
     ldsResult = ref<LdsData | null>(null);
+  const pendingFiles = ref<PendingFile[]>([]);
+  let pendingKey = 0;
+  const fileTypes = [
+    "image/png",
+    "image/jpeg",
+    "image/webp",
+    "application/pdf",
+    "text/plain",
+  ];
+  function fileType(file: File) {
+    if (file.type && fileTypes.includes(file.type)) return file.type;
+    return file.name.toLowerCase().endsWith(".txt") ? "text/plain" : file.type;
+  }
+  function assertFile(file: File) {
+    if (file.size <= 0 || file.size > 15 * 1024 * 1024)
+      throw new Error("File must be between 1 byte and 15 MB.");
+    if (!fileTypes.includes(fileType(file)))
+      throw new Error("Supported files: PNG, JPEG, WebP, PDF, TXT.");
+  }
+  function readBase64(file: File) {
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result).split(",")[1] || "");
+      reader.onerror = () => reject(Error("Unable to read file."));
+      reader.readAsDataURL(file);
+    });
+  }
   const permissionUser = ref("remote"),
     permissionForm = reactive<Permission>({
       crossSite: "none",
@@ -239,6 +280,8 @@ export function useWorkspace(
       phone: state.user.phone,
     });
     ldsResult.value = null;
+    pendingFiles.value = [];
+    requestSection.value = "Condition";
     dialog.value = "create";
     error.value = "";
   }
@@ -251,17 +294,78 @@ export function useWorkspace(
   }
   async function createRequest() {
     await run(async () => {
+      const queued = [...pendingFiles.value];
       const r = await api()<EsrRecord>("/records", {
         ...form,
         jcn: form.noJcn ? "N/A" : normalizeJcn(form.jcn),
       });
+      let version = r.version;
+      let failed = "";
+      for (const file of queued) {
+        try {
+          const updated = await api()<EsrRecord>(`/records/${r.id}/attach`, {
+            name: file.name,
+            type: file.type,
+            base64: file.base64,
+            section: file.section,
+            version,
+          });
+          version = updated.version;
+          pendingFiles.value = pendingFiles.value.filter(
+            (item) => item.key !== file.key,
+          );
+          emit("record-change", {
+            id: r.id,
+            action: "attach",
+            status: updated.status,
+          });
+        } catch (cause) {
+          failed =
+            cause instanceof Error
+              ? cause.message
+              : "Unable to attach a supporting file.";
+          break;
+        }
+      }
       await reload();
       dialog.value = null;
       openRecord(r);
-      notice.value =
-        "Request submitted. Attach supporting files in the Files tab.";
       emit("record-change", { id: r.id, action: "create", status: r.status });
+      if (failed)
+        throw new Error(
+          `Request submitted. A supporting file was not attached. ${failed}`,
+        );
+      notice.value = queued.length
+        ? "Request submitted with supporting files."
+        : "Request submitted.";
     });
+  }
+  async function queueFiles(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const files = [...(input.files ?? [])];
+    input.value = "";
+    if (!files.length) return;
+    await run(async () => {
+      for (const file of files) {
+        assertFile(file);
+        if (pendingFiles.value.length >= 20)
+          throw new Error("Maximum 20 files per record.");
+        pendingFiles.value = [
+          ...pendingFiles.value,
+          {
+            key: `pending-${pendingKey++}`,
+            name: file.name,
+            type: fileType(file),
+            size: file.size,
+            section: requestSection.value,
+            base64: await readBase64(file),
+          },
+        ];
+      }
+    });
+  }
+  function removePending(key: string) {
+    pendingFiles.value = pendingFiles.value.filter((file) => file.key !== key);
   }
   async function mutate(action: string, data: object = {}) {
     const r = selectedRecord();
@@ -301,7 +405,7 @@ export function useWorkspace(
   async function findHistory() {
     await run(async () => {
       searchResult.value = await api()<HistorySearch>("/history/search", {
-        condition: selectedRecord().condition,
+        condition: plainText(selectedRecord().condition),
       });
     });
   }
@@ -320,8 +424,8 @@ export function useWorkspace(
       "Historical text inserted. Review and save the draft before signing.";
   }
   function applyTemplate(template: EngineeringTemplate) {
-    draft.resolution += `${draft.resolution ? "\n\n" : ""}${template.resolution}`;
-    draft.rationale += `${draft.rationale ? "\n\n" : ""}${template.rationale}`;
+    draft.resolution = appendRichText(draft.resolution, template.resolution);
+    draft.rationale = appendRichText(draft.rationale, template.rationale);
     dialog.value = null;
     notice.value = "Approved template inserted. Review and save your draft.";
   }
@@ -333,25 +437,20 @@ export function useWorkspace(
   }
   async function upload(event: Event) {
     const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) return;
-    await run(async () => {
-      if (file.size > 15 * 1024 * 1024)
-        throw new Error("File must be 15 MB or smaller.");
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result).split(",")[1]);
-        reader.onerror = () => reject(Error("Unable to read file."));
-        reader.readAsDataURL(file);
-      });
-      await mutate("attach", {
-        name: file.name,
-        type: file.type || (file.name.endsWith(".txt") ? "text/plain" : ""),
-        base64,
-        section: attachmentSection.value,
-      });
-    });
+    const files = [...(input.files ?? [])];
     input.value = "";
+    if (!files.length) return;
+    await run(async () => {
+      for (const file of files) {
+        assertFile(file);
+        await mutate("attach", {
+          name: file.name,
+          type: fileType(file),
+          base64: await readBase64(file),
+          section: attachmentSection.value,
+        });
+      }
+    });
   }
   async function downloadPdf() {
     await run(async () => {
@@ -458,6 +557,8 @@ export function useWorkspace(
     historySnapshot,
     comment,
     attachmentSection,
+    requestSection,
+    pendingFiles,
     ldsResult,
     permissionUser,
     permissionForm,
@@ -479,6 +580,8 @@ export function useWorkspace(
     newRequest,
     importLds,
     createRequest,
+    queueFiles,
+    removePending,
     saveDraft,
     action,
     confirmAction,

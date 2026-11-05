@@ -17,7 +17,7 @@ export function useDialogFocus(dialog: Ref<Dialog | null>, close: () => void) {
       await nextTick();
       modalElement.value
         ?.querySelector<HTMLElement>(
-          "input:not([type=checkbox]), select, textarea, button",
+          "input:not([type=checkbox]), select, textarea, [contenteditable='true'], button",
         )
         ?.focus();
     } else returnFocus?.focus();
@@ -26,7 +26,7 @@ export function useDialogFocus(dialog: Ref<Dialog | null>, close: () => void) {
     if (event.key !== "Tab" || !modalElement.value) return;
     const items = [
       ...modalElement.value.querySelectorAll<HTMLElement>(
-        "button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href]",
+        "button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [contenteditable='true'], a[href]",
       ),
     ].filter((e) => e.getClientRects().length);
     const root = modalElement.value.getRootNode() as Document | ShadowRoot;

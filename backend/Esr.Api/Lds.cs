@@ -30,7 +30,8 @@ public sealed class CracnOptions
 
 /// <summary>
 /// Reads LDS context from the CRACN API (cracn_openapi.json): the Job gives the work
-/// statement and refit; its configuration item gives the component and location.
+/// statement and refit; its configuration item gives the component, location, and SWBS
+/// (the hierarchical structure code mapped from the LDS function group code).
 /// </summary>
 public sealed class CracnLdsSource(HttpClient http) : ILdsSource
 {
@@ -41,12 +42,13 @@ public sealed class CracnLdsSource(HttpClient http) : ILdsSource
         var refs = job["noncanonicalRefs"];
         var refit = refs?["refit"]?["uniqueness"];
         var item = refs?["configurationItem"]?["uniqueness"];
-        string component = "", location = "";
+        string component = "", location = "", swbs = Text(item?["hsc"]) ?? "";
         if (Text(item?["uic"]) is { } uic && Text(item?["hsc"]) is { } hsc)
         {
             var configurationItem = await Get($"api/v1/boats/{Uri.EscapeDataString(uic)}/configurationItems/{Uri.EscapeDataString(hsc)}", cancellationToken);
             component = string.Join(" / ", new[] { Text(configurationItem?["equipmentName"]), Text(configurationItem?["equipmentSerialNumber"]) ?? hsc }.Where(s => !string.IsNullOrWhiteSpace(s)));
             location = Text(configurationItem?["location"]) ?? "";
+            swbs = Text(configurationItem?["hsc"]) ?? swbs;
         }
         return new LdsData
         {
@@ -54,6 +56,7 @@ public sealed class CracnLdsSource(HttpClient http) : ILdsSource
             Refit = Text(refit?["refitNumber"]) ?? "",
             Component = component,
             Location = location,
+            Swbs = swbs,
         };
     }
 

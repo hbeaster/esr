@@ -9,15 +9,16 @@ This is a synthetic, end-to-end demonstration. “Implemented” describes demo 
 | UI component boundaries | 17 focused child components, typed instance context, dialog focus composable | Vue Test Utils unit tests and browser regressions |
 | ESLint defaults | Recommended ESLint, typescript-eslint, and Vue presets without rule overrides | Lint passes with zero warnings |
 | Docker / Kubernetes | Multi-stage image, Compose, Kustomize deployment/service | Passed Docker build and hardened-container smoke test; Kustomize rendering (no cluster rollout) |
-| Initiation required fields / JCN optional | Required form fields; 13-character JCNs (`12345WX019999`: 5 digits, 4 alphanumerics, `0001`–`9999`) validated, then resolved from the mock CRACN API (`cracn_openapi.json`), or N/A | Browser creation/import; CRACN mapping and record-creation HTTP tests |
+| Initiation required fields / JCN optional | Name, shop, phone, references, and condition. References and condition use a rich text editor. Supporting files can be chosen in the request form and on the record. A request title is not collected. A JCN is 13 characters (`12345WX019999`: 5 digits, 4 alphanumerics, `0001`–`9999`), validated, then resolved from the mock CRACN API (`cracn_openapi.json`), or N/A | Browser creation/import; CRACN mapping and record-creation HTTP tests |
 | Assignment / serial | Supervisor assigns a local engineer and issues `YY` + `0001`–`9999` + revision `A` | Workflow tests; full browser flow |
 | Reject/delete | Commented return with requestor resubmit; confirmed deletion of unassigned request | Domain resubmission test; role validation |
-| Manual resolution / rationale | Draft editor with saved technical text | Workflow tests; browser editor |
+| Manual resolution / rationale | Draft editor with saved technical text. Resolution and rationale use a rich text editor | Workflow tests; browser editor |
 | Assisted summary / matches / copying | Labeled deterministic mock summary, ranked historical matches, clipboard and insertion | HTTP search; browser search/insertion |
 | Approved templates | Three synthetic supervisor-approved templates | Browser library test |
 | High-resolution attachments / preview | Original file bytes, authenticated previews, section classification | HTTP byte roundtrip; browser upload |
 | DFS / TVD sequential questions | Conditional prompts and references, server validation | Missing DFS reference unit test; browser entry |
-| Attributes / document labels | Table, record header and PDF metadata | Browser SUBSAFE/DFS; PDF unit test |
+| Attributes / document labels | Record header and PDF metadata | Browser SUBSAFE/DFS; PDF unit test |
+| ESR table | Serial, JCN, Refit, Requester, Shop Code, Condition, Resolution, SWBS, Status, Assigned Engineer, and Date Initiated. Each column can be shown or hidden, and clicking its header sorts the visible rows | Column toggle and sort unit tests; browser layout |
 | JWT identity signatures | Server-verified demo JWT supplies identity | Tampering and spoofed payload tests |
 | Engineer / supervisor approvals | State changes, role checks, locked issued text | Domain workflow / immutability tests; browser handoff |
 | Delegated dual signing | Admin permission and mandatory comment | Dual signature unit test |
