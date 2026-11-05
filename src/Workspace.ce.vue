@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { computed, provide } from "vue";
+import { computed, provide, useId } from "vue";
 import { useWorkspace } from "./composables/useWorkspace";
 import { workspaceKey } from "./composables/workspaceContext";
 import type { WorkspaceProps, WorkspaceEvents } from "./types";
-import WorkspaceSidebar from "./components/WorkspaceSidebar.vue";
+import WorkspaceNavigation from "./components/WorkspaceNavigation.vue";
 import RequestWorkspace from "./components/RequestWorkspace.vue";
 import RecordDetail from "./components/RecordDetail.vue";
 import TemplateLibrary from "./components/TemplateLibrary.vue";
@@ -29,6 +29,15 @@ const {
   run,
   reload,
 } = workspace;
+const navigationId = useId();
+const panelId = `${navigationId}-panel`;
+const activeTab = computed(() =>
+  view.value === "admin"
+    ? "admin"
+    : view.value === "workspace" && scope.value === "mine"
+      ? "mine"
+      : "all",
+);
 /** Changes when the visible page changes, not when the same page re-renders. */
 const pageKey = computed(() =>
   !state.user
@@ -45,24 +54,16 @@ const pageKey = computed(() =>
     class="app"
     :aria-busy="busy"
   >
-    <WorkspaceSidebar />
     <div
       class="main-shell"
       :inert="!!dialog"
     >
       <header class="topbar">
-        <div class="crumbs">
-          Engineering <span>/</span>
-          {{
-            view === "record"
-              ? record?.serial || "New request"
-              : view === "templates"
-                ? "Template library"
-                : view === "admin"
-                  ? "Permissions"
-                  : "Service requests"
-          }}
-        </div>
+        <WorkspaceNavigation
+          :active-tab="activeTab"
+          :panel-id="panelId"
+          :id-prefix="navigationId"
+        />
         <div class="topbar-right">
           <span class="live-dot" />
           <span>TRF <strong>{{ state.user?.site || "—" }}</strong></span>
@@ -78,61 +79,69 @@ const pageKey = computed(() =>
       </header>
       <main>
         <div
-          v-if="error && !dialog"
-          class="alert error"
-          role="alert"
-        >
-          {{ error }}
-          <button
-            aria-label="Dismiss error"
-            @click="error = ''"
-          >
-            ×
-          </button>
-        </div>
-        <div
-          v-if="notice"
-          class="alert success"
-          role="status"
-        >
-          {{ notice }}
-          <button
-            aria-label="Dismiss notice"
-            @click="notice = ''"
-          >
-            ×
-          </button>
-        </div>
-        <Transition
-          name="page"
-          mode="out-in"
+          :id="panelId"
+          role="tabpanel"
+          :aria-labelledby="`${navigationId}-${activeTab}`"
+          tabindex="0"
+          class="workspace-panel"
         >
           <div
-            :key="pageKey"
-            class="page"
+            v-if="error && !dialog"
+            class="alert error"
+            role="alert"
+          >
+            {{ error }}
+            <button
+              aria-label="Dismiss error"
+              @click="error = ''"
+            >
+              ×
+            </button>
+          </div>
+          <div
+            v-if="notice"
+            class="alert success"
+            role="status"
+          >
+            {{ notice }}
+            <button
+              aria-label="Dismiss notice"
+              @click="notice = ''"
+            >
+              ×
+            </button>
+          </div>
+          <Transition
+            name="page"
+            mode="out-in"
           >
             <div
-              v-if="!state.user"
-              class="empty"
+              :key="pageKey"
+              class="page"
             >
-              <div class="empty-icon">
-                ▦
+              <div
+                v-if="!state.user"
+                class="empty"
+              >
+                <div class="empty-icon">
+                  ▦
+                </div>
+                <h1>Engineering service requests</h1>
+                <p>
+                  {{
+                    props.tokenProvider
+                      ? "Connecting to the workspace…"
+                      : "Provide a tokenProvider to connect the component to your API."
+                  }}
+                </p>
               </div>
-              <h1>Engineering service requests</h1>
-              <p>
-                {{
-                  props.tokenProvider
-                    ? "Connecting to the workspace…"
-                    : "Provide a tokenProvider to connect the component to your API."
-                }}
-              </p>
+              <RequestWorkspace v-else-if="view === 'workspace'" />
+              <RecordDetail v-else-if="view === 'record' && record" />
+              <TemplateLibrary v-else-if="view === 'templates'" />
+              <PermissionSettings v-else-if="view === 'admin'" />
             </div>
-            <RequestWorkspace v-else-if="view === 'workspace'" />
-            <RecordDetail v-else-if="view === 'record' && record" />
-            <TemplateLibrary v-else-if="view === 'templates'" />
-            <PermissionSettings v-else-if="view === 'admin'" />
-          </div>
-        </Transition>
+          </Transition>
+        </div>
       </main>
     </div>
     <WorkspaceDialogs />
@@ -143,30 +152,28 @@ const pageKey = computed(() =>
 
 <style scoped>
 .app {
-  display: flex;
   min-height: calc(100vh - 47px);
   background: var(--esr-bg);
 }
+/* Layout responds to the embedding container, not the host viewport. */
 .main-shell {
-  flex: 1;
   min-width: 0;
+  container-type: inline-size;
 }
 .topbar {
-  height: 56px;
+  min-height: 56px;
   border-bottom: 1px solid var(--line);
   background: #ffffffd9;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: var(--sp-5);
   padding: 0 var(--sp-8);
   font-size: var(--fs-sm);
   color: var(--ink-3);
 }
-.crumbs > span {
-  padding: 0 var(--sp-2);
-  color: var(--ink-4);
-}
 .topbar-right {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: var(--sp-2);
@@ -187,6 +194,11 @@ main {
   max-width: 1600px;
   margin: 0 auto;
   padding: var(--sp-8);
+}
+.workspace-panel:focus-visible {
+  outline: 2px solid var(--esr-accent);
+  outline-offset: 4px;
+  border-radius: var(--radius-sm);
 }
 /*
  * Page change: the old page fades quickly, the new one rises 6px into place.
@@ -213,7 +225,7 @@ main {
   margin-bottom: var(--sp-3);
   color: var(--ink-4);
 }
-@media (max-width: 1150px) {
+@container (max-width: 1150px) {
   main {
     padding: var(--sp-6);
   }
@@ -221,17 +233,16 @@ main {
     padding-inline: var(--sp-6);
   }
 }
-@media (max-width: 560px) {
-  .app {
-    display: block;
-  }
+/* Tabs take a full row; status and refresh drop below them. */
+@container (max-width: 620px) {
   .topbar {
-    height: 48px;
-    padding: 0 var(--sp-4);
-    font-size: var(--fs-xs);
+    flex-wrap: wrap;
+    gap: 0;
+    padding: 0 var(--sp-4) var(--sp-2);
   }
-  .topbar-right > span:not(.live-dot) {
-    display: none;
+  .topbar-right {
+    margin-left: auto;
+    font-size: var(--fs-xs);
   }
   main {
     padding: var(--sp-5) var(--sp-4);

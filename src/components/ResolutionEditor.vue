@@ -259,7 +259,7 @@ const {
 .reference-prompts h3 {
   margin-bottom: 0;
 }
-@media (max-width: 560px) {
+@container (max-width: 560px) {
   .match {
     flex-wrap: wrap;
   }

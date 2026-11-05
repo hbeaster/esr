@@ -95,7 +95,7 @@ const { state, tab, historySnapshot, current, record } = useWorkspaceContext();
 .revision-row .muted {
   font-size: var(--fs-xs);
 }
-@media (max-width: 560px) {
+@container (max-width: 560px) {
   .revision-row {
     flex-wrap: wrap;
   }

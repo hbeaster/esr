@@ -359,7 +359,7 @@ const {
 .record-aside > .padded {
   padding: var(--sp-5);
 }
-@media (max-width: 1150px) {
+@container (max-width: 1150px) {
   .detail-grid {
     grid-template-columns: minmax(0, 1fr) 260px;
   }
@@ -367,7 +367,7 @@ const {
     display: none;
   }
 }
-@media (max-width: 850px) {
+@container (max-width: 850px) {
   .detail-grid {
     grid-template-columns: 1fr;
   }
@@ -387,7 +387,7 @@ const {
     font-size: var(--fs-xs);
   }
 }
-@media (max-width: 560px) {
+@container (max-width: 560px) {
   .record-aside {
     display: flex;
   }

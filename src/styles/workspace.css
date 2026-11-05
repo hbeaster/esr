@@ -663,7 +663,8 @@ fieldset .check {
 }
 
 /* ---------- Responsive ---------- */
-@media (max-width: 560px) {
+/* Page content follows the component width (.main-shell is the container). */
+@container (max-width: 560px) {
   h1 {
     font-size: 22px;
   }
@@ -678,6 +679,12 @@ fieldset .check {
     align-items: flex-start;
   }
   .section-heading,
+  .form-footer {
+    flex-wrap: wrap;
+  }
+}
+/* Dialogs sit outside the container and follow the viewport. */
+@media (max-width: 560px) {
   .form-footer {
     flex-wrap: wrap;
   }

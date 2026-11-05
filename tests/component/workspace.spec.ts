@@ -70,10 +70,10 @@ test("isolated component loads, filters, navigates, and lays out at mobile width
   });
   await page.getByLabel("Search requests").fill("SUBSAFE");
   await expect(page.locator("tbody tr")).toHaveCount(1);
-  await page.getByRole("button", { name: "Template library" }).click();
-  await expect(page.locator(".template-card")).toHaveCount(3);
+  await page.getByRole("tab", { name: "My work", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "My work" })).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole("button", { name: "All requests" }).click();
+  await page.getByRole("tab", { name: "All requests" }).click();
   await page.screenshot({
     path: "artifacts/mobile-workspace.png",
     fullPage: true,
@@ -164,7 +164,96 @@ test("built package bundle boots independently of Vue host source", async ({
     };
   });
   expect(styles.shadow).toMatch(/\.stat\[data-v-[0-9a-f]{8}\]/);
-  expect(styles.shadow).toMatch(/\.sidebar\[data-v-[0-9a-f]{8}\]/);
+  expect(styles.shadow).toMatch(/\.workspace-tabs\[data-v-[0-9a-f]{8}\]/);
   expect(styles.document).not.toMatch(/data-v-/);
   expect(styles.statBorder).toBe("3px");
+});
+
+test("top tabs expose permitted views and support keyboard navigation", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const tabs = page.getByRole("tablist", { name: "Workspace views" });
+  const all = tabs.getByRole("tab", { name: "All requests" });
+  const mine = tabs.getByRole("tab", { name: "My work" });
+  await expect(all).toHaveAttribute("aria-selected", "true");
+  await expect(tabs.getByRole("tab")).toHaveCount(2);
+  await expect(page.locator(".sidebar")).toHaveCount(0);
+  await expect(page.locator(".topbar")).not.toContainText("Engineering /");
+  await expect(
+    page.getByRole("button", { name: "Template library" }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("tab", { name: /Historical ESRs|Template library/ }),
+  ).toHaveCount(0);
+  await all.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(mine).toBeFocused();
+  await expect(all).toHaveAttribute("aria-selected", "true");
+  await page.keyboard.press("Enter");
+  await expect(mine).toHaveAttribute("aria-selected", "true");
+  await expect(page.locator("tbody tr")).toHaveCount(
+    fixture.records.filter(
+      (record) =>
+        record.engineerId === "engineer" || record.requestorId === "engineer",
+    ).length,
+  );
+  await page.getByRole("button", { name: "Open 260037A" }).click();
+  await expect(all).toHaveAttribute("aria-selected", "true");
+  await page.getByRole("button", { name: "Back to requests" }).click();
+  await all.focus();
+  await page.keyboard.press("End");
+  await expect(mine).toBeFocused();
+  await page.keyboard.press("Home");
+  await expect(all).toBeFocused();
+  await page.keyboard.press("ArrowLeft");
+  await expect(mine).toBeFocused();
+  await page.keyboard.press("Space");
+  await expect(mine).toHaveAttribute("aria-selected", "true");
+  await page.getByLabel("Demo identity").selectOption("admin");
+  const permissions = tabs.getByRole("tab", {
+    name: "Permissions",
+    exact: true,
+  });
+  await expect(permissions).toBeVisible();
+  await permissions.click();
+  await expect(
+    page.getByRole("heading", { name: "User permissions" }),
+  ).toBeVisible();
+  await page.getByLabel("Demo identity").selectOption("engineer");
+  await expect(permissions).toHaveCount(0);
+  await expect(all).toHaveAttribute("aria-selected", "true");
+});
+
+test("header fits a narrow container inside a desktop host", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/");
+  await page.getByLabel("Demo identity").selectOption("admin");
+  await expect(
+    page.getByRole("tab", { name: "Permissions", exact: true }),
+  ).toBeVisible();
+  await page.locator("esr-workspace").evaluate((element) => {
+    (element as HTMLElement).style.width = "360px";
+  });
+  const tabs = page.getByRole("tablist", { name: "Workspace views" });
+  const refresh = page.getByRole("button", { name: "Refresh workspace" });
+  const tabsBox = (await tabs.boundingBox())!;
+  const refreshBox = (await refresh.boundingBox())!;
+  expect(refreshBox.y).toBeGreaterThanOrEqual(tabsBox.y + tabsBox.height);
+  expect(
+    await page
+      .locator("esr-workspace .app")
+      .evaluate((element) => element.scrollWidth <= element.clientWidth),
+  ).toBe(true);
+  await page.screenshot({
+    path: "artifacts/narrow-embedded-workspace.png",
+    fullPage: true,
+  });
+  await refresh.click();
+  await expect(page.locator("esr-workspace .app")).toHaveAttribute(
+    "aria-busy",
+    "false",
+  );
 });

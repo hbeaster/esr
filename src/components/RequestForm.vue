@@ -180,7 +180,7 @@ function onJcnInput(event: Event) {
 .lds-result strong {
   color: var(--green-text);
 }
-@media (max-width: 560px) {
+@container (max-width: 560px) {
   .fields-grid {
     grid-template-columns: 1fr;
   }

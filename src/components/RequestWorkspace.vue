@@ -660,7 +660,7 @@ tbody tr:hover .row-open {
   font-size: var(--fs-xs);
   font-style: italic;
 }
-@media (max-width: 1150px) {
+@container (max-width: 1150px) {
   .stats {
     gap: var(--sp-2);
   }
@@ -671,12 +671,12 @@ tbody tr:hover .row-open {
     display: none;
   }
 }
-@media (max-width: 850px) {
+@container (max-width: 850px) {
   .stats {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
-@media (max-width: 560px) {
+@container (max-width: 560px) {
   .stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

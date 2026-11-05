@@ -63,7 +63,7 @@ const { state } = useWorkspaceContext();
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-@media (max-width: 560px) {
+@container (max-width: 560px) {
   .template-grid {
     grid-template-columns: 1fr;
   }
