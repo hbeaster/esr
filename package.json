@@ -16,7 +16,8 @@
     "dist/component",
     "README.md",
     "LICENSE",
-    "docs/api.md"
+    "docs/api.md",
+    "docs/host-component-contract.md"
   ],
   "scripts": {
     "dev": "vite --host 127.0.0.1",

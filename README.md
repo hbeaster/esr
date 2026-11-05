@@ -20,9 +20,11 @@ npm run package:component
 - Type declarations: `dist/component/index.d.ts`
 - Installable npm tarball: `artifacts/trf-esr-workspace-0.1.0.tgz`
 
-The npm allowlist includes only `dist/component/`, this README, the API contract, and the license. It excludes the demo host, C# backend, synthetic seed records, deployment files, tests, and source tree. `npm pack` also builds the component through `prepack`. No registry publishing is performed.
+The npm allowlist includes only `dist/component/`, this README, the API and host communication contracts, and the license. It excludes the demo host, C# backend, synthetic seed records, deployment files, tests, and source tree. `npm pack` also builds the component through `prepack`. No registry publishing is performed.
 
 ### Embed in another application
+
+See the [host and component communication specification](docs/host-component-contract.md) for the input properties, event payloads, authentication lifecycle, and integration checklist.
 
 ```sh
 npm install ./artifacts/trf-esr-workspace-0.1.0.tgz
