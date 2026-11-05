@@ -7,7 +7,8 @@ import RecordActivity from "./RecordActivity.vue";
 import WorkflowActions from "./WorkflowActions.vue";
 import SignatureRecord from "./SignatureRecord.vue";
 import EquipmentVisual from "./EquipmentVisual.vue";
-import { esrRevision, plainText, steps, statusTone } from "../presentation";
+import WorkflowTimeline from "./WorkflowTimeline.vue";
+import { esrRevision, plainText, statusTone } from "../presentation";
 import { useWorkspaceContext } from "../composables/workspaceContext";
 const {
   state,
@@ -121,31 +122,7 @@ const {
       <span><strong>Returned to the requestor.</strong> See the review comments
         before resubmitting.</span>
     </div>
-    <div
-      class="stepper"
-      aria-label="Workflow progress"
-    >
-      <div
-        v-for="(step, i) in steps"
-        :key="step"
-        :class="{
-          done:
-            i <
-            steps.indexOf(
-              record.status.startsWith('ESR Issued')
-                ? 'ESR Issued'
-                : record.status,
-            ),
-          current:
-            step ===
-            (record.status.startsWith('ESR Issued')
-              ? 'ESR Issued'
-              : record.status),
-        }"
-      >
-        <span>{{ i + 1 }}</span><strong>{{ step }}</strong>
-      </div>
-    </div>
+    <WorkflowTimeline />
     <div
       class="tabs"
       role="tablist"
@@ -258,70 +235,6 @@ const {
   color: var(--ink-3);
   flex-wrap: wrap;
 }
-.stepper {
-  display: flex;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--surface);
-  padding: var(--sp-4) var(--sp-5);
-  margin-bottom: var(--sp-6);
-  gap: var(--sp-3);
-}
-.stepper > div {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  color: var(--ink-4);
-  font-size: var(--fs-sm);
-  min-width: 0;
-}
-.stepper > div:not(:last-child)::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: var(--line);
-  min-width: var(--sp-3);
-}
-.stepper > div > span {
-  width: 24px;
-  height: 24px;
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--fs-xs);
-  font-weight: 700;
-  flex-shrink: 0;
-}
-.stepper strong {
-  font-weight: 500;
-  white-space: nowrap;
-}
-.stepper .done {
-  color: var(--ink-2);
-}
-.stepper .done > span {
-  background: var(--green-bg);
-  border-color: var(--green-line);
-  color: var(--green-text);
-}
-.stepper .done:not(:last-child)::after {
-  background: var(--green-line);
-}
-.stepper .current {
-  color: var(--esr-accent-text);
-}
-.stepper .current strong {
-  font-weight: 800;
-}
-.stepper .current > span {
-  background: var(--esr-accent);
-  color: #fff;
-  border-color: var(--esr-accent);
-  box-shadow: 0 0 0 3px var(--esr-accent-soft);
-}
 .tabs {
   display: flex;
   gap: var(--sp-6);
@@ -381,9 +294,6 @@ const {
   .detail-grid {
     grid-template-columns: minmax(0, 1fr) 260px;
   }
-  .stepper > div:not(:last-child)::after {
-    display: none;
-  }
 }
 @container (max-width: 850px) {
   .detail-grid {
@@ -395,14 +305,6 @@ const {
   }
   .detail-heading {
     flex-wrap: wrap;
-  }
-  .stepper {
-    overflow: auto;
-    padding: var(--sp-3);
-  }
-  .stepper > div {
-    min-width: max-content;
-    font-size: var(--fs-xs);
   }
 }
 @container (max-width: 560px) {

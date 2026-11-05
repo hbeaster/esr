@@ -65,6 +65,9 @@ test("isolated component loads, filters, navigates, and lays out at mobile width
   ).toBeVisible();
   await expect(page.locator("tbody tr")).toHaveCount(6);
   await expect(
+    page.getByRole("columnheader", { name: /Time in Status/ }),
+  ).toBeVisible();
+  await expect(
     page.getByRole("img", { name: /Mock fleet hull heatmap: .*Auxiliary 1/ }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Auxiliary 1" }).click();
@@ -111,6 +114,11 @@ test("editor inserts approved template, answers sequential prompts, and saves", 
       name: "Mock hull map: Auxiliary machinery space (Auxiliary)",
     }),
   ).toBeVisible();
+  const progress = page.getByRole("list", { name: "Workflow progress" });
+  await expect(progress.getByRole("listitem")).toHaveCount(5);
+  await expect(progress.locator('[aria-current="step"]')).toContainText(
+    "In Process",
+  );
   await page.getByRole("tab", { name: "Resolution", exact: true }).click();
   await page.getByRole("button", { name: "Insert template" }).click();
   await page

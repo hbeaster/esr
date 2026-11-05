@@ -442,6 +442,7 @@ describe("ESR table columns", () => {
       "Resolution",
       "SWBS",
       "Status",
+      "Time in Status",
       "Assigned Engineer",
       "Date Initiated",
       "Open",
@@ -528,5 +529,33 @@ describe("hull zone filter", () => {
       .find((b) => b.text() === "Clear filters")!;
     await clear.trigger("click");
     expect(context.zone.value).toBe("");
+  });
+});
+
+describe("status aging in the table", () => {
+  afterEach(() => vi.useRealTimers());
+  it("marks a stale record and describes it", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-20T12:00:00Z"));
+    const { wrapper } = mountSection(
+      RequestWorkspace,
+      makeBootstrap({
+        records: [
+          makeRecord({
+            status: "Unassigned",
+            serial: null,
+            engineerId: null,
+            createdAt: "2026-11-10T12:00:00Z",
+          }),
+        ],
+      }),
+    );
+    const chip = wrapper.get(".age");
+    expect(chip.classes()).toContain("stale");
+    expect(chip.text()).toContain("10d");
+    expect(chip.attributes("title")).toBe(
+      "Unassigned for 10 days, past the 7-day stale limit",
+    );
+    expect(wrapper.get(".stat-foot.stale").text()).toBe("1 stale");
   });
 });

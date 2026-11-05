@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import {
+  agingDescription,
   esrRevision,
+  formatDuration,
+  statusAge,
+  stepOf,
   esrTableColumns,
   hullZoneLabel,
   initials,
@@ -14,6 +18,7 @@ import {
 import type { EsrTableColumnId, SortDirection } from "../presentation";
 import { useWorkspaceContext } from "../composables/workspaceContext";
 import HullHeatmap from "./HullHeatmap.vue";
+import { useNow } from "../composables/useNow";
 const {
   state,
   scope,
@@ -26,6 +31,19 @@ const {
   openRecord,
   newRequest,
 } = useWorkspaceContext();
+const now = useNow();
+const ages = computed(
+  () =>
+    new Map(state.records.map((r) => [r.id, statusAge(r, now.value)])),
+);
+/** Stale records per stepper step, for the stat card triage line. */
+const staleCounts = computed(() => {
+  const result: Record<string, number> = {};
+  for (const r of state.records)
+    if (ages.value.get(r.id)?.tone === "stale")
+      result[stepOf(r.status)] = (result[stepOf(r.status)] || 0) + 1;
+  return result;
+});
 const hiddenColumns = ref<EsrTableColumnId[]>([]);
 function visible(id: EsrTableColumnId) {
   return !hiddenColumns.value.includes(id);
@@ -112,7 +130,13 @@ const stepHint: Record<string, string> = {
         :aria-pressed="status === step"
         @click="status = status === step ? '' : step"
       >
-        <span class="stat-label"><span :class="['status-dot', statusTone(step)]" />{{ step }}</span><strong>{{ counts[step] }}</strong><span class="stat-foot">{{ stepHint[step] }}</span>
+        <span class="stat-label"><span :class="['status-dot', statusTone(step)]" />{{ step }}</span><strong>{{ counts[step] }}</strong><span
+          v-if="staleCounts[step]"
+          class="stat-foot stale"
+        >{{ staleCounts[step] }} stale</span><span
+          v-else
+          class="stat-foot"
+        >{{ stepHint[step] }}</span>
       </button>
     </section>
     <HullHeatmap />
@@ -266,6 +290,24 @@ const stepHint: Record<string, string> = {
               <td v-if="visible('status')">
                 <span :class="['badge', statusTone(r.status)]"><span class="status-dot" />{{ r.status }}</span>
               </td>
+              <td
+                v-if="visible('age')"
+                class="nowrap"
+              >
+                <span
+                  v-if="ages.get(r.id)"
+                  :class="['age', ages.get(r.id)!.tone]"
+                  :title="agingDescription(r, now)"
+                ><span
+                  v-if="ages.get(r.id)!.tone === 'stale'"
+                  aria-hidden="true"
+                >!</span>{{ formatDuration(ages.get(r.id)!.ms)
+                }}<span class="sr-only">, {{ agingDescription(r, now) }}</span></span>
+                <span
+                  v-else
+                  class="muted"
+                >—</span>
+              </td>
               <td v-if="visible('engineer')">
                 <div
                   v-if="r.engineerId"
@@ -383,6 +425,37 @@ const stepHint: Record<string, string> = {
   font-size: var(--fs-xs);
   color: var(--ink-3);
   font-style: italic;
+}
+.stat-foot.stale {
+  color: var(--red-text);
+  font-style: normal;
+  font-weight: 700;
+}
+.age {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--gray-line);
+  background: var(--gray-bg);
+  color: var(--gray-text);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.age.warn {
+  border-color: var(--amber-line);
+  background: var(--amber-bg);
+  color: var(--amber-text);
+}
+.age.stale {
+  border-color: var(--red-line);
+  background: var(--red-bg);
+  color: var(--red-text);
+}
+.age.stale > span[aria-hidden] {
+  font-weight: 800;
 }
 .workspace-card {
   min-width: 0;
