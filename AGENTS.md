@@ -8,6 +8,7 @@ Human docs, which these instructions do not restate:
 - Endpoints and actions: `docs/api.md`
 - Host embedding contract: `docs/host-component-contract.md`
 - Implemented decisions: `docs/requirements.md`
+- Source PRD, split per section: `docs/prd/`
 
 ## Invariants
 
