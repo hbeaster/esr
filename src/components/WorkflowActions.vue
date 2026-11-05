@@ -143,3 +143,56 @@ const waitingOn = computed(() => {
     </div>
   </template>
 </template>
+
+<style scoped>
+h2 {
+  margin: var(--sp-1) 0 var(--sp-4);
+}
+.next-step.actionable {
+  border-color: var(--blue-line);
+  box-shadow:
+    inset 3px 0 0 var(--esr-accent),
+    var(--shadow);
+}
+.next-step.actionable .eyebrow {
+  color: var(--esr-accent);
+}
+.person div > span {
+  display: block;
+  font-size: var(--fs-xs);
+}
+.person strong {
+  display: block;
+}
+.workflow-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-top: var(--sp-5);
+}
+.workflow-actions button {
+  padding: 10px var(--sp-3);
+}
+.danger-text {
+  color: var(--red-text);
+}
+.danger-text:hover {
+  color: var(--red-text);
+  background: var(--red-bg);
+  border-color: var(--red-line);
+}
+.waiting {
+  margin: var(--sp-5) 0 0;
+  padding: var(--sp-3);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px dashed var(--line);
+  font-size: var(--fs-sm);
+  font-style: italic;
+  color: var(--ink-3);
+}
+.waiting strong {
+  font-style: normal;
+  color: var(--ink);
+}
+</style>

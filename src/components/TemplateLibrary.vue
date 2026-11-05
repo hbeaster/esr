@@ -32,3 +32,40 @@ const { state } = useWorkspaceContext();
     </article>
   </div>
 </template>
+
+<style scoped>
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--sp-5);
+}
+.template-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.template-card h2 {
+  margin-top: var(--sp-3);
+}
+.template-card .prose {
+  font-size: var(--fs-sm);
+}
+.template-card details {
+  font-size: var(--fs-sm);
+  margin-top: auto;
+}
+.template-card summary {
+  cursor: pointer;
+  color: var(--esr-accent);
+  font-weight: 600;
+}
+.template-card summary:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+@media (max-width: 560px) {
+  .template-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

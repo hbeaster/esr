@@ -1,7 +1,9 @@
 import { defineConfig } from "vitest/config";
 import vue from "@vitejs/plugin-vue";
 export default defineConfig(({ mode }) => ({
-  plugins: [vue({ customElement: /\.ce\.vue$/ })],
+  // Every SFC compiles in custom-element mode so its <style scoped> block is
+  // injected into the <esr-workspace> shadow root instead of document.head.
+  plugins: [vue({ customElement: true })],
   server: {
     port: 5173,
     proxy: {

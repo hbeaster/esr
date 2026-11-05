@@ -53,3 +53,13 @@ const { state, busy, permissionUser, permissionForm, savePermission } =
     </div>
   </form>
 </template>
+
+<style scoped>
+.admin-form {
+  max-width: 640px;
+}
+.admin-form > .muted {
+  font-size: var(--fs-sm);
+  font-style: italic;
+}
+</style>

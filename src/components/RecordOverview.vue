@@ -88,3 +88,18 @@ const { state, current, record } = useWorkspaceContext();
     </div>
   </template>
 </template>
+
+<style scoped>
+.read-label {
+  display: block;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin: var(--sp-6) 0 var(--sp-1);
+}
+.read-label + p {
+  margin-bottom: 0;
+}
+</style>

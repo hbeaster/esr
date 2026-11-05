@@ -1,13 +1,16 @@
 import { defineCustomElement } from "vue";
 import Workspace from "./Workspace.ce.vue";
-import workspaceStyles from "./styles/workspace.css?inline";
 import monoUpright from "@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2?url";
 import monoItalic from "@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-italic.woff2?url";
 import type { EsrWorkspaceElement } from "./types";
 export type * from "./types";
-/** Vue and all descendant styles are bundled into the custom element's shadow root. */
+/**
+ * Vue and every SFC style block are bundled into the custom element's shadow
+ * root: the shared base sheet through `Workspace.ce.vue`, and each child's
+ * `<style scoped>` block when that child first mounts.
+ */
 export const EsrWorkspace: { new (): EsrWorkspaceElement } =
-  defineCustomElement(Workspace, { styles: [workspaceStyles] });
+  defineCustomElement(Workspace);
 /**
  * `@font-face` rules inside a shadow root are ignored, so the bundled
  * JetBrains Mono (SIL OFL 1.1) is registered on the document font set under a

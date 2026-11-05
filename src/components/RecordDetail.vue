@@ -173,3 +173,212 @@ const {
     </div>
   </template>
 </template>
+
+<style scoped>
+.back-link {
+  border-color: transparent;
+  background: transparent;
+  padding: 0;
+  margin: 0 0 var(--sp-5);
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+}
+.back-link:hover {
+  background: transparent;
+  border-color: transparent;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.detail-heading {
+  align-items: flex-start;
+  margin-bottom: var(--sp-5);
+}
+.detail-serial {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-lg);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--esr-accent-text);
+  margin-bottom: var(--sp-1);
+}
+.detail-serial.pending {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  font-style: italic;
+  color: var(--ink-3);
+}
+.rev {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px 7px;
+  border-radius: 4px;
+  background: var(--amber-bg);
+  color: var(--amber-text);
+  border: 1px solid var(--amber-line);
+}
+.detail-heading h1 {
+  font-size: 24px;
+  max-width: 760px;
+}
+.detail-meta {
+  display: flex;
+  gap: var(--sp-2) var(--sp-3);
+  align-items: center;
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  flex-wrap: wrap;
+}
+.stepper {
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: var(--sp-4) var(--sp-5);
+  margin-bottom: var(--sp-6);
+  gap: var(--sp-3);
+}
+.stepper > div {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--ink-4);
+  font-size: var(--fs-sm);
+  min-width: 0;
+}
+.stepper > div:not(:last-child)::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+  min-width: var(--sp-3);
+}
+.stepper > div > span {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.stepper strong {
+  font-weight: 500;
+  white-space: nowrap;
+}
+.stepper .done {
+  color: var(--ink-2);
+}
+.stepper .done > span {
+  background: var(--green-bg);
+  border-color: var(--green-line);
+  color: var(--green-text);
+}
+.stepper .done:not(:last-child)::after {
+  background: var(--green-line);
+}
+.stepper .current {
+  color: var(--esr-accent-text);
+}
+.stepper .current strong {
+  font-weight: 800;
+}
+.stepper .current > span {
+  background: var(--esr-accent);
+  color: #fff;
+  border-color: var(--esr-accent);
+  box-shadow: 0 0 0 3px var(--esr-accent-soft);
+}
+.tabs {
+  display: flex;
+  gap: var(--sp-6);
+  border-bottom: 1px solid var(--line);
+  margin-bottom: var(--sp-6);
+  overflow: auto;
+}
+.tabs button {
+  border: 0;
+  background: transparent;
+  border-radius: 0;
+  padding: 0 2px var(--sp-3);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--ink-3);
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.tabs button:hover {
+  background: transparent;
+  color: var(--ink);
+}
+.tabs button.active {
+  color: var(--esr-accent-text);
+  font-weight: 700;
+  border-bottom-color: var(--esr-accent);
+}
+.detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: var(--sp-6);
+}
+.detail-content,
+.record-aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+/* Child component roots carry this component's scope, so these apply. */
+.record-aside > .padded {
+  padding: var(--sp-5);
+}
+@media (max-width: 1150px) {
+  .detail-grid {
+    grid-template-columns: minmax(0, 1fr) 260px;
+  }
+  .stepper > div:not(:last-child)::after {
+    display: none;
+  }
+}
+@media (max-width: 850px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+  .record-aside {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .detail-heading {
+    flex-wrap: wrap;
+  }
+  .stepper {
+    overflow: auto;
+    padding: var(--sp-3);
+  }
+  .stepper > div {
+    min-width: max-content;
+    font-size: var(--fs-xs);
+  }
+}
+@media (max-width: 560px) {
+  .record-aside {
+    display: flex;
+  }
+  .record-aside > .padded {
+    padding: var(--sp-5) var(--sp-4);
+  }
+  .detail-heading h1 {
+    font-size: 20px;
+  }
+  .tabs {
+    gap: var(--sp-5);
+  }
+}
+</style>

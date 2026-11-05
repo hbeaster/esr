@@ -24,3 +24,13 @@ const { state, applyTemplate } = useWorkspaceContext();
     </article>
   </div>
 </template>
+
+<style scoped>
+.template-choice {
+  border-top: 1px solid var(--line-soft);
+  padding: var(--sp-5) 0;
+}
+.template-choice h3 {
+  margin-top: var(--sp-3);
+}
+</style>

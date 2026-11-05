@@ -108,3 +108,83 @@ const { state, busy, error, notice, view, dialog, record, run, reload } =
     <WorkspaceDialogs />
   </div>
 </template>
+
+<style src="./styles/workspace.css"></style>
+
+<style scoped>
+.app {
+  display: flex;
+  min-height: calc(100vh - 47px);
+  background: var(--esr-bg);
+}
+.main-shell {
+  flex: 1;
+  min-width: 0;
+}
+.topbar {
+  height: 56px;
+  border-bottom: 1px solid var(--line);
+  background: #ffffffd9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 var(--sp-8);
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+}
+.crumbs > span {
+  padding: 0 var(--sp-2);
+  color: var(--ink-4);
+}
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.topbar-right strong {
+  color: var(--ink);
+}
+.live-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green-dot);
+  box-shadow: 0 0 0 3px var(--green-bg);
+  flex-shrink: 0;
+}
+main {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: var(--sp-8);
+}
+.empty-icon {
+  font-size: 40px;
+  margin-bottom: var(--sp-3);
+  color: var(--ink-4);
+}
+@media (max-width: 1150px) {
+  main {
+    padding: var(--sp-6);
+  }
+  .topbar {
+    padding-inline: var(--sp-6);
+  }
+}
+@media (max-width: 560px) {
+  .app {
+    display: block;
+  }
+  .topbar {
+    height: 48px;
+    padding: 0 var(--sp-4);
+    font-size: var(--fs-xs);
+  }
+  .topbar-right > span:not(.live-dot) {
+    display: none;
+  }
+  main {
+    padding: var(--sp-5) var(--sp-4);
+  }
+}
+</style>
