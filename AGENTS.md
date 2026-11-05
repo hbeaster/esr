@@ -19,7 +19,7 @@ Human docs, which these instructions do not restate:
 - `Workflow.Public` strips attachment bytes from record DTOs. Downloads use the authenticated file route.
 - The npm `files` allowlist is `dist/component/`, `README.md`, `LICENSE`, `docs/api.md`, and `docs/host-component-contract.md`. Leave the host, backend, seed data, tests, and these agent files out of the package. Publishing to a registry is out of scope.
 - Kubernetes stays at one replica. Demo records and the JWT signing key are process-local.
-- Historical search is deterministic term overlap. Keep it labeled as a mock. Esra AI is a separate review call. It uses the deployment's `EsrAi` settings, and the browser never sends or receives the provider credential.
+- Historical search is deterministic term overlap. Keep it labeled as a mock. Esra AI is a separate review call. It uses the deployment's `EsrAi` settings, and the browser never sends or receives the provider credential. Local credentials belong in the gitignored `.env`, not in `appsettings.json` or the image.
 - Component styles enter the shadow root only through `src/index.ts` and `src/styles/workspace.css`. Workspace state is instance-local via `useWorkspaceContext`. Each `<esr-workspace>` has its own state.
 - Vue custom-element listeners receive `event.detail` as a one-element array. The payload is `event.detail[0]`.
 - `tokenProvider` is a JavaScript property, not an HTML attribute. Assigning a new function reloads bootstrap. Changing `apiBase` alone does not.

@@ -21,7 +21,7 @@
   ],
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "dev:api": "dotnet run --project backend/Esr.Api --urls http://127.0.0.1:5080",
+    "dev:api": "node --env-file-if-exists=.env scripts/dev-api.mjs",
     "build": "npm run build:component",
     "build:component": "vue-tsc --noEmit -p tsconfig.component.json && vite build --mode component && vue-tsc -p tsconfig.build.json",
     "build:host": "vue-tsc --noEmit && vite build",

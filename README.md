@@ -69,9 +69,12 @@ Requires the [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10
 
 ```sh
 npm ci
-npm run dev:api  # terminal 1: ASP.NET on http://127.0.0.1:5080
-npm run dev      # terminal 2: Vue host on http://127.0.0.1:5173
+cp .env.example .env  # optional: local Esra provider settings; this file stays untracked
+npm run dev:api       # terminal 1: ASP.NET on http://127.0.0.1:5080
+npm run dev           # terminal 2: Vue host on http://127.0.0.1:5173
 ```
+
+`npm run dev:api` loads `.env` when that file exists. Keep provider credentials there. `backend/Esr.Api/appsettings.json` stays in git with those values empty.
 
 Use the identity selector above the workspace to follow each role. Start with **Requestor**, create a request, switch to **Supervisor** to assign it, then **Engineer**, **Supervisor**, **Shop**, and **Division Head** for the full workflow. Administrator can grant cross-TRF review and delegated signatures. Demo JCNs are `JCN-260184` and `JCN-260207`; `N/A` is supported.
 
@@ -101,9 +104,7 @@ Esra stays off until the deployment sets an OpenAI-compatible chat endpoint. The
 | `EsrAi__AuthHeader` | Header that carries the credential | `Authorization` |
 | `EsrAi__AuthScheme` | Scheme before the key. Empty sends the key as the whole header value | `Bearer` |
 
-```sh
-EsrAi__BaseUrl=http://127.0.0.1:11434/v1 EsrAi__Model=llama3.1 docker compose up --build
-```
+Put the same names in the gitignored `.env`. Both `npm run dev:api` and `docker compose up --build` read that file. Compose passes the values into the container and does not copy `.env` into the image. Restart the API after changing `.env`.
 
 In Kubernetes, create a secret named `esr-ai` with `baseUrl`, `apiKey`, and `model`. The deployment reads those keys only when the secret exists. See [the API contract](docs/api.md) for the review response.
 
