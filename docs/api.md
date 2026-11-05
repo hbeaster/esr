@@ -6,6 +6,7 @@ Base URL defaults to `/api`. All endpoints except `/demo/*` and `/health/*` requ
 | --- | --- | --- |
 | `GET /demo/users` | None | Synthetic actors |
 | `POST /demo/session` | `{userId}` | `{user,token}`; demo only |
+| `GET /demo/simulated`, `POST /demo/simulated` | None; `{records,templates}` | `{accepts,loaded}`; `{records,sequence}`. Dev sandbox only: mapped only in Development or Testing with `Demo:AcceptSimulatedData` set, so hosts never implement it |
 | `GET /bootstrap` | None | `{user,users,templates,permissions,records}` |
 | `GET /lds?jcn=21036WX010184` | None | `{workStatement,refit,component,location,swbs}` |
 | `POST /history/search` | `{condition}` | `{summary,matches:[{id,serial,title,resolution,rationale,similarity}]}` |

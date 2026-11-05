@@ -6,6 +6,7 @@ import type { Plugin } from "vite";
 import { SIMULATED_API_BASE } from "./base";
 import { createSimulatedApi } from "./handler";
 import { ChatFailure, completeChat } from "./chat";
+import { createSandbox } from "./sandbox";
 import type { ChatProvider } from "./chat";
 import type { SimulatedSeed } from "./data";
 
@@ -41,7 +42,17 @@ export function simulatedApiPlugin(): Plugin {
       const env = loadEnv(server.config.mode, server.config.root, [
         "CHAT_",
         "Chat__",
+        "ESR_",
       ]);
+      // The writable sandbox API that `npm run dev:api` starts. "off" keeps simulated data read-only.
+      const sandboxUrl = env.ESR_SIMULATED_API || "http://127.0.0.1:5081";
+      const sandbox =
+        sandboxUrl === "off" ? null : createSandbox(sandboxUrl, seed);
+      server.config.logger.info(
+        sandbox
+          ? `  Simulated data: writable through ${sandboxUrl} while npm run dev:api runs, read-only otherwise`
+          : "  Simulated data: read-only (ESR_SIMULATED_API=off)",
+      );
       const apiKey = env.Chat__ApiKey || env.CHAT_API_KEY || "";
       const provider: ChatProvider | null = apiKey.trim()
         ? {
@@ -63,6 +74,11 @@ export function simulatedApiPlugin(): Plugin {
       server.middlewares.use(SIMULATED_API_BASE, (req, res, next) => {
         void (async () => {
           const url = new URL(req.url ?? "/", "http://simulated.local");
+          // Writable simulated data: the sandbox runs the real workflow.
+          if (sandbox && (await sandbox.ready())) {
+            sandbox.forward(req, res, `${url.pathname}${url.search}`);
+            return;
+          }
           let body: unknown;
           if (req.method === "POST" && ROUTES_WITH_BODY.has(url.pathname)) {
             try {

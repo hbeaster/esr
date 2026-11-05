@@ -44,7 +44,9 @@ export default defineConfig({
           command: "npm run dev",
           url: "http://127.0.0.1:5173",
           reuseExistingServer: !process.env.CI,
-          env: { CHAT_API_KEY: "", Chat__ApiKey: "" },
+          // Simulated data stays read-only in tests: the suite's shared store
+          // must not be replaced by a sandbox load.
+          env: { CHAT_API_KEY: "", Chat__ApiKey: "", ESR_SIMULATED_API: "off" },
         },
       ],
 });

@@ -23,7 +23,7 @@ export type SimulatedResponse =
   | { status: number; bytes: Uint8Array; type: string };
 
 export const READ_ONLY_MESSAGE =
-  "Simulated data is read-only. Switch to API data to run workflow actions.";
+  "Simulated data is read-only without the dev API. Run npm run dev:api to sign and submit on simulated data, or switch to API data.";
 const TOKEN_PREFIX = "simulated.";
 const CANNED_SIMILARITY = [90, 75, 60];
 

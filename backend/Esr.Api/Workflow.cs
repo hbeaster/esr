@@ -123,6 +123,21 @@ public sealed class Workflow(StoreData data)
         Audit(r, a, action == "revise" ? $"Revision {RevisionSuffix(r.Revision)}: {r.RevisionReason}" : action);
         Data.Records[Data.Records.IndexOf(original)] = r; return r;
     }
+    /// <summary>
+    /// Dev sandbox only: replaces the records and templates with the dev server's simulated data,
+    /// then continues ESR numbering after the highest simulated number of the current year.
+    /// Call under <see cref="Sync"/>.
+    /// </summary>
+    public int LoadSimulated(StoreData simulated)
+    {
+        Data.Records = simulated.Records; Data.Templates = simulated.Templates;
+        var year = DateTime.UtcNow.Year % 100;
+        Data.SequenceYear = DateTime.UtcNow.Year;
+        Data.Sequence = simulated.Records.Concat(simulated.Records.SelectMany(r => r.Revisions))
+            .Select(r => r.SerialBase is { Length: 6 } b && int.TryParse(b[..2], out var y) && y == year && int.TryParse(b[2..], out var n) ? n : 0)
+            .DefaultIfEmpty(0).Max();
+        return Data.Records.Count;
+    }
     public void SetPermission(Actor actor, JsonObject d)
     {
         Role(actor, "Administrator"); var id = Required(d, "userId"); Require(Data.Users.Any(u => u.Id == id), "Unknown user."); var access = Get(d, "crossSite"); Require(access is "none" or "read" or "review", "Invalid cross-facility access.");

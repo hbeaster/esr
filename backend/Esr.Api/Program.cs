@@ -110,6 +110,18 @@ app.MapPost("/api/presence", (HttpContext c, JsonObject d) =>
     live.SetPresence(a, d["connectionId"]?.GetValue<string>() ?? "", d["view"]?.GetValue<string>() ?? "", d["recordId"]?.GetValue<string>());
     return Results.Ok(new { ok = true });
 });
+// Dev sandbox for "Use fake data": the dev server loads its simulated records here, so signing and
+// every other action run through Workflow.cs. Only Development or Testing with the flag set maps it.
+var acceptSimulated = (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing")) && app.Configuration.GetValue<bool>("Demo:AcceptSimulatedData");
+if (acceptSimulated)
+{
+    var simulatedLoaded = false;
+    app.MapGet("/api/demo/simulated", () => { lock (workflow.Sync) return Results.Ok(new { accepts = true, loaded = simulatedLoaded }); });
+    app.MapPost("/api/demo/simulated", (StoreData simulated) =>
+    {
+        lock (workflow.Sync) { var count = workflow.LoadSimulated(simulated); simulatedLoaded = true; return Results.Ok(new { records = count, sequence = workflow.Data.Sequence }); }
+    });
+}
 app.MapFallback((HttpContext c) => { c.Response.StatusCode = 404; return Results.Json(new { error = "Route not found." }); });
 app.Run();
 public partial class Program { }

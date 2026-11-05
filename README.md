@@ -113,7 +113,17 @@ A host-only build is available with `npm run build:host`, producing `dist/host/`
 
 With `npm run dev`, the top-right **Use fake data** button is the only way to see pre-populated data. It switches the workspace to a generated dataset of 60 records and 3 templates, covering every workflow status, returned requests, deferrals, revisions, attachments and long text. An amber **SIMULATED DATA** badge shows while it is on, and the choice survives a reload. Select **Use API data** to switch back.
 
-The dataset comes from the Vite dev server, so the .NET API and CRACN mock do not need to be running. Fake mode is read-only: workflow actions and PDF export show an error explaining this, because those rules and the PDF generator live in the backend. The button, badge and dataset are not included in production host builds or the npm package.
+The dataset comes from the Vite dev server. What fake mode can do depends on whether `npm run dev:api` is running:
+
+| | `npm run dev` only | With `npm run dev:api` |
+| --- | --- | --- |
+| Browse, filter, replay, dive, watch floor | Yes | Yes |
+| Sign, submit, approve, close, revise, new requests | No: actions show a read-only error | Yes, through the real workflow |
+| PDF export, live push and presence | No | Yes |
+
+`npm run dev:api` also starts a sandbox copy of the API on port 5081 (Development, with `Demo:AcceptSimulatedData`). The first fake-data request loads the 60 simulated records into it, and the dev server then forwards every fake-data request there. Every rule runs in `Workflow.cs`, so nothing is duplicated in the browser or dev server. New ESR numbers continue after the highest simulated one. The sandbox keeps data in memory: changes survive a dev-server restart but reset when `npm run dev:api` restarts. Set `ESR_SIMULATED_API=off` to skip the sandbox, or point it elsewhere with `ESR_SIMULATED_API=<url>`. New requests on fake data can use the CRACN mock's JCNs or N/A; the simulated-only JCNs are not in the mock.
+
+The button, badge, dataset, and sandbox are not included in production host builds or the npm package. The sandbox endpoint only exists in Development or Testing with the flag set, so Compose and Kubernetes never expose it. The end-to-end tests keep fake mode read-only (`ESR_SIMULATED_API=off`).
 
 ## Docker
 
@@ -206,7 +216,7 @@ UI sections share a typed, instance-local Vue injection context. No state is sha
 | `src/types.ts` | Shared domain DTOs and public component types |
 | `src/index.ts` | Custom element registration and package exports |
 | `host/main.ts` | Demo-only identity selector and host initialization |
-| `host/simulated/` | Dev-only fake dataset, read-only API, Vite plugin, and toggle |
+| `host/simulated/` | Dev-only fake dataset, read-only stand-in API, writable sandbox proxy, Vite plugin, and toggle |
 | `backend/Esr.Api/Workflow.cs` | Authorization, transitions, revisions, validation |
 | `backend/Esr.Api/DemoIdentity.cs` | Ephemeral signed demo JWTs |
 | `backend/Esr.Api/Chat.cs` | Assistant chat prompt, provider adapter, and mock |
