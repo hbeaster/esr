@@ -313,6 +313,25 @@ export function agingDescription(
         : `warns after ${thresholds[0]} days`;
   return `${record.status} for ${span}, ${limit}`;
 }
+const liveVerbs: Record<string, string> = {
+  create: "created",
+  assign: "assigned",
+  reject: "rejected",
+  resubmit: "resubmitted",
+  delete: "deleted",
+  draft: "updated the draft of",
+  resolve: "resolved",
+  approve: "approved",
+  return: "returned",
+  complete: "signed shop work on",
+  close: "closed",
+  revise: "revised",
+  comment: "commented on",
+  attach: "attached a file to",
+};
+/** Past-tense phrase for a pushed action, e.g. "approved" in "Casey Rivera approved this record". */
+export const liveVerb = (action: string): string =>
+  liveVerbs[action] ?? "updated";
 const toneRank: Record<AgingTone, number> = { stale: 0, warn: 1, ok: 2 };
 /**
  * Records ordered most critical first: stale, then aging, then on track, then

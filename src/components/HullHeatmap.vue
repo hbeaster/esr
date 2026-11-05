@@ -44,6 +44,7 @@ const {
   replayAt,
   activity,
   openRecord,
+  lastChange,
 } = useWorkspaceContext();
 const max = computed(() =>
   Math.max(1, ...hullZones.map((z) => zoneCounts.value[z.id])),
@@ -329,6 +330,13 @@ watch(replayAt, (now, before) => {
     const z = hullZone(e.location);
     if (z) addPing(z, "event");
   }
+});
+// Live pushes ping the compartment where the change happened.
+watch(lastChange, (change) => {
+  if (!change || replayAt.value !== null || dive.value) return;
+  const record = state.records.find((r) => r.id === change.id);
+  const z = record && hullZone(record.location);
+  if (z) addPing(z, "event");
 });
 const ticker = computed(() => {
   const t = replayAt.value;

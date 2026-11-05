@@ -199,3 +199,28 @@ export interface EsrWorkspaceElement extends HTMLElement {
   apiBase?: string;
   tokenProvider?: TokenProvider | null;
 }
+/** Someone with a workspace open, from the optional live stream (`GET /events`). */
+export interface LiveViewer {
+  connectionId: string;
+  userId: string;
+  name: string;
+  role: string;
+  site: string;
+  view: "workspace" | "record" | "watch-floor" | "other";
+  /** Null when the viewer is not on a record, or it is not one you can open. */
+  recordId: string | null;
+}
+/** A committed change pushed by the optional live stream. */
+export interface LiveRecordChange {
+  id: string;
+  version: number;
+  status: WorkflowStatus;
+  serial: string | null;
+  action: string;
+  actor: string;
+  actorId: string;
+  deleted: boolean;
+  time: string;
+}
+/** "unavailable" means the host's API has no live stream; the workspace works without it. */
+export type LiveStatus = "off" | "connecting" | "live" | "unavailable";

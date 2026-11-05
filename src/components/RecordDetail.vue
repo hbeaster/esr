@@ -10,7 +10,8 @@ import EquipmentVisual from "./EquipmentVisual.vue";
 import WorkflowTimeline from "./WorkflowTimeline.vue";
 import SplitFlap from "./SplitFlap.vue";
 import RecordStamp from "./RecordStamp.vue";
-import { ref, watch } from "vue";
+import PresenceStack from "./PresenceStack.vue";
+import { computed, ref, watch } from "vue";
 import { date, esrRevision, plainText, statusTone } from "../presentation";
 import type { WorkflowStatus } from "../types";
 import { useWorkspaceContext } from "../composables/workspaceContext";
@@ -26,7 +27,21 @@ const {
   navigate,
   action,
   downloadPdf,
+  viewers,
 } = useWorkspaceContext();
+/** Other people on this record right now (from the optional live stream). */
+const onThisRecord = computed(() =>
+  viewers.value.filter(
+    (v) => v.recordId === record.value?.id && v.view === "record",
+  ),
+);
+const viewingText = computed(() => {
+  const names = [...new Set(onThisRecord.value.map((v) => v.name))];
+  if (!names.length) return "";
+  if (names.length === 1) return `${names[0]} is viewing`;
+  if (names.length === 2) return `${names[0]} and ${names[1]} are viewing`;
+  return `${names[0]} and ${names.length - 1} others are viewing`;
+});
 
 // Ceremony for milestones reached while this record is on screen: a stamp
 // when it is issued or closed, and a flip when its ESR number changes.
@@ -134,7 +149,14 @@ watch(
                   special: a === 'DFS' || a === 'TVD',
                 },
               ]"
-            >{{ a }}</span>
+            >{{ a }}</span><span
+              v-if="viewingText"
+              class="viewing"
+            ><PresenceStack
+              :viewers="onThisRecord"
+              :max="3"
+              label="Viewing this record"
+            /><span>{{ viewingText }}</span></span>
           </div>
         </div>
       </div>
@@ -276,6 +298,17 @@ watch(
   .detail-heading.shaking {
     animation: none;
   }
+}
+.viewing {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 2px 10px 2px 4px;
+  border: 1px solid var(--esr-accent-soft);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--esr-accent-text);
+  font-weight: 600;
 }
 .detail-identity {
   display: flex;

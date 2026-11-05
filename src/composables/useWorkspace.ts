@@ -6,6 +6,7 @@ import {
   filterRecords,
   hullZone,
   hullZones,
+  liveVerb,
   recordAsOf,
   normalizeJcn,
   plainText,
@@ -14,6 +15,7 @@ import {
 import type { HullZone } from "../presentation";
 import { useDialogFocus } from "./useDialogFocus";
 import { useNow } from "./useNow";
+import { useLive } from "./useLive";
 import type {
   ActionForm,
   Attachment,
@@ -27,6 +29,7 @@ import type {
   HistoricalMatch,
   HistorySearch,
   LdsData,
+  LiveRecordChange,
   Permission,
   RecordTab,
   RequestForm,
@@ -279,8 +282,24 @@ export function useWorkspace(
     { immediate: true },
   );
 
+  /** The record version the draft was loaded from. Saves send it, so edits made on an older version get a 409. */
+  const draftVersion = ref<number | null>(null);
+  const draftFields = (d: Draft) =>
+    JSON.stringify([
+      d.resolution,
+      d.rationale,
+      d.dfs,
+      d.dfsReference,
+      d.tvd,
+      d.tvdReference,
+      [...d.attributes],
+    ]);
+  /** True when the draft has edits the open record does not have yet. */
+  const draftDirty = () =>
+    !!current.value && draftFields(draft) !== draftFields(current.value);
   function resetDraft() {
     const r = current.value;
+    draftVersion.value = r?.version ?? null;
     if (r)
       Object.assign(draft, {
         resolution: r.resolution,
@@ -413,7 +432,7 @@ export function useWorkspace(
     const r = selectedRecord();
     const result = await api()<EsrRecord | { deleted: true }>(
       `/records/${r.id}/${action}`,
-      { ...data, version: r.version },
+      { ...data, version: draftVersion.value ?? r.version },
     );
     emit("record-change", {
       id: r.id,
@@ -545,6 +564,63 @@ export function useWorkspace(
     error.value = "";
   }
   onBeforeUnmount(closePreview);
+
+  // ---- Optional live updates and presence (GET /events, POST /presence) ----
+  async function applyRemoteChange(change: LiveRecordChange) {
+    const local = state.records.find((r) => r.id === change.id);
+    const others = change.actorId !== state.user?.id;
+    const onScreen = current.value?.id === change.id && view.value === "record";
+    if (change.deleted) {
+      state.records = state.records.filter((r) => r.id !== change.id);
+      if (onScreen) {
+        navigate("workspace");
+        if (others) notice.value = `${change.actor} deleted that request.`;
+      }
+      return;
+    }
+    if (local && local.version >= change.version) return;
+    const wasDirty = onScreen && draftDirty();
+    let fresh: EsrRecord;
+    try {
+      fresh = await api()<EsrRecord>(`/records/${change.id}`);
+    } catch {
+      return;
+    }
+    // A slower fetch must not replace a newer copy that already arrived.
+    const index = state.records.findIndex((r) => r.id === fresh.id);
+    if (index === -1) state.records.unshift(fresh);
+    else if (state.records[index].version < fresh.version)
+      state.records[index] = fresh;
+    else return;
+    if (!onScreen || !others) return;
+    if (wasDirty)
+      notice.value = `${change.actor} ${liveVerb(change.action)} this record. Your unsaved draft is based on the earlier version.`;
+    else {
+      resetDraft();
+      notice.value = `${change.actor} ${liveVerb(change.action)} this record.`;
+    }
+  }
+  const live = useLive({
+    identity: () => [state.user?.id, props.tokenProvider, props.apiBase],
+    enabled: () => !!state.user && !!props.tokenProvider,
+    base: () => props.apiBase || "/api",
+    tokenProvider: () => props.tokenProvider,
+    presence: () =>
+      watchFloor.value
+        ? { view: "watch-floor", recordId: null }
+        : view.value === "record"
+          ? { view: "record", recordId: selectedId.value }
+          : view.value === "workspace"
+            ? { view: "workspace", recordId: null }
+            : { view: "other", recordId: null },
+    onChange: (change) => void applyRemoteChange(change),
+  });
+  /** Everyone else with a workspace open, one entry per open window. */
+  const viewers = computed(() =>
+    live.viewers.value.filter(
+      (v) => v.connectionId !== live.connectionId.value,
+    ),
+  );
   const { modalElement, trapFocus } = useDialogFocus(dialog, closeDialog);
   watch(permissionUser, (id) =>
     Object.assign(
@@ -594,6 +670,9 @@ export function useWorkspace(
     fleet,
     fleetNow,
     activity,
+    liveStatus: live.status,
+    lastChange: live.lastChange,
+    viewers,
     selectedId,
     tab,
     dialog,

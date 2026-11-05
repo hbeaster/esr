@@ -119,7 +119,16 @@ For existing-record mutations, the event fires after the mutation response succe
 
 A host may invalidate its own record cache or refresh a related summary when this event arrives. Do not submit the same mutation again in response. Events do not contain the full record, version, signature, or attachment. Obtain authoritative data from the API when needed.
 
-Reading, navigation, downloads, and permission-map updates do not emit `record-change`. There are no notifications for changes made by other users or other component instances; there is no polling or subscription channel.
+Reading, navigation, downloads, and permission-map updates do not emit `record-change`. Changes made by other users or other component instances never emit `record-change`, including changes that arrive over the optional live stream below.
+
+### Live updates and presence
+
+When the API implements the optional `GET /events` and `POST /presence` endpoints ([API contract](api.md#live-updates-optional)), the component subscribes once it has an identity and a `tokenProvider`. Changes committed elsewhere then update the open list and record without a reload, the record header shows who else is viewing it, and the top bar shows who is online. If the endpoints are absent (404, 405, or 501), the component works as before and the status dot stays gray.
+
+- A remote change to the record on screen replaces it only when the user has no unsaved draft edits. With unsaved edits the draft is kept, a notice says the record changed, and the next save carries the version the edit started from, so the API answers 409 instead of overwriting the other change.
+- The stream reconnects when `tokenProvider`, `apiBase`, or the identity changes, and closes when the element is removed.
+- The exported types `LiveViewer`, `LiveRecordChange`, and `LiveStatus` describe the payloads.
+- A same-origin proxy must not buffer `text/event-stream` responses. The API sends `X-Accel-Buffering: no` for nginx.
 
 ### workspace-error
 
@@ -195,6 +204,7 @@ Do not call internal Vue methods or synthesize button clicks to emulate these in
 - Verify sign-out removes loaded records from the page and detaches listeners.
 - Verify identity changes do not reuse an old element's data or unsaved edits.
 - Verify deployed API routing, authorization, CORS where applicable, and file downloads.
+- If the API offers live updates, verify a change in one window reaches another through the deployed proxy, and that the status dot is green.
 - Verify the workspace fits the host's desktop and mobile layouts.
 
 Implementation references: [public types](../src/types.ts), [registration](../src/index.ts), [workspace controller](../src/composables/useWorkspace.ts), [HTTP adapter](../src/api.ts), and [demo host](../host/main.ts).

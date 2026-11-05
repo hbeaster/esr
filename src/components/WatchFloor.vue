@@ -4,6 +4,7 @@ import HullHeatmap from "./HullHeatmap.vue";
 import FleetReplay from "./FleetReplay.vue";
 import CountUp from "./CountUp.vue";
 import EquipmentGlyph from "./EquipmentGlyph.vue";
+import PresenceStack from "./PresenceStack.vue";
 import {
   agingThresholdsDays,
   date,
@@ -12,6 +13,7 @@ import {
   formatDuration,
   hullZone,
   hullZoneLabel,
+  liveVerb,
   plainText,
   rankByCriticality,
   statusAge,
@@ -30,7 +32,34 @@ const {
   replayAt,
   watchFloor,
   openRecord,
+  liveStatus,
+  viewers,
+  lastChange,
 } = useWorkspaceContext();
+
+// ---- Live pushes: a toast for each change as it is committed anywhere ----
+interface Toast {
+  key: number;
+  text: string;
+  tone: string;
+}
+const toasts = ref<Toast[]>([]);
+let toastKey = 0;
+const toastTimers = new Set<ReturnType<typeof setTimeout>>();
+watch(lastChange, (change) => {
+  if (!change) return;
+  const toast = {
+    key: ++toastKey,
+    text: `${change.actor} ${liveVerb(change.action)} ${change.serial || "a new request"}`,
+    tone: change.deleted ? "gray" : statusTone(change.status),
+  };
+  toasts.value = [toast, ...toasts.value].slice(0, 3);
+  const timer = setTimeout(() => {
+    toasts.value = toasts.value.filter((t) => t.key !== toast.key);
+    toastTimers.delete(timer);
+  }, 6000);
+  toastTimers.add(timer);
+});
 
 const root = ref<HTMLElement | null>(null);
 const replay = ref<InstanceType<typeof FleetReplay> | null>(null);
@@ -149,6 +178,7 @@ onMounted(() => {
   scheduleReplay(FIRST_REPLAY_MS);
 });
 onBeforeUnmount(() => {
+  toastTimers.forEach(clearTimeout);
   clearInterval(spotlightTimer);
   clearTimeout(attractTimer);
   document.removeEventListener("fullscreenchange", onFullscreenChange);
@@ -170,11 +200,24 @@ onBeforeUnmount(() => {
     <header class="wf-bar">
       <div class="wf-brand">
         <span
-          class="wf-live"
+          :class="['wf-live', { off: liveStatus !== 'live' }]"
           aria-hidden="true"
         />
         <strong>ESR Watch Floor</strong>
         <span class="wf-site">TRF {{ state.user?.site }}</span>
+        <span
+          :class="['wf-link', liveStatus]"
+          :title="
+            liveStatus === 'live'
+              ? 'Changes appear here as they are committed'
+              : 'Live updates are not available; showing the last load'
+          "
+        >{{ liveStatus === "live" ? "Live" : "Not live" }}</span>
+        <PresenceStack
+          :viewers="viewers"
+          :max="5"
+          label="Online now"
+        />
         <span
           v-if="replayAt !== null"
           class="wf-mode"
@@ -202,6 +245,24 @@ onBeforeUnmount(() => {
       </div>
     </header>
 
+    <TransitionGroup
+      tag="ol"
+      name="toast"
+      class="wf-toasts"
+      aria-live="polite"
+      aria-label="Live changes"
+    >
+      <li
+        v-for="t in toasts"
+        :key="t.key"
+        :class="['wf-toast', t.tone]"
+      >
+        <span
+          class="wf-bolt"
+          aria-hidden="true"
+        >⚡</span>{{ t.text }}
+      </li>
+    </TransitionGroup>
     <section
       class="wf-stats"
       aria-label="Workflow counts"
@@ -420,6 +481,73 @@ onBeforeUnmount(() => {
 }
 .wf-site {
   color: var(--ink-3);
+}
+.wf-live.off {
+  background: var(--ink-4);
+  animation: none;
+}
+.wf-link {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: var(--fs-xs);
+  font-weight: 800;
+  background: var(--green-bg);
+  color: var(--green-text);
+}
+.wf-link:not(.live) {
+  background: var(--gray-bg);
+  color: var(--gray-text);
+}
+.wf-toasts {
+  position: fixed;
+  top: 84px;
+  right: var(--sp-6);
+  z-index: 2;
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+}
+.wf-toast {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  max-width: 420px;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--gray-dot);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  box-shadow: 0 12px 32px #0008;
+  font-size: var(--fs-md);
+  font-weight: 700;
+}
+.wf-toast.blue {
+  border-left-color: var(--blue-dot);
+}
+.wf-toast.amber {
+  border-left-color: var(--amber-dot);
+}
+.wf-toast.green {
+  border-left-color: var(--green-dot);
+}
+.wf-bolt {
+  color: var(--amber-dot);
+}
+.toast-enter-active,
+.toast-leave-active {
+  transition:
+    transform 0.35s var(--ease),
+    opacity 0.35s;
+}
+.toast-enter-from {
+  transform: translateX(40px);
+  opacity: 0;
+}
+.toast-leave-to {
+  opacity: 0;
 }
 .wf-mode {
   padding: 2px 10px;

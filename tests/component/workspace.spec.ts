@@ -88,12 +88,18 @@ test("isolated component loads, filters, navigates, and lays out at mobile width
   await expect(page.locator("tbody tr")).toHaveCount(1);
   await page.getByRole("button", { name: "Surface" }).click();
   await expect(page.locator("tbody tr")).toHaveCount(6);
+  // Real fullscreen would block the viewport resize later in this test, and
+  // leaving it is asynchronous at the window level. The overlay is under test here.
+  await page.evaluate(() => {
+    Element.prototype.requestFullscreen = () => Promise.resolve();
+  });
   await page.getByRole("button", { name: "Watch floor" }).click();
   const floor = page.getByRole("dialog", { name: "ESR watch floor" });
   await expect(floor).toBeVisible();
   await expect(floor.locator(".wf-stat")).toHaveCount(5);
   await page.keyboard.press("Escape");
   await expect(floor).toBeHidden();
+
   await page.screenshot({
     path: "artifacts/desktop-workspace.png",
     fullPage: true,

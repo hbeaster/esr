@@ -1,4 +1,5 @@
 using Esr.Api;
+using Microsoft.AspNetCore.Http.Features;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 var builder = WebApplication.CreateBuilder(args);
@@ -6,8 +7,8 @@ builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 
 // Only local runs and tests can load other data; deployed environments always use the shipped seed.
 var dataFile = builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("Testing") ? builder.Configuration["Demo:DataFile"] : null;
 var seed = JsonSerializer.Deserialize<StoreData>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, dataFile ?? "seed.json")), JsonConfig.Options)!;
-var workflow = new Workflow(seed); var identity = new DemoIdentity();
-builder.Services.AddSingleton(workflow); builder.Services.AddSingleton(identity);
+var workflow = new Workflow(seed); var identity = new DemoIdentity(); var live = new LiveHub(workflow);
+builder.Services.AddSingleton(workflow); builder.Services.AddSingleton(identity); builder.Services.AddSingleton(live);
 // JCN context comes from the CRACN API (cracn_openapi.json); locally that is the mock in mocks/cracn.
 var cracn = builder.Configuration.GetSection("Cracn").Get<CracnOptions>() ?? new CracnOptions();
 builder.Services.AddHttpClient<ILdsSource, CracnLdsSource>(cracn.Apply);
@@ -39,7 +40,7 @@ app.MapPost("/api/records", async (HttpContext c, JsonObject d, ILdsSource lds) 
     var a = User(c); var jcn = d["jcn"] is JsonValue v && v.TryGetValue<string>(out var s) ? s.Trim() : "";
     // Resolve the JCN before taking the store lock; Create re-validates the rest of the request.
     var context = jcn is "" or "N/A" ? null : await lds.Lookup(Workflow.Jcn(jcn), c.RequestAborted);
-    lock (workflow.Sync) return Results.Ok(Workflow.Public(workflow.Create(a, d, context)));
+    lock (workflow.Sync) { var created = workflow.Create(a, d, context); live.RecordChanged(created, "create", a); return Results.Ok(Workflow.Public(created)); }
 });
 app.MapGet("/api/records/{id}", (HttpContext c, string id) => { var a = User(c); lock (workflow.Sync) return Results.Ok(Workflow.Public(workflow.Find(a, id))); });
 app.MapGet("/api/records/{id}/pdf", (HttpContext c, string id, int? revision) =>
@@ -50,7 +51,52 @@ app.MapGet("/api/records/{id}/files/{fileId}", (HttpContext c, string id, string
 {
     var a = User(c); lock (workflow.Sync) { var r = workflow.Find(a, id); if (revision is not null) r = r.Revisions.Find(x => x.Revision == revision) ?? throw new RuleException("Revision not found.", 404); var f = r.Attachments.Find(x => x.Id == fileId) ?? throw new RuleException("File not found.", 404); return Results.File(Convert.FromBase64String(f.Base64), f.Type); }
 });
-app.MapPost("/api/records/{id}/{action}", (HttpContext c, string id, string action, JsonObject d) => { var a = User(c); lock (workflow.Sync) { var result = workflow.Execute(a, id, action, d); return result is null ? Results.Ok(new { deleted = true }) : Results.Ok(Workflow.Public(result)); } });
+app.MapPost("/api/records/{id}/{action}", (HttpContext c, string id, string action, JsonObject d) =>
+{
+    var a = User(c);
+    lock (workflow.Sync)
+    {
+        var before = workflow.Find(a, id); var result = workflow.Execute(a, id, action, d);
+        live.RecordChanged(result ?? before, action, a, deleted: result is null);
+        return result is null ? Results.Ok(new { deleted = true }) : Results.Ok(Workflow.Public(result));
+    }
+});
+// Server-sent events: record changes and presence. Uses the same bearer token as every other call.
+app.MapGet("/api/events", async (HttpContext c) =>
+{
+    var a = User(c);
+    c.Response.ContentType = "text/event-stream";
+    c.Response.Headers["X-Accel-Buffering"] = "no";
+    c.Features.Get<IHttpResponseBodyFeature>()?.DisableBuffering();
+    var connection = live.Connect(a);
+    try
+    {
+        await c.Response.WriteAsync(LiveHub.Frame("hello", new { connectionId = connection.Id }), c.RequestAborted);
+        await c.Response.Body.FlushAsync(c.RequestAborted);
+        var reader = connection.Outbox.Reader;
+        while (!c.RequestAborted.IsCancellationRequested)
+        {
+            using var wait = CancellationTokenSource.CreateLinkedTokenSource(c.RequestAborted);
+            wait.CancelAfter(TimeSpan.FromSeconds(15));
+            try { await reader.WaitToReadAsync(wait.Token); }
+            catch (OperationCanceledException) when (!c.RequestAborted.IsCancellationRequested)
+            {
+                // Comment line keeps proxies from closing an idle stream.
+                await c.Response.WriteAsync(": ping\n\n", c.RequestAborted); await c.Response.Body.FlushAsync(c.RequestAborted); continue;
+            }
+            while (reader.TryRead(out var frame)) await c.Response.WriteAsync(frame, c.RequestAborted);
+            await c.Response.Body.FlushAsync(c.RequestAborted);
+        }
+    }
+    catch (OperationCanceledException) { }
+    finally { live.Disconnect(connection); }
+});
+app.MapPost("/api/presence", (HttpContext c, JsonObject d) =>
+{
+    var a = User(c);
+    live.SetPresence(a, d["connectionId"]?.GetValue<string>() ?? "", d["view"]?.GetValue<string>() ?? "", d["recordId"]?.GetValue<string>());
+    return Results.Ok(new { ok = true });
+});
 app.MapFallback((HttpContext c) => { c.Response.StatusCode = 404; return Results.Json(new { error = "Route not found." }); });
 app.Run();
 public partial class Program { }

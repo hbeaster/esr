@@ -15,6 +15,8 @@ Base URL defaults to `/api`. All endpoints except `/demo/*` and `/health/*` requ
 | `GET /records/:id/pdf` | Optional `?revision=0` | Approved `application/pdf` snapshot |
 | `GET /records/:id/files/:fileId` | Optional `?revision=0` | Original file bytes |
 | `POST /permissions` | `{userId,crossSite,dualSign}` | Permission map; admin only |
+| `GET /events` | None | Optional. `text/event-stream` of live changes and presence (below) |
+| `POST /presence` | `{connectionId,view,recordId?}` | Optional. `{ok:true}`; reports what this workspace shows |
 
 Action bodies:
 
@@ -43,3 +45,19 @@ An assigned ESR number is a two-digit UTC year, a sequence from `0001` to `9999`
 Records carry a monotonically increasing `version`. The component submits it on actions; a stale version fails with 409. Mutations are validated on a deep copy and committed under a store lock. Record DTOs omit the binary attachment payload; downloads require authenticated access. Snapshots preserve attachment bytes and all signature evidence.
 
 Cross-facility access is `none`, `read`, or `review`. Review permits comments only. Dual-sign delegation does not override facility boundaries and requires a comment. The API derives every signature identity from the validated JWT, never the action body. The demo JWT is HS256, issuer `esr-demo`, audience `esr-workspace`, with a one-hour expiry and a process-local random key.
+
+## Live updates (optional)
+
+`GET /events` is a [server-sent event](https://html.spec.whatwg.org/multipage/server-sent-events.html) stream authenticated with the same bearer token as every other call. The component reads it with `fetch`, because `EventSource` cannot send an `Authorization` header and a token in the URL would leak into logs. An API that answers 404, 405, or 501, or a non-`text/event-stream` body, is treated as having no live updates: the component keeps working and does not retry until the identity, token provider, or `apiBase` changes. Other failures retry with backoff from 1 to 30 seconds.
+
+| Event | Data | Sent |
+| --- | --- | --- |
+| `hello` | `{connectionId}` | First, once per stream |
+| `record-changed` | `{id,version,status,serial,action,actor,actorId,deleted,time}` | After each committed create or record action, in commit order, only to identities that can see the record. A failed action sends nothing |
+| `presence` | `{viewers:[{connectionId,userId,name,role,site,view,recordId}]}` | When any stream opens, closes, or reports presence |
+
+A comment line (`: ping`) every 15 seconds keeps proxies from closing an idle stream. The events carry no record content: on `record-changed` the component fetches `GET /records/:id` when its copy is older than `version`, and removes the record when `deleted` is true.
+
+`POST /presence` accepts `view` of `workspace`, `record`, `watch-floor`, or `other`, and a `recordId` the caller can open (404 otherwise). Only the identity that opened a connection may report for it (403). Everyone sees who is online, but a viewer's `recordId` is null for identities that cannot open that record. Closing the stream removes the connection from presence.
+
+The demo keeps connections in process, like its record store, which is one reason it runs a single replica. A multi-instance deployment needs a shared channel (for example Redis pub/sub) behind these endpoints.

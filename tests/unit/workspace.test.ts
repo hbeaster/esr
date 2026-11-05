@@ -363,15 +363,19 @@ describe("typed workspace controller", () => {
       name: "Alex Morgan",
       role: "Requestor" as const,
     };
-    const fetch = vi
-      .fn()
-      .mockImplementationOnce(
-        () =>
-          new Promise((resolve) => {
-            resolveFirst = resolve;
-          }),
-      )
-      .mockResolvedValueOnce(jsonResponse(makeBootstrap({ user: requestor })));
+    const bootstraps: (() => Promise<Response>)[] = [
+      () =>
+        new Promise((resolve) => {
+          resolveFirst = resolve;
+        }),
+      () => Promise.resolve(jsonResponse(makeBootstrap({ user: requestor }))),
+    ];
+    // Route by URL: the optional live stream answers 404, like a host without it.
+    const fetch = vi.fn((url: string) =>
+      url.endsWith("/events")
+        ? Promise.resolve(new Response("", { status: 404 }))
+        : bootstraps.shift()!(),
+    );
     vi.stubGlobal("fetch", fetch);
     const wrapper = mount(Workspace, {
       props: { tokenProvider: () => "engineer-token" },
@@ -380,7 +384,10 @@ describe("typed workspace controller", () => {
     await wrapper.setProps({ tokenProvider: () => "requestor-token" });
     resolveFirst(jsonResponse(makeBootstrap()));
     await flushPromises();
-    expect(fetch).toHaveBeenCalledTimes(2);
+    // Two bootstraps; the optional live stream may add its own call.
+    expect(
+      fetch.mock.calls.filter(([url]) => String(url).endsWith("/bootstrap")),
+    ).toHaveLength(2);
     await wrapper
       .findAll("button")
       .find((button) => button.text().includes("New request"))!
@@ -394,9 +401,12 @@ describe("typed workspace controller", () => {
           .get("input").element as HTMLInputElement
       ).value,
     ).toBe("Alex Morgan");
-    expect(fetch.mock.calls[1][1].headers.Authorization).toBe(
-      "Bearer requestor-token",
-    );
+    const bootstrapCalls = fetch.mock.calls.filter(([url]) =>
+      String(url).endsWith("/bootstrap"),
+    ) as unknown as [string, RequestInit][];
+    expect(
+      (bootstrapCalls[1][1].headers as Record<string, string>).Authorization,
+    ).toBe("Bearer requestor-token");
   });
   it("loads the root workspace through the embedding host token provider", async () => {
     const fetch = bootstrapFetch(makeBootstrap());
