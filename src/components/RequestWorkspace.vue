@@ -18,6 +18,7 @@ import {
 import type { EsrTableColumnId, SortDirection } from "../presentation";
 import { useWorkspaceContext } from "../composables/workspaceContext";
 import HullHeatmap from "./HullHeatmap.vue";
+import FlowChart from "./FlowChart.vue";
 import { useNow } from "../composables/useNow";
 const {
   state,
@@ -157,6 +158,7 @@ const stepHint: Record<string, string> = {
       </button>
     </section>
     <HullHeatmap @show-all="showAllInTable" />
+    <FlowChart />
     <section
       ref="tableCard"
       class="card workspace-card"

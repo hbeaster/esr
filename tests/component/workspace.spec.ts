@@ -84,6 +84,11 @@ test("isolated component loads, filters, navigates, and lays out at mobile width
     page.getByRole("columnheader", { name: /Time in Status/ }),
   ).toBeVisible();
   await expect(
+    page.getByRole("img", {
+      name: /^Opened vs closed ESRs from .* to now: 6 opened/,
+    }),
+  ).toBeVisible();
+  await expect(
     page.getByRole("img", { name: /Mock fleet hull heatmap: .*Auxiliary 1/ }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Auxiliary 1" }).click();
@@ -140,9 +145,7 @@ test("editor inserts approved template, answers sequential prompts, and saves", 
   page,
 }) => {
   await page.goto("/");
-  await page
-    .getByRole("button", { name: "Open 260037A" })
-    .click();
+  await page.getByRole("button", { name: "Open 260037A" }).click();
   await expect(
     page.locator(".detail-heading").getByRole("img", {
       name: "Mock illustration: Pump",
@@ -192,9 +195,7 @@ test("new request LDS import, modal keyboard and API errors", async ({
   await expect(page.locator(".lds-result")).toContainText("ASW-P-02");
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toBeHidden();
-  await page
-    .getByRole("button", { name: "Open 260037A" })
-    .click();
+  await page.getByRole("button", { name: "Open 260037A" }).click();
   await page
     .getByRole("button", { name: "Sign & submit for approval" })
     .click();
@@ -226,8 +227,7 @@ test("built package bundle boots independently of Vue host source", async ({
     return {
       shadow: text(root.querySelectorAll("style")),
       document: text(document.querySelectorAll("style")),
-      statBorder: getComputedStyle(root.querySelector(".stat")!)
-        .borderTopWidth,
+      statBorder: getComputedStyle(root.querySelector(".stat")!).borderTopWidth,
     };
   });
   expect(styles.shadow).toMatch(/\.stat\[data-v-[0-9a-f]{8}\]/);
@@ -265,9 +265,7 @@ test("top tabs expose permitted views and support keyboard navigation", async ({
         record.engineerId === "engineer" || record.requestorId === "engineer",
     ).length,
   );
-  await page
-    .getByRole("button", { name: "Open 260037A" })
-    .click();
+  await page.getByRole("button", { name: "Open 260037A" }).click();
   await expect(all).toHaveAttribute("aria-selected", "true");
   await page.getByRole("button", { name: "Back to requests" }).click();
   await all.focus();
@@ -331,9 +329,7 @@ test("assistant chat renders Markdown and strips unsafe HTML in a real browser",
   page,
 }) => {
   await page.goto("/");
-  await page
-    .getByRole("button", { name: "Open 260037A" })
-    .click();
+  await page.getByRole("button", { name: "Open 260037A" }).click();
   await page.getByRole("tab", { name: "Resolution", exact: true }).click();
   await page.getByLabel("Message").fill("What should I inspect?");
   await page.getByRole("button", { name: "Send", exact: true }).click();

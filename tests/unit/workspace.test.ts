@@ -870,3 +870,78 @@ describe("watch floor", () => {
     vi.useRealTimers();
   });
 });
+
+describe("opened vs closed chart", () => {
+  const dayAgo = (n: number) =>
+    new Date(Date.now() - n * 86_400_000).toISOString();
+  const data = () =>
+    makeBootstrap({
+      records: [
+        makeRecord({
+          id: "open-1",
+          serial: "260091A",
+          createdAt: dayAgo(10),
+          location: "Auxiliary machinery space",
+        }),
+        makeRecord({
+          id: "closed-1",
+          serial: "260092A",
+          status: "ESR Closed",
+          createdAt: dayAgo(9),
+          signatures: [
+            {
+              id: "s1",
+              userId: "division",
+              name: "Sam Chen",
+              block: "Division Head",
+              time: dayAgo(2),
+              comment: "",
+            },
+          ],
+        }),
+      ],
+    });
+  const stats = (wrapper: VueWrapper) =>
+    wrapper.get(".flow-stats").text().replace(/\s+/g, " ");
+  it("shows totals, reads points by keyboard, and links to the replay", async () => {
+    const { wrapper, context } = mountSection(RequestWorkspace, data());
+    expect(stats(wrapper)).toContain("1 open now");
+    expect(stats(wrapper)).toContain("2 opened");
+    expect(stats(wrapper)).toContain("1 closed");
+    const frame = wrapper.get(".flow-frame");
+    await frame.trigger("keydown", { key: "End" });
+    expect(wrapper.get(".flow-frame [aria-live]").text()).toMatch(
+      /^Now, .*: 2 opened, 1 closed, 1 open$/,
+    );
+    await frame.trigger("keydown", { key: "Home" });
+    await frame.trigger("keydown", { key: "Enter" });
+    expect(context.replayAt.value).not.toBeNull();
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find(".replay-cursor").exists()).toBe(true);
+  });
+  it("offers every value as a table once opened", async () => {
+    const { wrapper } = mountSection(RequestWorkspace, data());
+    const details = wrapper.get(".flow-table");
+    expect(details.find("table").exists()).toBe(false);
+    (details.element as HTMLDetailsElement).open = true;
+    await details.trigger("toggle");
+    const rows = details.findAll("tbody tr");
+    expect(rows.length).toBeGreaterThan(5);
+    expect(rows[0].text()).toMatch(/^Now, .*2\s*1\s*1$/);
+  });
+  it("follows search and zone, but not the status filter", async () => {
+    const { wrapper, context } = mountSection(RequestWorkspace, data());
+    context.status.value = "ESR Closed";
+    await wrapper.vm.$nextTick();
+    expect(stats(wrapper)).toContain("2 opened");
+    context.status.value = "";
+    context.zone.value = "auxiliary";
+    await wrapper.vm.$nextTick();
+    expect(stats(wrapper)).toContain("1 opened");
+    expect(stats(wrapper)).toContain("0 closed");
+    context.zone.value = "";
+    context.query.value = "260092A";
+    await wrapper.vm.$nextTick();
+    expect(stats(wrapper)).toContain("0 open now");
+  });
+});

@@ -473,6 +473,86 @@ export function activityFeed(records: EsrRecord[]): ActivityEvent[] {
   }
   return events.sort((a, b) => at(a.time) - at(b.time));
 }
+export interface FlowPoint {
+  /** End of this bucket (epoch ms); the last point is "now". */
+  time: number;
+  /** Requests opened so far, including ESRs reopened by a revision. */
+  opened: number;
+  /** Closures so far (Division Head signatures, across revisions). */
+  closed: number;
+  /** Open backlog: opened minus closed. */
+  open: number;
+  /** How many of `opened` were reopenings by revision. */
+  reopened: number;
+}
+const FLOW_WEEKLY_AFTER_DAYS = 180;
+/**
+ * Cumulative opened and closed ESRs over time, from the first event to `now`.
+ * Daily buckets, or weekly past 180 days. A revision reopens a closed ESR, so
+ * it counts as opened again and the backlog stays right without a dip.
+ */
+export function flowSeries(
+  records: Pick<
+    EsrRecord,
+    "createdAt" | "signatures" | "audit" | "revisions"
+  >[],
+  now = Date.now(),
+): FlowPoint[] {
+  const events: { time: number; kind: "open" | "close" | "reopen" }[] = [];
+  for (const r of records) {
+    events.push({ time: at(r.createdAt), kind: "open" });
+    const signatures = [
+      ...r.revisions.flatMap((v) => v.signatures),
+      ...r.signatures,
+    ];
+    const seen = new Set<string>();
+    for (const s of signatures)
+      if (s.block === "Division Head" && !seen.has(s.id)) {
+        seen.add(s.id);
+        events.push({ time: at(s.time), kind: "close" });
+      }
+    for (const a of r.audit)
+      if (a.action.startsWith("Revision "))
+        events.push({ time: at(a.time), kind: "reopen" });
+  }
+  const valid = events.filter((e) => !Number.isNaN(e.time) && e.time <= now);
+  if (!valid.length) return [];
+  valid.sort((a, b) => a.time - b.time);
+  // Local midnight, so each bucket is the calendar day the viewer reads.
+  const first = new Date(valid[0].time);
+  const start = new Date(
+    first.getFullYear(),
+    first.getMonth(),
+    first.getDate(),
+  ).getTime();
+  const step =
+    (now - start) / DAY_MS > FLOW_WEEKLY_AFTER_DAYS ? 7 * DAY_MS : DAY_MS;
+  const points: FlowPoint[] = [];
+  let opened = 0;
+  let closed = 0;
+  let reopened = 0;
+  let i = 0;
+  for (let end = start + step; ; end += step) {
+    const until = Math.min(end, now);
+    while (i < valid.length && valid[i].time <= until) {
+      const e = valid[i++];
+      if (e.kind === "close") closed++;
+      else {
+        opened++;
+        if (e.kind === "reopen") reopened++;
+      }
+    }
+    points.push({
+      time: until,
+      opened,
+      closed,
+      open: opened - closed,
+      reopened,
+    });
+    if (until >= now) break;
+  }
+  return points;
+}
 export type EsrTableColumnId = (typeof esrTableColumns)[number]["id"];
 export type SortDirection = "asc" | "desc";
 const statusSortOrder: WorkflowStatus[] = [

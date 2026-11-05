@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  flowSeries,
   rankByCriticality,
   activityFeed,
   recordAsOf,
@@ -330,5 +331,73 @@ describe("rankByCriticality", () => {
       "ok",
       "closed",
     ]);
+  });
+});
+
+describe("flowSeries", () => {
+  const now = Date.parse(at(20, 12));
+  const records = [
+    // Open since day 1.
+    makeRecord({ id: "a", createdAt: at(1), signatures: [], audit: [] }),
+    // Closed on day 5.
+    makeRecord({
+      id: "b",
+      createdAt: at(2),
+      status: "ESR Closed",
+      signatures: [
+        signature("Approved By", 3),
+        { ...signature("Division Head", 5), id: "b-close" },
+      ],
+      audit: [],
+    }),
+    // Closed day 3, revised day 4, closed again day 6: two closures, one reopening.
+    makeRecord({
+      id: "c",
+      createdAt: at(1),
+      status: "ESR Closed",
+      revisions: [
+        makeRecord({
+          id: "c",
+          signatures: [{ ...signature("Division Head", 3), id: "c-close-a" }],
+        }),
+      ],
+      audit: [audit("Revision B: Drawing update", 4)],
+      signatures: [{ ...signature("Division Head", 6), id: "c-close-b" }],
+    }),
+    // Issued but not closed: still open.
+    makeRecord({
+      id: "d",
+      createdAt: at(3),
+      status: "ESR Issued",
+      signatures: [signature("Approved By", 7)],
+      audit: [],
+    }),
+  ];
+  it("counts opened, closed, and the open backlog over time", () => {
+    const series = flowSeries(records, now);
+    expect(series.at(-1)).toMatchObject({
+      time: now,
+      opened: 5,
+      closed: 3,
+      open: 2,
+      reopened: 1,
+    });
+    for (let i = 1; i < series.length; i++) {
+      expect(series[i].opened).toBeGreaterThanOrEqual(series[i - 1].opened);
+      expect(series[i].closed).toBeGreaterThanOrEqual(series[i - 1].closed);
+      expect(series[i].open).toBe(series[i].opened - series[i].closed);
+    }
+    // Day buckets from the first event to now.
+    expect(series.length).toBeGreaterThanOrEqual(19);
+    expect(series.length).toBeLessThanOrEqual(21);
+  });
+  it("switches to weekly buckets past 180 days, and is empty without data", () => {
+    const old = [
+      makeRecord({ createdAt: new Date(now - 200 * DAY).toISOString() }),
+    ];
+    const series = flowSeries(old, now);
+    expect(series.length).toBeLessThanOrEqual(31);
+    expect(series.at(-1)).toMatchObject({ opened: 1, closed: 0, open: 1 });
+    expect(flowSeries([], now)).toEqual([]);
   });
 });
