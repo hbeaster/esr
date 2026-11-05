@@ -6,7 +6,7 @@ import RevisionHistory from "./RevisionHistory.vue";
 import RecordActivity from "./RecordActivity.vue";
 import WorkflowActions from "./WorkflowActions.vue";
 import SignatureRecord from "./SignatureRecord.vue";
-import { esrRevision, steps, statusTone } from "../presentation";
+import { esrRevision, plainText, steps, statusTone } from "../presentation";
 import { useWorkspaceContext } from "../composables/workspaceContext";
 const {
   state,
@@ -40,7 +40,7 @@ const {
             class="rev"
           >Revision {{ esrRevision(record.serial) }}</span>
         </div>
-        <h1>{{ record.title }}</h1>
+        <h1>{{ record.title || plainText(record.condition) }}</h1>
         <div class="detail-meta">
           <span :class="['badge', statusTone(record.status)]">{{
             record.status

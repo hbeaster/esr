@@ -7,9 +7,9 @@ Base URL defaults to `/api`. All endpoints except `/demo/*` and `/health/*` requ
 | `GET /demo/users` | None | Synthetic actors |
 | `POST /demo/session` | `{userId}` | `{user,token}`; demo only |
 | `GET /bootstrap` | None | `{user,users,templates,permissions,records}` |
-| `GET /lds?jcn=21036WX010184` | None | `{workStatement,refit,component,location}` |
+| `GET /lds?jcn=21036WX010184` | None | `{workStatement,refit,component,location,swbs}` |
 | `POST /history/search` | `{condition}` | `{summary,matches:[{id,serial,title,resolution,rationale,similarity}]}` |
-| `POST /records` | `{title,name,shop,phone,references,condition,jcn}` | Created record |
+| `POST /records` | `{name,shop,phone,references,condition,jcn}` | Created record |
 | `GET /records/:id` | None | Accessible record |
 | `POST /records/:id/:action` | See below, plus current `version` | Updated record or `{deleted:true}` |
 | `GET /records/:id/pdf` | Optional `?revision=0` | Approved `application/pdf` snapshot |
@@ -34,11 +34,11 @@ Action bodies:
 | `comment` | `{text}` | Local actors or cross-facility review permission |
 | `attach` | `{name,type,section,base64}` | Requestor on initiation or draft editor |
 
-`dfs` and `tvd` are `yes` or `no`, with references mandatory for `yes`. `attributes` accepts `Level 1`, `Requires Rev`, `SOC`, `SUBSAFE`. Completion accepts `Completed`, `Deferred`, `Other`, `Canceled`. All but Completed require an explanation. `section` accepts `Condition`, `Reference`, `Continuation`. Files are PNG, JPEG, WebP, PDF or TXT, maximum 15 MB per file and 20 files per record.
+`references`, `condition`, `resolution`, and `rationale` may contain paragraphs, bold, italic, underline, and lists. The workspace shows a sanitized subset of that markup. `dfs` and `tvd` are `yes` or `no`, with references mandatory for `yes`. `attributes` accepts `Level 1`, `Requires Rev`, `SOC`, `SUBSAFE`. Completion accepts `Completed`, `Deferred`, `Other`, `Canceled`. All but Completed require an explanation. `section` accepts `Condition`, `Reference`, `Continuation`. Files are PNG, JPEG, WebP, PDF or TXT, maximum 15 MB per file and 20 files per record.
 
 An assigned ESR number is a two-digit UTC year, a sequence from `0001` to `9999`, and a revision suffix from `A` to `ZZ`. Assignment issues revision `A`. Each later `revise` advances the suffix, so the last revision of the first 2026 number is `260001ZZ`. The sequence resets every UTC year and the 9999th number of that year is the last. Unassigned requests have no number. The `serial` field is the full number. `serialBase` is the year and sequence without the suffix.
 
-`GET /lds` and `POST /records` resolve the JCN through the CRACN API (`cracn_openapi.json`, at the backend's `Cracn:BaseUrl`): `workStatement` comes from the job's `csmpSummary`, `refit` from its refit number, and `component`/`location` from its configuration item (`equipmentName / equipmentSerialNumber`). A JCN is 13 characters: five digits, four letters or digits, then a sequence from `0001` to `9999` (for example `12345WX019999`). The backend trims and upper-cases it, and a malformed JCN returns 400 before any CRACN call. An unknown JCN returns 404; an unreachable or failing CRACN returns 502. `jcn: "N/A"` skips the lookup.
+`GET /lds` and `POST /records` resolve the JCN through the CRACN API (`cracn_openapi.json`, at the backend's `Cracn:BaseUrl`): `workStatement` comes from the job's `csmpSummary`, `refit` from its refit number, and `component`/`location` from its configuration item (`equipmentName / equipmentSerialNumber`). `swbs` is that item's hierarchical structure code, which CRACN maps from the LDS function group code. A JCN is 13 characters: five digits, four letters or digits, then a sequence from `0001` to `9999` (for example `12345WX019999`). The backend trims and upper-cases it, and a malformed JCN returns 400 before any CRACN call. An unknown JCN returns 404; an unreachable or failing CRACN returns 502. `jcn: "N/A"` skips the lookup.
 
 Records carry a monotonically increasing `version`. The component submits it on actions; a stale version fails with 409. Mutations are validated on a deep copy and committed under a store lock. Record DTOs omit the binary attachment payload; downloads require authenticated access. Snapshots preserve attachment bytes and all signature evidence.
 

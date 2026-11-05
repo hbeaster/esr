@@ -1,5 +1,16 @@
 <script setup lang="ts">
-import { esrRevision, initials, date, steps, statusTone } from "../presentation";
+import { computed, ref } from "vue";
+import {
+  esrRevision,
+  esrTableColumns,
+  initials,
+  date,
+  plainText,
+  sortRecords,
+  steps,
+  statusTone,
+} from "../presentation";
+import type { EsrTableColumnId, SortDirection } from "../presentation";
 import { useWorkspaceContext } from "../composables/workspaceContext";
 const {
   state,
@@ -12,6 +23,37 @@ const {
   openRecord,
   newRequest,
 } = useWorkspaceContext();
+const hiddenColumns = ref<EsrTableColumnId[]>([]);
+function visible(id: EsrTableColumnId) {
+  return !hiddenColumns.value.includes(id);
+}
+function toggleColumn(id: EsrTableColumnId) {
+  hiddenColumns.value = visible(id)
+    ? [...hiddenColumns.value, id]
+    : hiddenColumns.value.filter((column) => column !== id);
+}
+function text(value?: string | null) {
+  const trimmed = plainText(value);
+  return trimmed || "—";
+}
+const visibleCount = computed(
+  () => esrTableColumns.length - hiddenColumns.value.length,
+);
+const sortColumn = ref<EsrTableColumnId | null>(null);
+const sortDirection = ref<SortDirection>("asc");
+const rows = computed(() =>
+  sortRecords(filtered.value, sortColumn.value, sortDirection.value, (id) =>
+    owner(id),
+  ),
+);
+function toggleSort(id: EsrTableColumnId) {
+  if (sortColumn.value === id) {
+    sortDirection.value = sortDirection.value === "asc" ? "desc" : "asc";
+    return;
+  }
+  sortColumn.value = id;
+  sortDirection.value = "asc";
+}
 const stepHint: Record<string, string> = {
   Unassigned: "Needs an engineer",
   "In Process": "Resolution in progress",
@@ -75,7 +117,7 @@ const stepHint: Record<string, string> = {
         <label class="search"><span aria-hidden="true">⌕</span><input
           v-model="query"
           aria-label="Search requests"
-          placeholder="Search serial, title, JCN, or attribute…"
+          placeholder="Search serial, JCN, requester, shop, or condition…"
         ></label><select
           v-model="status"
           aria-label="Filter by status"
@@ -105,41 +147,114 @@ const stepHint: Record<string, string> = {
         </button>
         <span class="result-count"><strong>{{ filtered.length }}</strong> of
           {{ state.records.length }}</span>
+        <details class="column-picker">
+          <summary>
+            <span>Columns</span><span
+              class="column-count"
+              :class="{ partial: visibleCount < esrTableColumns.length }"
+            >{{ visibleCount }}</span>
+          </summary>
+          <fieldset>
+            <legend>Visible columns</legend>
+            <label
+              v-for="column in esrTableColumns"
+              :key="column.id"
+            >
+              <input
+                type="checkbox"
+                :checked="visible(column.id)"
+                :aria-label="`Show ${column.label}`"
+                @change="toggleColumn(column.id)"
+              ><span>{{ column.label }}</span>
+            </label>
+          </fieldset>
+        </details>
       </div>
       <div class="table-scroll">
         <table>
           <thead>
             <tr>
-              <th>Request</th>
-              <th>Status</th>
-              <th>Engineer</th>
-              <th>Attributes</th>
-              <th>Updated</th>
+              <template
+                v-for="column in esrTableColumns"
+                :key="column.id"
+              >
+                <th
+                  v-if="visible(column.id)"
+                  :aria-sort="
+                    sortColumn === column.id
+                      ? sortDirection === 'asc'
+                        ? 'ascending'
+                        : 'descending'
+                      : 'none'
+                  "
+                >
+                  <button
+                    type="button"
+                    class="sort-button"
+                    :aria-label="`Sort by ${column.label}`"
+                    @click="toggleSort(column.id)"
+                  >
+                    {{ column.label
+                    }}<span
+                      v-if="sortColumn === column.id"
+                      class="sort-mark"
+                      aria-hidden="true"
+                    >{{ sortDirection === "asc" ? "↑" : "↓" }}</span>
+                  </button>
+                </th>
+              </template>
               <th><span class="sr-only">Open</span></th>
             </tr>
           </thead>
           <tbody>
             <tr
-              v-for="r in filtered"
+              v-for="r in rows"
               :key="r.id"
             >
-              <td>
+              <td v-if="visible('serial')">
                 <button
                   class="record-link"
                   @click="openRecord(r)"
                 >
                   <span :class="['serial', { pending: !r.serial }]">{{ r.serial || "Pending assignment" }}
-                    <span v-if="esrRevision(r.serial) && esrRevision(r.serial) !== 'A'">· Rev {{ esrRevision(r.serial) }}</span></span><strong>{{ r.title }}</strong><span class="muted">{{ r.jcn }}
-                    <em
-                      v-if="r.rejected"
-                      class="returned"
-                    >· Returned to requestor</em></span>
+                    <span v-if="esrRevision(r.serial) && esrRevision(r.serial) !== 'A'">· Rev {{ esrRevision(r.serial) }}</span></span>
+                  <em
+                    v-if="r.rejected"
+                    class="returned"
+                  >Returned to requestor</em>
                 </button>
               </td>
-              <td>
+              <td v-if="visible('jcn')">
+                {{ text(r.jcn) }}
+              </td>
+              <td v-if="visible('refit')">
+                {{ text(r.refit) }}
+              </td>
+              <td v-if="visible('requester')">
+                {{ text(r.name) }}
+              </td>
+              <td v-if="visible('shop')">
+                {{ text(r.shop) }}
+              </td>
+              <td v-if="visible('condition')">
+                <span
+                  class="cell-clip"
+                  :title="r.condition"
+                >{{ text(r.condition) }}</span>
+              </td>
+              <td v-if="visible('resolution')">
+                <span
+                  class="cell-clip"
+                  :title="r.resolution"
+                >{{ text(r.resolution) }}</span>
+              </td>
+              <td v-if="visible('swbs')">
+                {{ text(r.swbs) }}
+              </td>
+              <td v-if="visible('status')">
                 <span :class="['badge', statusTone(r.status)]"><span class="status-dot" />{{ r.status }}</span>
               </td>
-              <td>
+              <td v-if="visible('engineer')">
                 <div
                   v-if="r.engineerId"
                   class="person"
@@ -153,35 +268,16 @@ const stepHint: Record<string, string> = {
                   class="muted"
                 >Unassigned</em>
               </td>
-              <td>
-                <div class="tags">
-                  <span
-                    v-if="r.dfs === 'yes'"
-                    class="tag special"
-                  >DFS</span><span
-                    v-if="r.tvd === 'yes'"
-                    class="tag special"
-                  >TVD</span><span
-                    v-for="a in r.attributes"
-                    :key="a"
-                    :class="['tag', { critical: a === 'SUBSAFE' }]"
-                  >{{
-                    a
-                  }}</span><span
-                    v-if="
-                      !r.attributes.length && r.dfs !== 'yes' && r.tvd !== 'yes'
-                    "
-                    class="muted"
-                  >—</span>
-                </div>
-              </td>
-              <td class="nowrap muted">
-                {{ date(r.updatedAt) }}
+              <td
+                v-if="visible('initiated')"
+                class="nowrap"
+              >
+                {{ date(r.createdAt) }}
               </td>
               <td>
                 <button
                   class="icon-button row-open"
-                  :aria-label="`Open ${r.title}`"
+                  :aria-label="`Open ${r.serial || 'unassigned request'}`"
                   @click="openRecord(r)"
                 >
                   →
@@ -276,8 +372,13 @@ const stepHint: Record<string, string> = {
   color: var(--ink-3);
   font-style: italic;
 }
+.workspace-card {
+  min-width: 0;
+  max-width: 100%;
+}
 .filters {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--sp-3);
   align-items: center;
   padding: var(--sp-4) var(--sp-5);
@@ -306,6 +407,123 @@ const stepHint: Record<string, string> = {
   width: 210px;
   margin: 0;
 }
+/* Column picker: a native <details> popover of column toggles. */
+.column-picker {
+  position: relative;
+  z-index: 4;
+}
+.column-picker summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  list-style: none;
+  cursor: pointer;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 8px var(--sp-3);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.column-picker summary:hover {
+  background: var(--surface-2);
+  border-color: #b9c2ce;
+}
+.column-picker summary::-webkit-details-marker {
+  display: none;
+}
+.column-picker summary::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  margin-left: 2px;
+  border-right: 1.5px solid var(--ink-4);
+  border-bottom: 1.5px solid var(--ink-4);
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 0.2s var(--ease);
+}
+.column-picker[open] summary::after {
+  transform: translateY(1px) rotate(225deg);
+}
+.column-count {
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--gray-bg);
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+.column-count.partial {
+  background: var(--esr-accent-soft);
+  color: var(--esr-accent-text);
+}
+.column-picker fieldset {
+  position: absolute;
+  z-index: 3;
+  right: 0;
+  top: calc(100% + 6px);
+  width: 340px;
+  margin: 0;
+  padding: var(--sp-2);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 32px #0f1a2a1f;
+}
+.column-picker legend {
+  grid-column: 1 / -1;
+  margin: var(--sp-1) var(--sp-2) 6px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.column-picker label {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 7px var(--sp-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.column-picker label:hover {
+  background: var(--surface-2);
+}
+.column-picker input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  padding: 0;
+  flex: none;
+  accent-color: var(--esr-accent);
+  box-shadow: none;
+}
+.column-picker input:focus-visible {
+  outline: 2px solid var(--esr-accent);
+  outline-offset: 2px;
+}
+.cell-clip {
+  display: block;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .result-count {
   margin-left: auto;
   font-size: var(--fs-sm);
@@ -320,6 +538,7 @@ const stepHint: Record<string, string> = {
   /* Contains the absolutely positioned .sr-only header inside the scroller. */
   position: relative;
   max-width: 100%;
+  min-width: 0;
 }
 table {
   border-collapse: collapse;
@@ -339,6 +558,32 @@ th {
   font-weight: 700;
   color: var(--ink-3);
   white-space: nowrap;
+}
+.sort-button {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  gap: var(--sp-1);
+}
+.sort-button:hover,
+th[aria-sort="ascending"] .sort-button,
+th[aria-sort="descending"] .sort-button {
+  background: transparent;
+  border-color: transparent;
+  color: var(--ink);
+}
+.sort-button:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.sort-mark {
+  color: var(--esr-accent);
 }
 th:first-child,
 td:first-child {
@@ -367,14 +612,13 @@ tbody tr:last-child td {
   background: none;
   text-align: left;
   gap: 2px;
-  min-width: 260px;
-  max-width: 420px;
+  min-width: 150px;
   font-weight: 400;
 }
 .record-link:hover {
   background: transparent;
 }
-.record-link:hover strong {
+.record-link:hover .serial:not(.pending) {
   color: var(--esr-accent);
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -384,16 +628,9 @@ tbody tr:last-child td {
   font-style: italic;
   color: var(--ink-4);
 }
-.record-link strong {
-  font-weight: 600;
-  font-size: var(--fs-base);
-  color: var(--ink);
-}
-.record-link > .muted {
-  font-size: var(--fs-xs);
-}
 .returned {
   color: var(--red-text);
+  font-size: var(--fs-xs);
   font-weight: 700;
 }
 .tags {
@@ -438,9 +675,6 @@ tbody tr:hover .row-open {
   .stats {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-  .filters {
-    flex-wrap: wrap;
-  }
 }
 @media (max-width: 560px) {
   .stats {
@@ -459,6 +693,11 @@ tbody tr:hover .row-open {
   .filters select {
     flex: 1;
     width: auto;
+  }
+  .column-picker fieldset {
+    left: 0;
+    right: auto;
+    width: min(340px, calc(100vw - 32px));
   }
   th:first-child,
   td:first-child {

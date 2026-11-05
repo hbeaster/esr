@@ -479,6 +479,13 @@ label {
   margin: var(--sp-4) 0;
   color: var(--ink-2);
 }
+.rich-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: var(--fs-sm);
+  font-weight: 650;
+  color: var(--ink-2);
+}
 input,
 select,
 textarea {

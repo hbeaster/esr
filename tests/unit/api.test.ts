@@ -5,6 +5,10 @@ import {
   filterRecords,
   isJcn,
   normalizeJcn,
+  plainText,
+  richTextHtml,
+  sanitizeRichText,
+  sortRecords,
   statusTone,
 } from "../../src/presentation";
 import { makeRecord } from "../fixtures";
@@ -104,6 +108,65 @@ describe("workspace search", () => {
     expect(filterRecords(records, "pump", "ESR Closed", "all")).toEqual([]));
   it("distinguishes deferred records", () =>
     expect(statusTone("ESR Issued – Deferred")).toBe("amber"));
+  it("sorts table columns and keeps blanks last", () => {
+    const rows = [
+      makeRecord({
+        id: "issued",
+        serial: "260040A",
+        status: "ESR Issued",
+        createdAt: "2026-11-02T00:00:00Z",
+        shop: "9",
+      }),
+      makeRecord({
+        id: "pending",
+        serial: null,
+        status: "Unassigned",
+        createdAt: "2026-11-06T00:00:00Z",
+        shop: "31",
+      }),
+      makeRecord({
+        id: "closed",
+        serial: "260037A",
+        status: "ESR Closed",
+        createdAt: "2026-11-01T00:00:00Z",
+        shop: "100",
+      }),
+    ];
+    expect(sortRecords(rows, "serial", "asc").map((row) => row.id)).toEqual([
+      "closed",
+      "issued",
+      "pending",
+    ]);
+    expect(sortRecords(rows, "serial", "desc").map((row) => row.id)).toEqual([
+      "issued",
+      "closed",
+      "pending",
+    ]);
+    expect(sortRecords(rows, "status", "asc").map((row) => row.id)).toEqual([
+      "pending",
+      "issued",
+      "closed",
+    ]);
+    expect(sortRecords(rows, "initiated", "asc").map((row) => row.id)).toEqual([
+      "closed",
+      "issued",
+      "pending",
+    ]);
+    expect(sortRecords(rows, "shop", "asc").map((row) => row.id)).toEqual([
+      "issued",
+      "pending",
+      "closed",
+    ]);
+    expect(sortRecords(rows, null, "asc")).toBe(rows);
+  });
+  it("keeps rich text formatting and drops scripts", () => {
+    expect(sanitizeRichText("<strong>Wear</strong><script>alert(1)</script>")).toBe(
+      "<strong>Wear</strong>",
+    );
+    expect(richTextHtml("Line one\nLine two")).toBe("Line one<br>Line two");
+    expect(plainText("<p>Coupling</p><br><b>wear</b>")).toBe("Coupling\n\nwear");
+    expect(plainText("<p><br></p>")).toBe("");
+  });
 });
 
 describe("JCN format", () => {

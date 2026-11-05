@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import RecordFiles from "./RecordFiles.vue";
+import RichTextView from "./RichTextView.vue";
 import { date } from "../presentation";
 import { useWorkspaceContext } from "../composables/workspaceContext";
 const { state, current, record } = useWorkspaceContext();
@@ -8,9 +10,7 @@ const { state, current, record } = useWorkspaceContext();
   <template v-if="record && current && state.user">
     <div class="card padded">
       <h2>Condition & finding</h2>
-      <p class="prose">
-        {{ record.condition }}
-      </p>
+      <RichTextView :value="record.condition" />
       <div class="fields-grid read-fields">
         <div>
           <span>REQUESTOR</span><strong>{{ record.name }}</strong>
@@ -45,6 +45,12 @@ const { state, current, record } = useWorkspaceContext();
           >Not provided</em>
         </div>
         <div>
+          <span>SWBS</span><strong v-if="record.swbs">{{ record.swbs }}</strong><em
+            v-else
+            class="muted"
+          >Not provided</em>
+        </div>
+        <div>
           <span>LOCATION</span><strong v-if="record.location">{{ record.location }}</strong><em
             v-else
             class="muted"
@@ -59,10 +65,9 @@ const { state, current, record } = useWorkspaceContext();
         <em class="muted">No LDS work statement linked.</em>
       </p>
       <label class="read-label">REFERENCES</label>
-      <p class="prose">
-        {{ record.references }}
-      </p>
+      <RichTextView :value="record.references" />
     </div>
+    <RecordFiles />
     <div
       v-if="record.revisionReason"
       class="card padded"
