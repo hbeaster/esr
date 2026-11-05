@@ -9,6 +9,7 @@ import RecordDetail from "./components/RecordDetail.vue";
 import TemplateLibrary from "./components/TemplateLibrary.vue";
 import PermissionSettings from "./components/PermissionSettings.vue";
 import WorkspaceDialogs from "./components/WorkspaceDialogs.vue";
+import WatchFloor from "./components/WatchFloor.vue";
 defineOptions({ name: "EsrWorkspace" });
 const props = withDefaults(defineProps<WorkspaceProps>(), {
   apiBase: "/api",
@@ -28,6 +29,7 @@ const {
   record,
   run,
   reload,
+  watchFloor,
 } = workspace;
 const navigationId = useId();
 const panelId = `${navigationId}-panel`;
@@ -56,7 +58,7 @@ const pageKey = computed(() =>
   >
     <div
       class="main-shell"
-      :inert="!!dialog"
+      :inert="!!dialog || watchFloor"
     >
       <header class="topbar">
         <WorkspaceNavigation
@@ -145,6 +147,7 @@ const pageKey = computed(() =>
       </main>
     </div>
     <WorkspaceDialogs />
+    <WatchFloor v-if="watchFloor && state.user" />
   </div>
 </template>
 

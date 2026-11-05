@@ -62,6 +62,7 @@ onBeforeUnmount(() => {
   clearTimeout(exitTimer);
   replayAt.value = null;
 });
+defineExpose({ play, playing });
 </script>
 
 <template>

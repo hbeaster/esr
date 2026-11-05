@@ -114,6 +114,7 @@ function surface() {
   tweenTo(FULL_VIEW);
 }
 function onBand(z: HullZone) {
+  if (wallboard.value) return;
   if (dive.value === z) surface();
   else diveInto(z);
 }
@@ -124,6 +125,11 @@ watch(zone, (z) => {
   else if (z !== dive.value) diveInto(z);
 });
 const emit = defineEmits<{ "show-all": [] }>();
+const props = defineProps<{
+  /** "wallboard": hull only, larger, no dive or filter controls. */
+  variant?: "card" | "wallboard";
+}>();
+const wallboard = computed(() => props.variant === "wallboard");
 const compact = (n: number) =>
   n >= 1000 ? `${(n / 1000).toFixed(n >= 10_000 ? 0 : 1)}k` : String(n);
 /**
@@ -345,12 +351,16 @@ onBeforeUnmount(() => {
     :class="[
       'card',
       'hull-heatmap',
-      { replaying: replayAt !== null, diving: dive },
+      { replaying: replayAt !== null, diving: dive, wallboard },
     ]"
-    aria-labelledby="hull-heatmap-title"
+    :aria-labelledby="wallboard ? undefined : 'hull-heatmap-title'"
+    :aria-label="wallboard ? 'Fleet hull' : undefined"
     @keydown.esc="surface"
   >
-    <div class="heatmap-head">
+    <div
+      v-if="!wallboard"
+      class="heatmap-head"
+    >
       <div class="heading-group">
         <h2 id="hull-heatmap-title">
           Where the work is<template v-if="dive">
@@ -634,7 +644,7 @@ onBeforeUnmount(() => {
       </button>
     </p>
     <TransitionGroup
-      v-if="replayAt !== null"
+      v-if="replayAt !== null && !wallboard"
       tag="ol"
       name="tick"
       class="ticker"
@@ -655,6 +665,7 @@ onBeforeUnmount(() => {
       </li>
     </TransitionGroup>
     <div
+      v-if="!wallboard"
       class="zone-chips"
       role="group"
       aria-label="Filter by hull zone"
@@ -694,6 +705,19 @@ onBeforeUnmount(() => {
   transition:
     border-color 0.3s,
     box-shadow 0.3s;
+}
+.hull-heatmap.wallboard {
+  margin: 0;
+  padding: var(--sp-4);
+  background: transparent;
+  border-color: var(--line);
+  box-shadow: none;
+}
+.hull-heatmap.wallboard svg {
+  max-width: none;
+}
+.hull-heatmap.wallboard .heat {
+  cursor: default;
 }
 .hull-heatmap.replaying {
   border-color: var(--esr-accent);

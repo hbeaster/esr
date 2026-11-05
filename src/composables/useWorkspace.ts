@@ -95,6 +95,8 @@ export function useWorkspace(
     query = ref(""),
     status = ref(""),
     zone = ref<HullZone | "">("");
+  /** Full-screen watch-floor wallboard. */
+  const watchFloor = ref(false);
   /** Fleet replay position (epoch ms). Null shows live data. */
   const replayAt = ref<number | null>(null);
   const clock = useNow();
@@ -588,6 +590,7 @@ export function useWorkspace(
     status,
     zone,
     replayAt,
+    watchFloor,
     fleet,
     fleetNow,
     activity,

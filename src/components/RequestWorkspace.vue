@@ -25,6 +25,7 @@ const {
   query,
   status,
   zone,
+  watchFloor,
   fleet,
   fleetNow,
   filtered,
@@ -115,17 +116,25 @@ const stepHint: Record<string, string> = {
           }}
         </p>
       </div>
-      <button
-        v-if="
-          ['Requestor', 'Shop', 'Engineer', 'Supervisor'].includes(
-            state.user.role,
-          )
-        "
-        class="primary new-request"
-        @click="newRequest"
-      >
-        <span class="plus">＋</span> New request
-      </button>
+      <div class="heading-actions">
+        <button
+          class="watch-floor-open"
+          @click="watchFloor = true"
+        >
+          <span aria-hidden="true">⛶</span> Watch floor
+        </button>
+        <button
+          v-if="
+            ['Requestor', 'Shop', 'Engineer', 'Supervisor'].includes(
+              state.user.role,
+            )
+          "
+          class="primary new-request"
+          @click="newRequest"
+        >
+          <span class="plus">＋</span> New request
+        </button>
+      </div>
     </div>
     <section
       class="stats"
@@ -473,6 +482,12 @@ const stepHint: Record<string, string> = {
   min-width: 0;
   outline: none;
   max-width: 100%;
+}
+.heading-actions {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: center;
+  flex-wrap: wrap;
 }
 .zone-filter {
   padding: 3px 10px;

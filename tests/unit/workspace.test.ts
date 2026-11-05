@@ -19,6 +19,7 @@ import RecordOverview from "../../src/components/RecordOverview.vue";
 import RequestForm from "../../src/components/RequestForm.vue";
 import RequestWorkspace from "../../src/components/RequestWorkspace.vue";
 import RecordDetail from "../../src/components/RecordDetail.vue";
+import WatchFloor from "../../src/components/WatchFloor.vue";
 import Workspace from "../../src/Workspace.ce.vue";
 import WorkspaceDialogs from "../../src/components/WorkspaceDialogs.vue";
 
@@ -728,5 +729,53 @@ describe("capped compartment dive", () => {
     expect(wrapper.find(".contact-tip").exists()).toBe(false);
     await contact.trigger("focus");
     expect(wrapper.find(".contact-tip").exists()).toBe(true);
+  });
+});
+
+describe("watch floor", () => {
+  it("opens from the list page", async () => {
+    const { wrapper, context } = mountSection(RequestWorkspace);
+    const open = wrapper
+      .findAll("button")
+      .find((b) => b.text().includes("Watch floor"))!;
+    await open.trigger("click");
+    expect(context.watchFloor.value).toBe(true);
+  });
+  it("spotlights the most critical ESR and exits on Escape", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-20T12:00:00Z"));
+    const { wrapper, context } = mountSection(
+      WatchFloor,
+      makeBootstrap({
+        records: [
+          makeRecord({
+            id: "fresh",
+            serial: "260071A",
+            status: "Unassigned",
+            createdAt: "2026-11-19T12:00:00Z",
+          }),
+          makeRecord({
+            id: "old",
+            serial: "260072A",
+            status: "Unassigned",
+            attributes: ["SUBSAFE"],
+            createdAt: "2026-10-01T12:00:00Z",
+          }),
+        ],
+      }),
+    );
+    context.watchFloor.value = true;
+    await flushPromises();
+    const dialog = wrapper.get('[role="dialog"]');
+    expect(dialog.attributes("aria-label")).toBe("ESR watch floor");
+    const card = wrapper.get(".wf-card");
+    expect(card.text()).toContain("260072A");
+    expect(card.text()).toContain("SUBSAFE");
+    expect(card.text()).toContain("Stale");
+    expect(wrapper.get(".wf-spotlight header").text()).toContain("1 of 2");
+    expect(wrapper.findAll(".wf-stat")).toHaveLength(5);
+    await dialog.trigger("keydown", { key: "Escape" });
+    expect(context.watchFloor.value).toBe(false);
+    vi.useRealTimers();
   });
 });
