@@ -1,4 +1,4 @@
-// Stateful CRACN mock server driven by openapi.json and data.json.
+// Stateful CRACN mock server driven by cracn_openapi.json and data.json.
 //   node mocks/cracn/server.mjs [--port 4010] [--host 127.0.0.1]
 // Every path in the spec is routed. Resource CRUD is backed by in-memory state
 // seeded from data.json; auth/permission checks always allow; other

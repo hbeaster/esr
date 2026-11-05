@@ -76,7 +76,7 @@ npm run dev        # terminal 3: Vue host on http://127.0.0.1:5173
 
 ### CRACN API and mock data
 
-JCN context (work statement, refit, component, location) comes from the **CRACN API** described by `openapi.json`. The backend reads `GET /api/v1/jobs/{jcn}` for the work statement and refit, then the job's configuration item for the component and location. It does this both for **Import LDS** and when a request is submitted, so saved records and PDFs carry the CRACN values.
+JCN context (work statement, refit, component, location) comes from the **CRACN API** described by `cracn_openapi.json`. The backend reads `GET /api/v1/jobs/{jcn}` for the work statement and refit, then the job's configuration item for the component and location. It does this both for **Import LDS** and when a request is submitted, so saved records and PDFs carry the CRACN values.
 
 `Cracn:BaseUrl` (environment variable `Cracn__BaseUrl`) defaults to the local mock at `http://127.0.0.1:4010`. Point it at a real CRACN deployment and set `Cracn:Token` to its service bearer token. If CRACN is unreachable, lookups fail with 502 and requests can still be submitted with `N/A`.
 

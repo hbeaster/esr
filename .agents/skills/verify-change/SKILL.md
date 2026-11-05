@@ -14,7 +14,7 @@ Run the narrowest command that covers the files you touched. Use `npm run valida
 | Custom element bundle, `src/index.ts`, or the host contract | `npm run test:component` |
 | `backend/` or API behavior documented in `docs/api.md` | `npm run test:backend` |
 | A role handoff visible in the browser | `npm run test:e2e` |
-| `openapi.json` or `mocks/cracn/` | `npm run mock:check` and `npm test` |
+| `cracn_openapi.json` or `mocks/cracn/` | `npm run mock:check` and `npm test` |
 | `Dockerfile`, `compose.yaml`, or `deploy/k8s/` | `docker build -t esr-demo:local .` (and `docker build -f mocks/cracn/Dockerfile -t cracn-mock:local .`) |
 
 ## Conditions

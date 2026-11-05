@@ -6,7 +6,7 @@ builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 
 var seed = JsonSerializer.Deserialize<StoreData>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "seed.json")), JsonConfig.Options)!;
 var workflow = new Workflow(seed); var identity = new DemoIdentity();
 builder.Services.AddSingleton(workflow); builder.Services.AddSingleton(identity);
-// JCN context comes from the CRACN API (openapi.json); locally that is the mock in mocks/cracn.
+// JCN context comes from the CRACN API (cracn_openapi.json); locally that is the mock in mocks/cracn.
 var cracn = builder.Configuration.GetSection("Cracn").Get<CracnOptions>() ?? new CracnOptions();
 builder.Services.AddHttpClient<ILdsSource, CracnLdsSource>(cracn.Apply);
 var app = builder.Build();

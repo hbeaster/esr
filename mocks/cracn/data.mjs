@@ -1,4 +1,4 @@
-// Builds the CRACN mock dataset from openapi.json: every list resource gets
+// Builds the CRACN mock dataset from cracn_openapi.json: every list resource gets
 // deterministic items, nested resources hang off each parent instance, and
 // cross-resource refs point at records that actually exist.
 import {

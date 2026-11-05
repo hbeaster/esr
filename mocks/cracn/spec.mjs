@@ -1,10 +1,10 @@
-// Shared helpers for the CRACN mock: loads openapi.json, classifies its routes
+// Shared helpers for the CRACN mock: loads cracn_openapi.json, classifies its routes
 // and generates deterministic schema-conformant values.
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 export const SPEC_PATH = fileURLToPath(
-  new URL("../../openapi.json", import.meta.url),
+  new URL("../../cracn_openapi.json", import.meta.url),
 );
 export const DATA_PATH = fileURLToPath(new URL("./data.json", import.meta.url));
 export const API_PREFIX = "/api/v1";

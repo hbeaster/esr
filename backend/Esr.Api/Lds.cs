@@ -29,7 +29,7 @@ public sealed class CracnOptions
 }
 
 /// <summary>
-/// Reads LDS context from the CRACN API (openapi.json): the Job gives the work
+/// Reads LDS context from the CRACN API (cracn_openapi.json): the Job gives the work
 /// statement and refit; its configuration item gives the component and location.
 /// </summary>
 public sealed class CracnLdsSource(HttpClient http) : ILdsSource

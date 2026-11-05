@@ -1,4 +1,4 @@
-// Regenerates mocks/cracn/data.json from openapi.json.
+// Regenerates mocks/cracn/data.json from cracn_openapi.json.
 //   node mocks/cracn/generate.mjs          write data.json
 //   node mocks/cracn/generate.mjs --check  fail if data.json is out of date
 import { readFileSync, writeFileSync } from "node:fs";
