@@ -21,7 +21,7 @@
   ],
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "dev:api": "dotnet run --project backend/Esr.Api --urls http://127.0.0.1:5080",
+    "dev:api": "node --env-file-if-exists=.env scripts/dev-api.mjs",
     "dev:cracn": "node mocks/cracn/server.mjs --port 4010",
     "mock:generate": "node mocks/cracn/generate.mjs",
     "mock:check": "node mocks/cracn/generate.mjs --check",

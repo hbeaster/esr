@@ -22,6 +22,8 @@ export default defineConfig({
       },
     },
   ],
+  // Tests never call a real chat model, even with a key in .env or the shell:
+  // an empty value here outranks .env for both the API and the dev server.
   webServer: process.env.ESR_BASE_URL
     ? undefined
     : [
@@ -36,11 +38,13 @@ export default defineConfig({
           url: "http://127.0.0.1:5080/health/ready",
           reuseExistingServer: !process.env.CI,
           timeout: 120000,
+          env: { Chat__ApiKey: "" },
         },
         {
           command: "npm run dev",
           url: "http://127.0.0.1:5173",
           reuseExistingServer: !process.env.CI,
+          env: { CHAT_API_KEY: "", Chat__ApiKey: "" },
         },
       ],
 });

@@ -93,11 +93,15 @@ The **Resolution** tab has an assistant chat for the engineer drafting an `In Pr
 | `Chat:Model` | `Chat__Model` | `gpt-4o-mini` |
 | `Chat:TimeoutSeconds` | `Chat__TimeoutSeconds` | `60` |
 
-To try it with an OpenAI key, start the API with the key in its environment:
+To try it with an OpenAI key, put it in `.env` (copy `.env.example`, set `CHAT_API_KEY`). `npm run dev:api` loads `.env` through `scripts/dev-api.mjs`, the same file Docker Compose reads, and logs whether the chat uses a real model or the mock without printing the key. A key in the shell still wins:
 
 ```sh
 Chat__ApiKey=sk-proj-... npm run dev:api
 ```
+
+`npm run dev` reads the same `.env`, so with **Use fake data** on, the chat also uses the real model. Simulated records live only in the dev server, so the dev server grounds the chat in the simulated record and calls the provider itself (`host/simulated/chat.ts`, mirroring `backend/Esr.Api/Chat.cs`). The key stays in the dev server process, and builds never include it. Without a key, the fake-data chat gives a labeled simulated reply. Both servers log which mode they use at startup, without printing the key.
+
+The end-to-end tests force an empty key on the API and dev server they start, so they always use the mock. Outside CI, Playwright reuses servers already listening on ports 5080 and 5173, and those keep whatever key they started with. Stop a keyed `dev:api` or `dev` before `npm run test:e2e` to avoid real model calls.
 
 Another provider only needs a different base URL and model, for example `Chat__BaseUrl=https://api.anthropic.com/v1/` with an Anthropic key, or `Chat__BaseUrl=http://localhost:11434/v1` for a local Ollama. Keep keys in the environment or a secret store, never in committed files. Backend tests always use the mock, even when `Chat__ApiKey` is set. In Kubernetes, put the key in a Secret and reference it from the `esr` container's `env`.
 

@@ -96,6 +96,35 @@ describe("simulated records", () => {
 });
 
 describe("simulated API", () => {
+  it("answers the assistant chat with a labeled simulated reply", () => {
+    const record = records.find(
+      (r) => r.status === "In Process" && r.site === "Bangor",
+    )!;
+    const reply = json<{ reply: string; model: string; mock: boolean }>(
+      call("/assistant/chat", {
+        method: "POST",
+        body: {
+          recordId: record.id,
+          messages: [{ role: "user", content: "What should I check first?" }],
+        },
+      }),
+    );
+    expect(reply.mock).toBe(true);
+    expect(reply.model).toBe("simulated");
+    expect(reply.reply).toContain("Simulated assistant");
+    expect(reply.reply).toContain(record.serial!);
+    expect(reply.reply).toContain("What should I check first?");
+    const missing = call("/assistant/chat", {
+      method: "POST",
+      body: { recordId: "nope", messages: [{ role: "user", content: "Hi" }] },
+    });
+    expect(missing.status).toBe(404);
+    const noQuestion = call("/assistant/chat", {
+      method: "POST",
+      body: { recordId: record.id, messages: [] },
+    });
+    expect(noQuestion.status).toBe(400);
+  });
   it("signs in known identities without requiring a token", () => {
     const session = call("/demo/session", {
       method: "POST",

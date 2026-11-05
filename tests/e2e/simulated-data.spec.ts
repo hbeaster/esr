@@ -137,3 +137,20 @@ test("stays on simulated data when the API cannot be reached", async ({
     page.getByRole("button", { name: "Use API data" }),
   ).toBeEnabled();
 });
+
+test("answers the assistant chat on simulated data", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Use fake data" }).click();
+  await page.getByLabel("Filter by status").selectOption("In Process");
+  await page.locator("tbody tr button.record-link").first().click();
+  await page.getByRole("tab", { name: "Resolution", exact: true }).click();
+  const message = page.locator(".chat textarea");
+  await message.fill("What should I check first?");
+  await message.press("Enter");
+  // The dev-server plugin must pass the chat body through to the handler.
+  await expect(page.locator(".chat")).toContainText("Simulated assistant");
+  await expect(page.locator(".chat")).toContainText(
+    "What should I check first?",
+  );
+  await expect(page.locator(".alert.error")).toHaveCount(0);
+});
