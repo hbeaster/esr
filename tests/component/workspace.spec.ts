@@ -9,7 +9,7 @@ const fixture: Bootstrap = JSON.parse(
 );
 /** What the backend returns from CRACN for the demo JCN (see mocks/cracn). */
 const lds: Record<string, LdsData> = {
-  "JCN-260184": {
+  "21036WX010184": {
     workStatement: "Inspect auxiliary seawater pump coupling",
     refit: "A014",
     component: "ASW-P-02 / TSN-10482",
@@ -120,7 +120,7 @@ test("new request LDS import, modal keyboard and API errors", async ({
 }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "New request" }).click();
-  await page.getByLabel("Job Control Number").fill("JCN-260184");
+  await page.getByLabel("Job Control Number").fill("21036WX010184");
   await page.getByRole("button", { name: "Import LDS" }).click();
   await expect(page.locator(".lds-result")).toContainText("ASW-P-02");
   await page.keyboard.press("Escape");

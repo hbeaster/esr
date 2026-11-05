@@ -406,7 +406,7 @@ describe("ESR table columns", () => {
         records: [
           makeRecord({
             serial: "260037A",
-            jcn: "JCN-260184",
+            jcn: "21036WX010184",
             refit: "A014",
             name: "Alex Morgan",
             shop: "31",

@@ -1,6 +1,8 @@
 // @vitest-environment node
 import { spawn, type ChildProcess } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { isJcn } from "../../src/presentation";
 
 let server: ChildProcess;
 let base = "";
@@ -29,15 +31,26 @@ const send = (method: string, path: string, body?: unknown) =>
     body: body === undefined ? undefined : JSON.stringify(body),
   });
 
+describe("CRACN mock data", () => {
+  it("uses 13-character JCNs for every job", () => {
+    const data = JSON.parse(
+      readFileSync("mocks/cracn/data.json", "utf8"),
+    ) as { resources: Record<string, unknown> };
+    const jobs = data.resources["/api/v1/jobs"] as { jcnOrMjfcn: string }[];
+    expect(jobs.length).toBeGreaterThan(2);
+    for (const { jcnOrMjfcn } of jobs) expect(isJcn(jcnOrMjfcn)).toBe(true);
+  });
+});
+
 describe("CRACN mock server", () => {
   it("requires a bearer token", async () => {
     expect((await get("/jobs", {})).status).toBe(401);
   });
 
   it("serves the demo JCNs with resolvable refs", async () => {
-    const job = await (await get("/jobs/JCN-260184")).json();
+    const job = await (await get("/jobs/21036WX010184")).json();
     expect(job.metadata).toEqual({
-      name: "jobs/JCN-260184",
+      name: "jobs/21036WX010184",
       resourceType: "cracn.projectblue.mil/Job",
     });
     const item = await (
@@ -62,19 +75,19 @@ describe("CRACN mock server", () => {
     ).json();
     expect(
       filtered.items.map((j: { jcnOrMjfcn: string }) => j.jcnOrMjfcn),
-    ).toEqual(["JCN-260207"]);
+    ).toEqual(["21036WX020207"]);
   });
 
   it("supports create, update and cascading delete", async () => {
     expect((await send("POST", "/boats", { uic: "ZZZZZ" })).status).toBe(422);
     const patched = await (
-      await send("PATCH", "/jobs/JCN-260207", { priority: "1" })
+      await send("PATCH", "/jobs/21036WX020207", { priority: "1" })
     ).json();
-    expect(patched).toMatchObject({ priority: "1", jcnOrMjfcn: "JCN-260207" });
-    expect((await send("DELETE", "/jobs/JCN-260207")).status).toBe(204);
-    expect((await get("/jobs/JCN-260207/planningForm")).status).toBe(404);
+    expect(patched).toMatchObject({ priority: "1", jcnOrMjfcn: "21036WX020207" });
+    expect((await send("DELETE", "/jobs/21036WX020207")).status).toBe(204);
+    expect((await get("/jobs/21036WX020207/planningForm")).status).toBe(404);
     await fetch(`${base}/__mock/reset`, { method: "POST" });
-    expect((await get("/jobs/JCN-260207")).status).toBe(200);
+    expect((await get("/jobs/21036WX020207")).status).toBe(200);
   });
 
   it("allows auth checks and returns 404 for unknown resources", async () => {
@@ -83,6 +96,6 @@ describe("CRACN mock server", () => {
     ).toEqual({
       allowed: true,
     });
-    expect((await get("/jobs/JCN-000000")).status).toBe(404);
+    expect((await get("/jobs/00000ZZZZ0001")).status).toBe(404);
   });
 });

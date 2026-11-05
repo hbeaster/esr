@@ -29,9 +29,10 @@ public sealed class ApiTests : IClassFixture<CracnFactory>
     [Fact] public async Task LdsAndSearchReturnMockData()
     {
         await SignIn("engineer");
-        var lds = await client.GetFromJsonAsync<JsonObject>("/api/lds?jcn=JCN-260184"); Assert.Contains("TSN", lds!["component"]!.GetValue<string>());
-        Assert.Equal("VLV-214 / TSN-20871", (await client.GetFromJsonAsync<JsonObject>("/api/lds?jcn=JCN-260207"))!["component"]!.GetValue<string>());
-        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/api/lds?jcn=unknown")).StatusCode);
+        var lds = await client.GetFromJsonAsync<JsonObject>("/api/lds?jcn=21036WX010184"); Assert.Contains("TSN", lds!["component"]!.GetValue<string>());
+        Assert.Equal("VLV-214 / TSN-20871", (await client.GetFromJsonAsync<JsonObject>("/api/lds?jcn=21036WX020207"))!["component"]!.GetValue<string>());
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.GetAsync("/api/lds?jcn=unknown")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/api/lds?jcn=00000ZZZZ0001")).StatusCode);
         var search = await client.PostAsJsonAsync("/api/history/search", new { condition = "Uneven pump coupling wear" }); var result = await search.Content.ReadFromJsonAsync<JsonObject>(); Assert.NotEmpty(result!["matches"]!.AsArray());
     }
     [Fact] public async Task AttachmentRetainsOriginal()
@@ -44,16 +45,17 @@ public sealed class ApiTests : IClassFixture<CracnFactory>
     [Fact] public async Task CreatedRecordStoresCracnContext()
     {
         await SignIn("requestor");
-        // JCN-264668 exists only in the generated CRACN data, never in seed.json.
-        var generated = await (await client.PostAsJsonAsync("/api/records", NewRequest("JCN-264668"))).Content.ReadFromJsonAsync<JsonObject>();
-        Assert.Equal("JCN-264668", generated!["jcn"]!.GetValue<string>());
+        // 71204POAH7469 exists only in the generated CRACN data, never in seed.json.
+        var generated = await (await client.PostAsJsonAsync("/api/records", NewRequest("71204POAH7469"))).Content.ReadFromJsonAsync<JsonObject>();
+        Assert.Equal("71204POAH7469", generated!["jcn"]!.GetValue<string>());
         Assert.NotEqual("", generated["workStatement"]!.GetValue<string>());
-        var demo = await (await client.PostAsJsonAsync("/api/records", NewRequest("JCN-260184"))).Content.ReadFromJsonAsync<JsonObject>();
+        var demo = await (await client.PostAsJsonAsync("/api/records", NewRequest("21036WX010184"))).Content.ReadFromJsonAsync<JsonObject>();
         Assert.Equal("A014", demo!["refit"]!.GetValue<string>());
         Assert.Equal("ASW-P-02 / TSN-10482", demo["component"]!.GetValue<string>());
         Assert.Equal("6286FCA00000", demo["swbs"]!.GetValue<string>());
         Assert.Equal("", demo["title"]!.GetValue<string>());
-        Assert.Equal(HttpStatusCode.NotFound, (await client.PostAsJsonAsync("/api/records", NewRequest("JCN-000000"))).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await client.PostAsJsonAsync("/api/records", NewRequest("00000ZZZZ0001"))).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/records", NewRequest("JCN-260184"))).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync("/api/records", NewRequest("N/A"))).StatusCode);
     }
 }

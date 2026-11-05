@@ -13,13 +13,26 @@ public sealed class WorkflowTests
     [Fact] public void CreateCopiesCracnContextForJcn()
     {
         var lds = new LdsData { WorkStatement = "Inspect coupling", Refit = "A014", Component = "ASW-P-02 / TSN-10482", Location = "Auxiliary machinery space", Swbs = "6286FCA00000" };
-        var r = w.Create(User("requestor"), Request("JCN-260184"), lds);
+        var r = w.Create(User("requestor"), Request("21036WX010184"), lds);
         Assert.Equal(("Inspect coupling", "A014", "ASW-P-02 / TSN-10482", "Auxiliary machinery space", "6286FCA00000"), (r.WorkStatement, r.Refit, r.Component, r.Location, r.Swbs));
+    }
+    [Theory]
+    [InlineData("12345WX019999")] [InlineData("1234512980001")] [InlineData(" 21036wx010184 ")]
+    public void JcnAcceptsFiveDigitsFourAlphanumericsAndSequence(string jcn) => Assert.Matches("^[0-9]{5}[A-Z0-9]{4}[0-9]{4}$", Workflow.Jcn(jcn));
+    [Theory]
+    [InlineData("JCN-260184")] [InlineData("1234WX019999")] [InlineData("12345WX0199999")] [InlineData("A2345WX019999")] [InlineData("12345WX01999A")] [InlineData("12345WX010000")] [InlineData("12345W-019999")]
+    public void JcnRejectsMalformedValues(string jcn) => Assert.Equal(400, Assert.Throws<RuleException>(() => Workflow.Jcn(jcn)).Status);
+    [Fact] public void CreateNormalizesAndValidatesJcn()
+    {
+        var lds = new LdsData { Refit = "A014" }; var count = w.Data.Records.Count;
+        Assert.Equal("21036WX010184", w.Create(User("requestor"), Request("21036wx010184"), lds).Jcn);
+        Assert.Equal(400, Assert.Throws<RuleException>(() => w.Create(User("requestor"), Request("JCN-260184"), lds)).Status);
+        Assert.Equal(count + 1, w.Data.Records.Count);
     }
     [Fact] public void CreateRejectsJcnWithoutCracnContext()
     {
         var count = w.Data.Records.Count;
-        Assert.Equal(400, Assert.Throws<RuleException>(() => w.Create(User("requestor"), Request("JCN-260184"))).Status);
+        Assert.Equal(400, Assert.Throws<RuleException>(() => w.Create(User("requestor"), Request("21036WX010184"))).Status);
         Assert.Equal(count, w.Data.Records.Count);
         var created = w.Create(User("requestor"), Request("N/A"), new LdsData { Refit = "A014" });
         Assert.Equal("", created.Refit);

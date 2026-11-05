@@ -16,7 +16,7 @@ test("request → assignment → resolution → approval → shop → division �
   await page.goto("/");
   await selectRole(page, "requestor", "Alex Morgan");
   await page.getByRole("button", { name: "New request", exact: false }).click();
-  await page.getByLabel("Job Control Number").fill("JCN-260184");
+  await page.getByLabel("Job Control Number").fill("21036WX010184");
   await page.getByRole("button", { name: "Import LDS" }).click();
   await expect(page.locator(".lds-result")).toContainText("ASW-P-02");
   await page

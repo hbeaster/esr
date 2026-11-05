@@ -1,5 +1,5 @@
 // Hand-written CRACN records merged over generated data. They keep the demo
-// JCNs that ESR documents (JCN-260184, JCN-260207) resolvable end to end:
+// JCNs that ESR documents (21036WX010184, 21036WX020207) resolvable end to end:
 // job → refit + configuration item on the same boat. All values are synthetic.
 export const DEMO_UIC = "21036";
 
@@ -50,7 +50,7 @@ export const curated = {
   ],
   "/api/v1/jobs": [
     {
-      jcnOrMjfcn: "JCN-260184",
+      jcnOrMjfcn: "21036WX010184",
       kind: "ActiveJob",
       priority: "2",
       csmpSummary: "Inspect auxiliary seawater pump coupling",
@@ -69,7 +69,7 @@ export const curated = {
       },
     },
     {
-      jcnOrMjfcn: "JCN-260207",
+      jcnOrMjfcn: "21036WX020207",
       kind: "ActiveJob",
       priority: "3",
       csmpSummary: "Restore valve actuator mounting hardware",

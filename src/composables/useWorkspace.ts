@@ -1,6 +1,12 @@
 import { computed, onBeforeUnmount, reactive, ref, watch } from "vue";
 import { createApi } from "../api";
-import { appendRichText, filterRecords, plainText, steps } from "../presentation";
+import {
+  appendRichText,
+  filterRecords,
+  normalizeJcn,
+  plainText,
+  steps,
+} from "../presentation";
 import { useDialogFocus } from "./useDialogFocus";
 import type {
   ActionForm,
@@ -282,7 +288,7 @@ export function useWorkspace(
   async function importLds() {
     await run(async () => {
       ldsResult.value = await api()<LdsData>(
-        `/lds?jcn=${encodeURIComponent(form.jcn)}`,
+        `/lds?jcn=${encodeURIComponent(normalizeJcn(form.jcn))}`,
       );
     });
   }
@@ -291,7 +297,7 @@ export function useWorkspace(
       const queued = [...pendingFiles.value];
       const r = await api()<EsrRecord>("/records", {
         ...form,
-        jcn: form.noJcn ? "N/A" : form.jcn,
+        jcn: form.noJcn ? "N/A" : normalizeJcn(form.jcn),
       });
       let version = r.version;
       let failed = "";

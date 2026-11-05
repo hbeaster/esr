@@ -3,6 +3,8 @@ import { createApi } from "../../src/api";
 import {
   esrRevision,
   filterRecords,
+  isJcn,
+  normalizeJcn,
   plainText,
   richTextHtml,
   sanitizeRichText,
@@ -75,7 +77,7 @@ describe("workspace search", () => {
       id: "1",
       title: "Pump coupling",
       serial: "260001A",
-      jcn: "JCN-1",
+      jcn: "12345WX019999",
       condition: "Wear",
       attributes: ["SUBSAFE"],
       engineerId: "e",
@@ -164,5 +166,23 @@ describe("workspace search", () => {
     expect(richTextHtml("Line one\nLine two")).toBe("Line one<br>Line two");
     expect(plainText("<p>Coupling</p><br><b>wear</b>")).toBe("Coupling\n\nwear");
     expect(plainText("<p><br></p>")).toBe("");
+  });
+});
+
+describe("JCN format", () => {
+  it("accepts 5 digits, 4 alphanumerics, and a 0001–9999 sequence", () => {
+    for (const jcn of ["12345WX019999", "1234512980001", "21036wx010184"])
+      expect(isJcn(jcn)).toBe(true);
+    for (const jcn of [
+      "JCN-260184",
+      "1234WX019999",
+      "12345WX0199999",
+      "A2345WX019999",
+      "12345WX01999A",
+      "12345WX010000",
+      "12345W-019999",
+    ])
+      expect(isJcn(jcn)).toBe(false);
+    expect(normalizeJcn(" 21036wx010184 ")).toBe("21036WX010184");
   });
 });

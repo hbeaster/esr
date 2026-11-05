@@ -176,8 +176,7 @@ function idValue(spec, idField, schema, n, random) {
   if (schema?.pattern || schema?.enum) return generate(spec, schema, random);
   const max = schema?.maxLength ?? 12;
   const example = schema?.examples?.find((e) => typeof e === "string");
-  if (idField === "jcnOrMjfcn")
-    return `JCN-26${String(random.int(1000, 9999))}`;
+  if (idField === "jcnOrMjfcn") return jcnValue(random);
   if (example && /^[0-9]+$/.test(example))
     return String(random.int(1, 10 ** example.length - 1)).padStart(
       example.length,
@@ -186,6 +185,19 @@ function idValue(spec, idField, schema, n, random) {
   return `${idField.slice(0, 3).toUpperCase()}${random.int(10000, 99999)}`.slice(
     0,
     max,
+  );
+}
+
+const JCN_ALNUM = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+/** JCN: 5 digits, 4 alphanumerics, 4-digit sequence 0001–9999 (12345WX019999). */
+function jcnValue(random) {
+  let middle = "";
+  for (let n = 0; n < 4; n++) middle += random.pick([...JCN_ALNUM]);
+  return (
+    String(random.int(0, 99999)).padStart(5, "0") +
+    middle +
+    String(random.int(1, 9999)).padStart(4, "0")
   );
 }
 

@@ -6,6 +6,13 @@ export const steps: WorkflowStatus[] = [
   "ESR Issued",
   "ESR Closed",
 ];
+/** JCN: 5 digits, 4 letters or digits, then a 0001–9999 sequence (12345WX019999). */
+export const JCN_PATTERN = "[0-9]{5}[A-Z0-9]{4}(?!0000)[0-9]{4}";
+const jcnFormat = new RegExp(`^${JCN_PATTERN}$`);
+export const normalizeJcn = (value: string): string =>
+  value.trim().toUpperCase();
+export const isJcn = (value: string): boolean =>
+  jcnFormat.test(normalizeJcn(value));
 export const statusTone = (status: string): string =>
   ({
     Unassigned: "gray",
