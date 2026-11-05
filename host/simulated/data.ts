@@ -108,16 +108,28 @@ type Stage =
   | "deferred"
   | "closed";
 
-const bangorStages: Stage[] = [
-  "unassigned",
-  "inProcess",
-  "awaiting",
-  "issued",
-  "closed",
-  "returned",
-  "shopSigned",
-  "deferred",
-];
+/**
+ * Most Bangor records are closed out. These 14 stay open (two of them are
+ * closed records reopened by revision), chosen so the backlog mixes fresh,
+ * aging, and stale work: see the age notes. Ages are days in the current
+ * status, against the limits in agingThresholdsDays.
+ */
+const openBangorStages: Partial<Record<number, Stage>> = {
+  0: "unassigned", // ~1 day: on track
+  26: "unassigned", // ~53 days: stale
+  2: "returned", // ~5 days: aging
+  1: "inProcess", // ~2 days: on track
+  31: "inProcess", // ~59 days: stale
+  3: "awaiting", // ~5 days: aging
+  28: "awaiting", // ~55 days: stale
+  9: "issued", // ~13 days: on track
+  40: "issued", // ~78 days: stale
+  12: "shopSigned", // ~22 days: on track
+  16: "deferred", // deferred work does not age
+  36: "deferred",
+};
+/** Closed records reopened as revision B: one fresh (~3 days), one stale (~83 days). */
+const revisedBangorIndexes = new Set([4, 44]);
 /** The other TRF only has an engineer identity, so its records stop before approval. */
 const kingsBayStages: Stage[] = ["unassigned", "inProcess", "awaiting"];
 
@@ -162,7 +174,19 @@ const longTitle =
 const longCondition = `${conditions[0]} `.repeat(14).trim();
 
 const DAY_MS = 86_400_000;
-const LATEST_RECORD_MS = Date.UTC(2026, 9, 31, 15);
+/**
+ * The newest record is anchored to yesterday 15:00 UTC, so the mix of fresh,
+ * aging, and stale work looks the same whenever the data is generated.
+ * Deterministic within a UTC day.
+ */
+function latestRecordMs(): number {
+  const now = new Date();
+  return (
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) -
+    DAY_MS +
+    15 * 3_600_000
+  );
+}
 
 function textBytes(name: string): number {
   return new TextEncoder().encode(simulatedTextFile(name)).length;
@@ -206,15 +230,24 @@ export function createSimulatedRecords(seed: SimulatedSeed): EsrRecord[] {
     "21036WX010184",
   ];
 
+  const latest = latestRecordMs();
   return Array.from({ length: SIMULATED_RECORD_COUNT }, (_, index) => {
     const kingsBay = index % 6 === 5;
-    const stage = kingsBay
+    const stage: Stage = kingsBay
       ? kingsBayStages[index % kingsBayStages.length]
-      : bangorStages[index % bangorStages.length];
+      : (openBangorStages[index] ?? "closed");
     const id = `sim-${index + 1}`;
-    const time = (offsetDays: number) =>
+    // Created every two days, newest first: about four months of history.
+    const createdDaysAgo = 1 + 2 * index;
+    // Workflow steps are `pace` days apart (1 to 4), but always finish before
+    // now: six steps fit between creation and the newest record.
+    const pace = Math.max(
+      1,
+      Math.min(1 + (index % 4), Math.floor((createdDaysAgo - 1) / 6)),
+    );
+    const time = (step: number) =>
       new Date(
-        LATEST_RECORD_MS - (index + 10) * DAY_MS + offsetDays * DAY_MS,
+        latest - createdDaysAgo * DAY_MS + step * pace * DAY_MS,
       ).toISOString();
 
     const requestor = actor(kingsBay ? "remote" : "requestor");
@@ -397,8 +430,8 @@ export function createSimulatedRecords(seed: SimulatedSeed): EsrRecord[] {
       rejected: stage === "returned",
     };
 
-    // Every fifth closed record reopens as revision B, keeping a frozen snapshot.
-    return stage === "closed" && index % 5 === 0
+    // A couple of closed records reopen as revision B, keeping a frozen snapshot.
+    return stage === "closed" && revisedBangorIndexes.has(index)
       ? reviseRecord(record, time(6))
       : record;
   });
