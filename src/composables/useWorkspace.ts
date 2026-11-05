@@ -60,6 +60,14 @@ const emptyAction = (): ActionForm => ({
   shop: "",
   acknowledgeDeferred: false,
 });
+export interface PendingFile {
+  key: string;
+  name: string;
+  type: string;
+  size: number;
+  section: AttachmentSection;
+  base64: string;
+}
 
 /** One controller per custom-element instance; no module-global state or credentials. */
 export function useWorkspace(
@@ -93,14 +101,6 @@ export function useWorkspace(
     attachmentSection = ref<AttachmentSection>("Continuation"),
     requestSection = ref<AttachmentSection>("Condition"),
     ldsResult = ref<LdsData | null>(null);
-  interface PendingFile {
-    key: string;
-    name: string;
-    type: string;
-    size: number;
-    section: AttachmentSection;
-    base64: string;
-  }
   const pendingFiles = ref<PendingFile[]>([]);
   let pendingKey = 0;
   const fileTypes = [
