@@ -18,7 +18,11 @@ export interface SimulatedSeed {
 
 export const SIMULATED_RECORD_COUNT = 60;
 
-/** Same JCN as the CRACN mock's demo job, so the New Request form behaves alike. */
+/**
+ * The first two JCNs match the CRACN mock's demo jobs, so the New Request form
+ * behaves alike. The rest exist only in simulated data, so every mock hull zone
+ * has records.
+ */
 export const simulatedLds: Record<string, LdsData> = {
   "21036WX010184": {
     workStatement: "Inspect auxiliary seawater pump coupling",
@@ -33,6 +37,34 @@ export const simulatedLds: Record<string, LdsData> = {
     component: "VLV-214 / TSN-20871",
     location: "Forward equipment space",
     swbs: "4521VLV21400",
+  },
+  "21036WX030311": {
+    workStatement: "Inspect propulsion motor mounting and cooling",
+    refit: "A021",
+    component: "MTR-01 / TSN-30115",
+    location: "Engine room lower level",
+    swbs: "2351MTR01000",
+  },
+  "21036WX040422": {
+    workStatement: "Recalibrate depth gauge transmitter",
+    refit: "A021",
+    component: "PT-118 / TSN-40233",
+    location: "Control room",
+    swbs: "4365PT118000",
+  },
+  "21036WX050533": {
+    workStatement: "Repair galley exhaust damper linkage",
+    refit: "A018",
+    component: "DMP-07 / TSN-50344",
+    location: "Crew mess and galley",
+    swbs: "5121DMP07000",
+  },
+  "21036WX060644": {
+    workStatement: "Inspect shaft seal cooling line",
+    refit: "A014",
+    component: "SS-02 / TSN-60455",
+    location: "Aft shaft alley",
+    swbs: "2441SS020000",
   },
 };
 
@@ -155,7 +187,24 @@ export function createSimulatedRecords(seed: SimulatedSeed): EsrRecord[] {
     if (!found) throw new Error(`Simulated data needs the "${id}" identity.`);
     return found;
   };
-  const jcns = [...Object.keys(simulatedLds), "N/A"];
+  // Weighted so the mock hull heatmap shows hot spots: auxiliary and
+  // engineering carry most of the work. Thirteen slots never line up with the
+  // every-sixth Kings Bay record, so every zone has records at each site.
+  const jcns = [
+    "21036WX010184", // auxiliary
+    "21036WX030311", // engineering
+    "21036WX010184",
+    "21036WX020207", // forward
+    "21036WX030311",
+    "21036WX040422", // operations
+    "21036WX010184",
+    "N/A",
+    "21036WX050533", // midships
+    "21036WX030311",
+    "21036WX020207",
+    "21036WX060644", // aft
+    "21036WX010184",
+  ];
 
   return Array.from({ length: SIMULATED_RECORD_COUNT }, (_, index) => {
     const kingsBay = index % 6 === 5;

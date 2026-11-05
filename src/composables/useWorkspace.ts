@@ -3,10 +3,13 @@ import { createApi } from "../api";
 import {
   appendRichText,
   filterRecords,
+  hullZone,
+  hullZones,
   normalizeJcn,
   plainText,
   steps,
 } from "../presentation";
+import type { HullZone } from "../presentation";
 import { useDialogFocus } from "./useDialogFocus";
 import type {
   ActionForm,
@@ -87,7 +90,8 @@ export function useWorkspace(
   const view = ref<View>("workspace"),
     scope = ref<Scope>("all"),
     query = ref(""),
-    status = ref("");
+    status = ref(""),
+    zone = ref<HullZone | "">("");
   const selectedId = ref<string | null>(null),
     tab = ref<RecordTab>("overview"),
     dialog = ref<Dialog | null>(null);
@@ -174,8 +178,24 @@ export function useWorkspace(
       status.value,
       scope.value,
       state.user?.id,
+      zone.value,
     ),
   );
+  /** Records per mock hull zone under every filter except the zone itself. */
+  const zoneCounts = computed(() => {
+    const result = Object.fromEntries(
+      [...hullZones.map((z) => z.id), "unlocated"].map((id) => [id, 0]),
+    ) as Record<HullZone | "unlocated", number>;
+    for (const r of filterRecords(
+      state.records,
+      query.value,
+      status.value,
+      scope.value,
+      state.user?.id,
+    ))
+      result[hullZone(r.location) ?? "unlocated"]++;
+    return result;
+  });
   const counts = computed(() =>
     Object.fromEntries(
       steps.map((s) => [
@@ -268,6 +288,7 @@ export function useWorkspace(
     selectedId.value = null;
     status.value = "";
     query.value = "";
+    zone.value = "";
     historySnapshot.value = null;
     error.value = "";
     notice.value = "";
@@ -546,6 +567,7 @@ export function useWorkspace(
     scope,
     query,
     status,
+    zone,
     selectedId,
     tab,
     dialog,
@@ -571,6 +593,7 @@ export function useWorkspace(
     canComment,
     filtered,
     counts,
+    zoneCounts,
     owner,
     run,
     reload,

@@ -3,6 +3,7 @@ import { computed, ref } from "vue";
 import {
   esrRevision,
   esrTableColumns,
+  hullZoneLabel,
   initials,
   date,
   plainText,
@@ -12,11 +13,13 @@ import {
 } from "../presentation";
 import type { EsrTableColumnId, SortDirection } from "../presentation";
 import { useWorkspaceContext } from "../composables/workspaceContext";
+import HullHeatmap from "./HullHeatmap.vue";
 const {
   state,
   scope,
   query,
   status,
+  zone,
   filtered,
   counts,
   owner,
@@ -112,6 +115,7 @@ const stepHint: Record<string, string> = {
         <span class="stat-label"><span :class="['status-dot', statusTone(step)]" />{{ step }}</span><strong>{{ counts[step] }}</strong><span class="stat-foot">{{ stepHint[step] }}</span>
       </button>
     </section>
+    <HullHeatmap />
     <section class="card workspace-card">
       <div class="filters">
         <label class="search"><span aria-hidden="true">⌕</span><input
@@ -136,11 +140,19 @@ const stepHint: Record<string, string> = {
             {{ step }}
           </option>
         </select><button
-          v-if="status || query"
+          v-if="zone"
+          class="zone-filter"
+          :aria-label="`Remove zone filter ${hullZoneLabel(zone)}`"
+          @click="zone = ''"
+        >
+          Zone: {{ hullZoneLabel(zone) }} <span aria-hidden="true">×</span>
+        </button><button
+          v-if="status || query || zone"
           class="text-button"
           @click="
             status = '';
             query = '';
+            zone = '';
           "
         >
           Clear filters
@@ -375,6 +387,15 @@ const stepHint: Record<string, string> = {
 .workspace-card {
   min-width: 0;
   max-width: 100%;
+}
+.zone-filter {
+  padding: 3px 10px;
+  border-radius: 999px;
+  border-color: var(--esr-accent);
+  background: var(--esr-accent-soft);
+  color: var(--esr-accent-text);
+  font-size: var(--fs-sm);
+  font-weight: 700;
 }
 .filters {
   display: flex;

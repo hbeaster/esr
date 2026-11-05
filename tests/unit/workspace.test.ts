@@ -304,15 +304,17 @@ describe("typed workspace controller", () => {
       base64: "U3ludGhldGlj",
       version: 2,
     });
-    expect(context.notice.value).toBe("Request submitted with supporting files.");
+    expect(context.notice.value).toBe(
+      "Request submitted with supporting files.",
+    );
     expect(emit).toHaveBeenCalledWith("record-change", {
       id: "created-1",
       action: "attach",
       status: "In Process",
     });
-    expect(wrapper.find('[aria-label="Upload supporting files"]').exists()).toBe(
-      true,
-    );
+    expect(
+      wrapper.find('[aria-label="Upload supporting files"]').exists(),
+    ).toBe(true);
   });
   it("offers a browser upload on the open record", () => {
     const { wrapper } = mountSection(RecordOverview);
@@ -472,5 +474,59 @@ describe("ESR table columns", () => {
     await wrapper.get('[aria-label="Sort by Serial"]').trigger("click");
     expect(wrapper.get("th").attributes("aria-sort")).toBe("descending");
     expect(serials()[0]).toContain("260040A");
+  });
+});
+
+describe("hull zone filter", () => {
+  const located = () =>
+    makeBootstrap({
+      records: [
+        makeRecord({ id: "aux-1", location: "Auxiliary machinery space" }),
+        makeRecord({
+          id: "aux-2",
+          location: "Auxiliary machinery space",
+          status: "ESR Closed",
+        }),
+        makeRecord({ id: "fwd", location: "Forward equipment space" }),
+        makeRecord({ id: "none" }),
+      ],
+    });
+  it("counts zones under every filter except the zone itself", () => {
+    const { context } = mountSection(RequestWorkspace, located());
+    expect(context.zoneCounts.value).toMatchObject({
+      auxiliary: 2,
+      forward: 1,
+      aft: 0,
+      unlocated: 1,
+    });
+    context.zone.value = "auxiliary";
+    expect(context.filtered.value.map((r) => r.id)).toEqual(["aux-1", "aux-2"]);
+    expect(context.zoneCounts.value.forward).toBe(1);
+    context.status.value = "ESR Closed";
+    expect(context.zoneCounts.value).toMatchObject({
+      auxiliary: 1,
+      forward: 0,
+    });
+    context.navigate("workspace");
+    expect(context.zone.value).toBe("");
+  });
+  it("filters the table from a zone chip and clears it", async () => {
+    const { wrapper, context } = mountSection(RequestWorkspace, located());
+    await wrapper
+      .get('[aria-label="Filter by hull zone"] button')
+      .trigger("click");
+    expect(context.zone.value).toBe("forward");
+    expect(wrapper.findAll("tbody tr")).toHaveLength(1);
+    await wrapper
+      .get('[aria-label="Remove zone filter Forward"]')
+      .trigger("click");
+    expect(wrapper.findAll("tbody tr")).toHaveLength(4);
+    context.zone.value = "auxiliary";
+    await wrapper.vm.$nextTick();
+    const clear = wrapper
+      .findAll("button")
+      .find((b) => b.text() === "Clear filters")!;
+    await clear.trigger("click");
+    expect(context.zone.value).toBe("");
   });
 });

@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   equipmentClass,
+  filterRecords,
   equipmentClassLabel,
   hullZone,
   hullZoneLabel,
 } from "../../src/presentation";
+import { makeRecord } from "../fixtures";
 
 const blank = { component: "", title: "", workStatement: "", condition: "" };
 
@@ -65,5 +67,20 @@ describe("hullZone", () => {
     expect(hullZone("")).toBeNull();
     expect(hullZone(null)).toBeNull();
     expect(hullZone("Pier 4")).toBeNull();
+  });
+});
+
+describe("filterRecords zone", () => {
+  const records = [
+    makeRecord({ id: "aux", location: "Auxiliary machinery space" }),
+    makeRecord({ id: "fwd", location: "Forward equipment space" }),
+    makeRecord({ id: "none", location: "" }),
+  ];
+  it("keeps only records in the selected hull zone", () => {
+    const ids = (zone: Parameters<typeof filterRecords>[5]) =>
+      filterRecords(records, "", "", "all", undefined, zone).map((r) => r.id);
+    expect(ids("auxiliary")).toEqual(["aux"]);
+    expect(ids("aft")).toEqual([]);
+    expect(ids("")).toEqual(["aux", "fwd", "none"]);
   });
 });

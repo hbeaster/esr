@@ -247,13 +247,14 @@ type SearchableRecord = Pick<
   | "engineerId"
   | "status"
 > &
-  Partial<Pick<EsrRecord, "requestorId">>;
+  Partial<Pick<EsrRecord, "requestorId" | "location">>;
 export function filterRecords<T extends SearchableRecord>(
   records: T[],
   query: string,
   status: string,
   scope: Scope,
   userId?: string,
+  zone: HullZone | "" = "",
 ): T[] {
   const search = query.trim().toLowerCase();
   return records.filter(
@@ -278,7 +279,8 @@ export function filterRecords<T extends SearchableRecord>(
       (scope !== "mine" ||
         r.engineerId === userId ||
         r.requestorId === userId) &&
-      (scope !== "history" || r.status === "ESR Closed"),
+      (scope !== "history" || r.status === "ESR Closed") &&
+      (!zone || hullZone(r.location) === zone),
   );
 }
 const richTags = new Set([

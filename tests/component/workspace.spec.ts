@@ -64,6 +64,16 @@ test("isolated component loads, filters, navigates, and lays out at mobile width
     page.getByRole("heading", { name: "Service requests" }),
   ).toBeVisible();
   await expect(page.locator("tbody tr")).toHaveCount(6);
+  await expect(
+    page.getByRole("img", { name: /Mock fleet hull heatmap: .*Auxiliary 1/ }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Auxiliary 1" }).click();
+  await expect(page.locator("tbody tr")).toHaveCount(1);
+  await expect(
+    page.getByRole("button", { name: "Remove zone filter Auxiliary" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Clear filters" }).click();
+  await expect(page.locator("tbody tr")).toHaveCount(6);
   await page.screenshot({
     path: "artifacts/desktop-workspace.png",
     fullPage: true,

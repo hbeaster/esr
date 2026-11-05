@@ -10,6 +10,7 @@ import {
 } from "../../host/simulated/handler";
 import type { SimulatedRequest } from "../../host/simulated/handler";
 import type { Bootstrap, EsrRecord } from "../../src/types";
+import { hullZone, hullZones } from "../../src/presentation";
 import seedJson from "../../backend/Esr.Api/seed.json";
 
 const seed = seedJson as unknown as SimulatedSeed;
@@ -33,6 +34,12 @@ const json = <T>(response: ReturnType<typeof handle>) => {
 const blocks = (record: EsrRecord) => record.signatures.map((s) => s.block);
 
 describe("simulated records", () => {
+  it("place records in every mock hull zone", () => {
+    const zones = new Set(records.map((r) => hullZone(r.location)));
+    for (const zone of hullZones) expect(zones).toContain(zone.id);
+    expect(zones).toContain(null);
+  });
+
   it("are deterministic and use unique, recognisable IDs", () => {
     expect(createSimulatedRecords(seed)).toEqual(records);
     expect(records).toHaveLength(SIMULATED_RECORD_COUNT);
