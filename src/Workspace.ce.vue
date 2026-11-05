@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { provide } from "vue";
+import { computed, provide } from "vue";
 import { useWorkspace } from "./composables/useWorkspace";
 import { workspaceKey } from "./composables/workspaceContext";
 import type { WorkspaceProps, WorkspaceEvents } from "./types";
@@ -17,8 +17,28 @@ const props = withDefaults(defineProps<WorkspaceProps>(), {
 const emit = defineEmits<WorkspaceEvents>();
 const workspace = useWorkspace(props, emit);
 provide(workspaceKey, workspace);
-const { state, busy, error, notice, view, dialog, record, run, reload } =
-  workspace;
+const {
+  state,
+  busy,
+  error,
+  notice,
+  view,
+  scope,
+  dialog,
+  record,
+  run,
+  reload,
+} = workspace;
+/** Changes when the visible page changes, not when the same page re-renders. */
+const pageKey = computed(() =>
+  !state.user
+    ? "connecting"
+    : view.value === "workspace"
+      ? `workspace:${scope.value}`
+      : view.value === "record"
+        ? `record:${record.value?.id ?? ""}`
+        : view.value,
+);
 </script>
 <template>
   <div
@@ -83,26 +103,36 @@ const { state, busy, error, notice, view, dialog, record, run, reload } =
             ×
           </button>
         </div>
-        <div
-          v-if="!state.user"
-          class="empty"
+        <Transition
+          name="page"
+          mode="out-in"
         >
-          <div class="empty-icon">
-            ▦
+          <div
+            :key="pageKey"
+            class="page"
+          >
+            <div
+              v-if="!state.user"
+              class="empty"
+            >
+              <div class="empty-icon">
+                ▦
+              </div>
+              <h1>Engineering service requests</h1>
+              <p>
+                {{
+                  props.tokenProvider
+                    ? "Connecting to the workspace…"
+                    : "Provide a tokenProvider to connect the component to your API."
+                }}
+              </p>
+            </div>
+            <RequestWorkspace v-else-if="view === 'workspace'" />
+            <RecordDetail v-else-if="view === 'record' && record" />
+            <TemplateLibrary v-else-if="view === 'templates'" />
+            <PermissionSettings v-else-if="view === 'admin'" />
           </div>
-          <h1>Engineering service requests</h1>
-          <p>
-            {{
-              props.tokenProvider
-                ? "Connecting to the workspace…"
-                : "Provide a tokenProvider to connect the component to your API."
-            }}
-          </p>
-        </div>
-        <RequestWorkspace v-else-if="view === 'workspace'" />
-        <RecordDetail v-else-if="view === 'record' && record" />
-        <TemplateLibrary v-else-if="view === 'templates'" />
-        <PermissionSettings v-else-if="view === 'admin'" />
+        </Transition>
       </main>
     </div>
     <WorkspaceDialogs />
@@ -157,6 +187,26 @@ main {
   max-width: 1600px;
   margin: 0 auto;
   padding: var(--sp-8);
+}
+/*
+ * Page change: the old page fades quickly, the new one rises 6px into place.
+ * The base sheet's reduced-motion rule shortens both to an instant swap.
+ */
+.page-leave-active {
+  transition: opacity 0.12s ease-in;
+  pointer-events: none;
+}
+.page-enter-active {
+  transition:
+    opacity 0.24s var(--ease),
+    transform 0.24s var(--ease);
+}
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+.page-leave-to {
+  opacity: 0;
 }
 .empty-icon {
   font-size: 40px;

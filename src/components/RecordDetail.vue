@@ -160,13 +160,21 @@ const {
       </button>
     </div>
     <div class="detail-grid">
-      <section class="detail-content">
-        <RecordOverview v-if="tab === 'overview'" />
-        <ResolutionEditor v-if="tab === 'resolution'" />
-        <RecordFiles v-if="tab === 'files'" />
-        <RevisionHistory v-if="tab === 'history'" />
-        <RecordActivity v-if="tab === 'activity'" />
-      </section>
+      <Transition
+        name="tab"
+        mode="out-in"
+      >
+        <section
+          :key="`${tab}:${historySnapshot?.serial ?? 'current'}`"
+          class="detail-content"
+        >
+          <RecordOverview v-if="tab === 'overview'" />
+          <ResolutionEditor v-if="tab === 'resolution'" />
+          <RecordFiles v-if="tab === 'files'" />
+          <RevisionHistory v-if="tab === 'history'" />
+          <RecordActivity v-if="tab === 'activity'" />
+        </section>
+      </Transition>
       <aside class="record-aside">
         <WorkflowActions /><SignatureRecord :signatures="record.signatures" />
       </aside>
@@ -334,6 +342,18 @@ const {
   display: flex;
   flex-direction: column;
   gap: var(--sp-5);
+}
+/* Tab change: a short cross-fade only, so the page frame stays still. */
+.tab-enter-active {
+  transition: opacity 0.18s var(--ease);
+}
+.tab-leave-active {
+  transition: opacity 0.08s ease-in;
+  pointer-events: none;
+}
+.tab-enter-from,
+.tab-leave-to {
+  opacity: 0;
 }
 /* Child component roots carry this component's scope, so these apply. */
 .record-aside > .padded {
