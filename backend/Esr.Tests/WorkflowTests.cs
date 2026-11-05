@@ -69,12 +69,40 @@ public sealed class WorkflowTests
     {
         var r = Issue(); Assert.Throws<RuleException>(() => w.Execute(User("engineer"), r.Id, "draft", new()));
         var original = r.Resolution; r = w.Execute(User("engineer"), r.Id, "revise", D("""{"reason":"Updated inspection requirements"}"""))!;
-        Assert.EndsWith("A", r.Serial); Assert.Equal(original, r.Resolution); Assert.Empty(r.Signatures); Assert.Equal(2, r.Revisions[0].Signatures.Count);
+        Assert.EndsWith("B", r.Serial); Assert.EndsWith("A", r.Revisions[0].Serial); Assert.Equal(original, r.Resolution); Assert.Empty(r.Signatures); Assert.Equal(2, r.Revisions[0].Signatures.Count);
         r = w.Execute(User("engineer"), r.Id, "draft", D("""{"resolution":"Changed", "rationale":"Changed", "dfs":"no", "tvd":"no"}"""))!; Assert.Equal(original, r.Revisions[0].Resolution);
     }
     [Theory] [InlineData(1,"A")] [InlineData(26,"Z")] [InlineData(27,"AA")] [InlineData(702,"ZZ")]
     public void RevisionSuffixBounds(int number, string suffix) => Assert.Equal(suffix, Workflow.RevisionSuffix(number));
     [Fact] public void RevisionOverflowRejected() => Assert.Throws<RuleException>(() => Workflow.RevisionSuffix(703));
+    [Fact] public void AssignmentIssuesYearSequenceAndRevisionA()
+    {
+        w.Data.SequenceYear = DateTime.UtcNow.Year; w.Data.Sequence = 0;
+        var r = w.Execute(User("supervisor"), Create().Id, "assign", D("""{"engineerId":"engineer"}"""))!;
+        Assert.Equal($"{DateTime.UtcNow:yy}0001A", r.Serial); Assert.Equal($"{DateTime.UtcNow:yy}0001", r.SerialBase); Assert.Equal(1, r.Revision);
+    }
+    [Fact] public void SequenceRestartsWhenTheYearChanges()
+    {
+        w.Data.SequenceYear = DateTime.UtcNow.Year - 1; w.Data.Sequence = 9999;
+        var r = w.Execute(User("supervisor"), Create().Id, "assign", D("""{"engineerId":"engineer"}"""))!;
+        Assert.Equal($"{DateTime.UtcNow:yy}0001A", r.Serial); Assert.Equal(DateTime.UtcNow.Year, w.Data.SequenceYear); Assert.Equal(1, w.Data.Sequence);
+    }
+    [Fact] public void AnnualSequenceStopsAt9999()
+    {
+        w.Data.SequenceYear = DateTime.UtcNow.Year; w.Data.Sequence = 9999; var r = Create();
+        Assert.Contains("Annual serial limit", Assert.Throws<RuleException>(() => w.Execute(User("supervisor"), r.Id, "assign", D("""{"engineerId":"engineer"}"""))).Message);
+    }
+    [Fact] public void LastRevisionUsesZZ()
+    {
+        var r = Issue(); r.Revision = 701; r.Serial = r.SerialBase + "ZY";
+        r = w.Execute(User("engineer"), r.Id, "revise", D("""{"reason":"Final suffix"}"""))!;
+        Assert.Equal(r.SerialBase + "ZZ", r.Serial); Assert.Equal(702, r.Revision);
+    }
+    [Fact] public void RevisionPastZZIsRejected()
+    {
+        var r = Issue(); r.Revision = 702; r.Serial = r.SerialBase + "ZZ";
+        Assert.Contains("Revision limit", Assert.Throws<RuleException>(() => w.Execute(User("engineer"), r.Id, "revise", D("""{"reason":"Past the end"}"""))).Message);
+    }
     [Fact] public void DfsReferenceRequiredBeforeSigning()
     {
         var r = Draft(); w.Execute(User("engineer"), r.Id, "draft", D("""{"resolution":"Inspect","rationale":"Criteria","dfs":"yes","tvd":"no"}"""));

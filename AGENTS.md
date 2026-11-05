@@ -8,12 +8,14 @@ Human docs, which these instructions do not restate:
 - Endpoints and actions: `docs/api.md`
 - Host embedding contract: `docs/host-component-contract.md`
 - Implemented decisions: `docs/requirements.md`
+- Source PRD, split per section: `docs/prd/`
 
 ## Invariants
 
 - Workflow authority is `backend/Esr.Api/Workflow.cs`. Hiding a button in `src/components/WorkflowActions.vue` does not authorize or forbid an action.
 - Signature name and user id come from the validated demo JWT in `backend/Esr.Api/DemoIdentity.cs`. Ignore identity fields in the action body.
 - The deferred status is exactly `ESR Issued – Deferred` (en dash, U+2013).
+- An assigned ESR number is `[2-digit year][0001-9999][A-ZZ]`. Assignment issues revision `A`. `260001ZZ` is year 26, sequence 0001, revision ZZ. The sequence resets each UTC year.
 - A supervisor reject leaves the status `Unassigned` and sets `Rejected`. The original requestor resubmits. Statuses are `Unassigned`, `In Process`, `Awaiting Approval`, `ESR Issued`, `ESR Issued – Deferred`, and `ESR Closed`.
 - Mutations clone the record, validate the copy, then commit under `workflow.Sync`. Clients send the current `version`. A mismatch is HTTP 409.
 - `Workflow.Public` strips attachment bytes from record DTOs. Downloads use the authenticated file route.

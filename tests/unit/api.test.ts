@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { createApi } from "../../src/api";
 import {
+  esrRevision,
   filterRecords,
   isJcn,
   normalizeJcn,
@@ -59,12 +60,19 @@ describe("component API boundary", () => {
     expect(await createApi("/api")("/pdf", undefined, true)).toBe("pdf");
   });
 });
+describe("ESR numbers", () => {
+  it("reads the revision suffix", () => {
+    expect(esrRevision("260001A")).toBe("A");
+    expect(esrRevision("260001ZZ")).toBe("ZZ");
+    expect(esrRevision(null)).toBe("");
+  });
+});
 describe("workspace search", () => {
   const records = [
     makeRecord({
       id: "1",
       title: "Pump coupling",
-      serial: "260001",
+      serial: "260001A",
       jcn: "12345WX019999",
       condition: "Wear",
       attributes: ["SUBSAFE"],
@@ -74,7 +82,7 @@ describe("workspace search", () => {
     makeRecord({
       id: "2",
       title: "Valve",
-      serial: "260002",
+      serial: "260002A",
       jcn: "N/A",
       condition: "Restored",
       attributes: [],

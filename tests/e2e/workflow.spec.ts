@@ -67,7 +67,7 @@ test("request → assignment → resolution → approval → shop → division �
   await page.getByRole("button", { name: "Export PDF" }).click();
   const download = await downloadPromise;
   await download.saveAs("artifacts/e2e-approved.pdf");
-  expect(download.suggestedFilename()).toMatch(/ESR-\d{6}\.pdf/);
+  expect(download.suggestedFilename()).toMatch(/ESR-\d{6}[A-Z]{1,2}\.pdf/);
   await selectRole(page, "shop", "Taylor Brooks");
   await page.getByRole("button", { name: "Record shop completion" }).click();
   await page.getByLabel("Completion status").selectOption("Deferred");
