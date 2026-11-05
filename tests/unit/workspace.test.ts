@@ -92,15 +92,13 @@ describe("resolution components", () => {
 describe("assistant chat", () => {
   it("sends the transcript for the open record and inserts a reply into the draft", async () => {
     const { wrapper, context } = mountSection(AssistantChat);
-    const fetch = vi
-      .fn()
-      .mockResolvedValue(
-        jsonResponse({
-          reply: "Check coupling alignment.",
-          model: "gpt-test",
-          mock: false,
-        }),
-      );
+    const fetch = vi.fn().mockResolvedValue(
+      jsonResponse({
+        reply: "Check **coupling** alignment.",
+        model: "gpt-test",
+        mock: false,
+      }),
+    );
     vi.stubGlobal("fetch", fetch);
     await wrapper.get("textarea").setValue("What should I inspect?");
     await wrapper.get("form").trigger("submit");
@@ -115,12 +113,16 @@ describe("assistant chat", () => {
       "What should I inspect?",
       "Check coupling alignment.",
     ]);
+    expect(wrapper.get(".chat-message.assistant strong").text()).toBe(
+      "coupling",
+    );
     expect(wrapper.text()).toContain("Model: gpt-test");
     const add = wrapper
       .findAll("button")
       .find((b) => b.text() === "Add to rationale");
     await add!.trigger("click");
     expect(context.draft.rationale).toContain("Check coupling alignment.");
+    expect(context.draft.rationale).not.toContain("**");
   });
   it("labels the mock and restores the message when the provider fails", async () => {
     const { wrapper, context, emit } = mountSection(AssistantChat);

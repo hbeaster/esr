@@ -107,6 +107,7 @@ public static class AssistantChat
         var s = new StringBuilder();
         s.AppendLine("You are an engineering assistant for a Trident Refit Facility engineer drafting the resolution and rationale of an Engineering Service Request (ESR).");
         s.AppendLine("Give concise, technically careful suggestions. Say when information is missing. Never invent specification, drawing, DFS, or TVD numbers. The engineer verifies and signs everything; your output is a draft.");
+        s.AppendLine("Format replies in Markdown: short paragraphs, numbered lists for steps, bullet lists for options, bold for key terms, and tables only for comparisons. Do not include images or HTML.");
         s.AppendLine().AppendLine("Active ESR:");
         void Line(string label, string? value) { if (!string.IsNullOrWhiteSpace(value)) s.AppendLine($"- {label}: {value}"); }
         Line("Title", r.Title); Line("Condition / finding", r.Condition); Line("References", r.References); Line("JCN", r.Jcn);

@@ -1,10 +1,17 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from "vue";
 import { useWorkspaceContext } from "../composables/workspaceContext";
+import { renderMarkdown } from "../presentation";
 const { chat, sendChat, clearChat, insertChat } = useWorkspaceContext();
 /** Mirrors the server limit in AssistantChat.MaxTurns: the next send adds one user turn. */
 const full = computed(() => chat.messages.length >= 19);
 const log = ref<HTMLElement | null>(null);
+/** Parsed once per message, not on every keystroke in the composer. */
+const rendered = computed(() =>
+  chat.messages.map((m) =>
+    m.role === "assistant" ? renderMarkdown(m.content) : "",
+  ),
+);
 watch(
   () => chat.messages.length,
   async () => {
@@ -67,7 +74,18 @@ function onKeydown(event: KeyboardEvent) {
         <span class="chat-role">{{
           message.role === "user" ? "You" : "Assistant"
         }}</span>
-        <div class="chat-bubble">
+        <!-- Sanitized by renderMarkdown: fixed tag allowlist, no images, http(s)/mailto links only. -->
+        <!-- eslint-disable vue/no-v-html -->
+        <div
+          v-if="message.role === 'assistant'"
+          class="chat-bubble rich"
+          v-html="rendered[index]"
+        />
+        <!-- eslint-enable vue/no-v-html -->
+        <div
+          v-else
+          class="chat-bubble"
+        >
           {{ message.content }}
         </div>
         <div

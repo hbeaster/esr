@@ -1,6 +1,6 @@
 import { computed, onBeforeUnmount, reactive, ref, watch } from "vue";
 import { createApi } from "../api";
-import { filterRecords, steps } from "../presentation";
+import { filterRecords, markdownToPlainText, steps } from "../presentation";
 import { useDialogFocus } from "./useDialogFocus";
 import type {
   ActionForm,
@@ -351,7 +351,8 @@ export function useWorkspace(
     }
   }
   function insertChat(content: string, field: "resolution" | "rationale") {
-    draft[field] += `${draft[field] ? "\n\n" : ""}${content}`;
+    const text = markdownToPlainText(content);
+    draft[field] += `${draft[field] ? "\n\n" : ""}${text}`;
     notice.value = `Assistant text added to the ${field}. Review and save the draft before signing.`;
   }
   async function copyMatch(match: HistoricalMatch) {
