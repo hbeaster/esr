@@ -77,6 +77,17 @@ test("isolated component loads, filters, navigates, and lays out at mobile width
   ).toBeVisible();
   await page.getByRole("button", { name: "Clear filters" }).click();
   await expect(page.locator("tbody tr")).toHaveCount(6);
+  // Click the band beside its count label, which sits on top of the center.
+  await page
+    .locator(".hull-heatmap .heat")
+    .nth(3)
+    .click({ position: { x: 8, y: 8 } });
+  await expect(
+    page.getByRole("button", { name: /^Contact 260037A: Pump/ }),
+  ).toBeVisible();
+  await expect(page.locator("tbody tr")).toHaveCount(1);
+  await page.getByRole("button", { name: "Surface" }).click();
+  await expect(page.locator("tbody tr")).toHaveCount(6);
   await page.screenshot({
     path: "artifacts/desktop-workspace.png",
     fullPage: true,

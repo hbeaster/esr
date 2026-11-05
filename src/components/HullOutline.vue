@@ -9,13 +9,18 @@ import {
   zoneBands,
   zoneCenter,
 } from "../hullGeometry";
-defineProps<{ active?: HullZone | null; muted?: boolean }>();
+defineProps<{
+  active?: HullZone | null;
+  muted?: boolean;
+  /** Hide labels and headings, e.g. while zoomed into one compartment. */
+  bare?: boolean;
+}>();
 // Two maps can share one shadow root, so each needs its own clip id.
 const clipId = `esr-hull-clip-${useId()}`;
 </script>
 
 <template>
-  <g :class="['hull-outline', { muted }]">
+  <g :class="['hull-outline', { muted, bare }]">
     <defs>
       <clipPath :id="clipId">
         <path :d="HULL_PATH" />
@@ -38,10 +43,12 @@ const clipId = `esr-hull-clip-${useId()}`;
     </text>
     <path
       class="fin"
+      vector-effect="non-scaling-stroke"
       d="M570 82L592 56H602L594 84M570 98L592 124H602L594 96"
     />
     <path
       class="sail"
+      vector-effect="non-scaling-stroke"
       d="M178 62L186 34H226L234 62M170 46H186M226 46H242"
     />
     <path
@@ -53,6 +60,7 @@ const clipId = `esr-hull-clip-${useId()}`;
         v-for="z in hullZones.slice(1)"
         :key="z.id"
         class="bulkhead"
+        vector-effect="non-scaling-stroke"
         :x1="zoneBands[z.id][0]"
         :x2="zoneBands[z.id][0]"
         :y1="HULL_TOP"
@@ -62,6 +70,7 @@ const clipId = `esr-hull-clip-${useId()}`;
     </g>
     <path
       class="hull-line"
+      vector-effect="non-scaling-stroke"
       :d="HULL_PATH"
     />
     <text
@@ -113,6 +122,10 @@ const clipId = `esr-hull-clip-${useId()}`;
 .zone-label.active {
   font-weight: 800;
   fill: var(--esr-accent-text);
+}
+.bare .heading,
+.bare .zone-label {
+  display: none;
 }
 .muted .hull-line,
 .muted .sail,

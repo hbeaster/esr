@@ -313,6 +313,27 @@ export function agingDescription(
         : `warns after ${thresholds[0]} days`;
   return `${record.status} for ${span}, ${limit}`;
 }
+const toneRank: Record<AgingTone, number> = { stale: 0, warn: 1, ok: 2 };
+/**
+ * Records ordered most critical first: stale, then aging, then on track, then
+ * statuses that do not age (deferred, closed). SUBSAFE breaks ties within a
+ * tone, then the longest time in status. Each record's age is computed once.
+ */
+export function rankByCriticality<T extends EsrRecord>(
+  records: T[],
+  now = Date.now(),
+): { record: T; age: ReturnType<typeof statusAge> }[] {
+  return records
+    .map((record) => ({ record, age: statusAge(record, now) }))
+    .sort(
+      (a, b) =>
+        (a.age ? toneRank[a.age.tone] : 3) -
+          (b.age ? toneRank[b.age.tone] : 3) ||
+        Number(b.record.attributes.includes("SUBSAFE")) -
+          Number(a.record.attributes.includes("SUBSAFE")) ||
+        (b.age?.ms ?? 0) - (a.age?.ms ?? 0),
+    );
+}
 const at = (value: string) => Date.parse(value);
 /**
  * The record as it stood at `time`, rebuilt from its audit trail and

@@ -46,6 +46,12 @@ const staleCounts = computed(() => {
       result[stepOf(r.status)] = (result[stepOf(r.status)] || 0) + 1;
   return result;
 });
+const tableCard = ref<HTMLElement | null>(null);
+/** From a capped compartment dive: bring the zone-filtered table into view. */
+function showAllInTable() {
+  tableCard.value?.scrollIntoView({ behavior: "smooth", block: "start" });
+  tableCard.value?.focus({ preventScroll: true });
+}
 const hiddenColumns = ref<EsrTableColumnId[]>([]);
 function visible(id: EsrTableColumnId) {
   return !hiddenColumns.value.includes(id);
@@ -141,8 +147,12 @@ const stepHint: Record<string, string> = {
         >{{ stepHint[step] }}</span>
       </button>
     </section>
-    <HullHeatmap />
-    <section class="card workspace-card">
+    <HullHeatmap @show-all="showAllInTable" />
+    <section
+      ref="tableCard"
+      class="card workspace-card"
+      tabindex="-1"
+    >
       <div class="filters">
         <label class="search"><span aria-hidden="true">⌕</span><input
           v-model="query"
@@ -461,6 +471,7 @@ const stepHint: Record<string, string> = {
 }
 .workspace-card {
   min-width: 0;
+  outline: none;
   max-width: 100%;
 }
 .zone-filter {

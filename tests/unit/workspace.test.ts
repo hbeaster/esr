@@ -617,3 +617,116 @@ describe("fleet replay", () => {
     expect(context.replayAt.value).toBeNull();
   });
 });
+
+describe("compartment dive", () => {
+  const reduceMotion = () =>
+    vi.spyOn(window, "matchMedia").mockReturnValue({
+      matches: true,
+    } as MediaQueryList);
+  const located = () =>
+    makeBootstrap({
+      records: [
+        makeRecord({
+          id: "aux-1",
+          serial: "260061A",
+          location: "Auxiliary machinery space",
+          component: "ASW-P-02 / TSN-10482",
+        }),
+        makeRecord({
+          id: "aux-2",
+          serial: "260062A",
+          location: "Auxiliary machinery space",
+        }),
+        makeRecord({ id: "fwd", location: "Forward equipment space" }),
+      ],
+    });
+  const band = (wrapper: VueWrapper, index: number) =>
+    wrapper.findAll(".heat")[index];
+  it("dives into a compartment, opens a contact, and surfaces", async () => {
+    reduceMotion();
+    const { wrapper, context } = mountSection(RequestWorkspace, located());
+    await band(wrapper, 3).trigger("click");
+    expect(context.zone.value).toBe("auxiliary");
+    const contacts = wrapper.findAll(".contact");
+    expect(contacts.map((c) => c.attributes("aria-label"))).toEqual([
+      "Contact 260061A: Pump, In Process",
+      "Contact 260062A: Pump, In Process",
+    ]);
+    expect(wrapper.text()).toContain("2 contacts");
+    await wrapper.get(".hull-heatmap").trigger("keydown", { key: "Escape" });
+    expect(context.zone.value).toBe("");
+    expect(wrapper.findAll(".contact")).toHaveLength(0);
+    await band(wrapper, 3).trigger("click");
+    await wrapper.findAll(".contact")[1].trigger("keydown", { key: "Enter" });
+    expect(context.view.value).toBe("record");
+    expect(context.selectedId.value).toBe("aux-2");
+  });
+  it("surfaces when the zone filter is cleared elsewhere", async () => {
+    reduceMotion();
+    const { wrapper } = mountSection(RequestWorkspace, located());
+    await band(wrapper, 0).trigger("click");
+    expect(wrapper.findAll(".contact")).toHaveLength(1);
+    const clear = wrapper
+      .findAll("button")
+      .find((b) => b.text() === "Clear filters")!;
+    await clear.trigger("click");
+    expect(wrapper.findAll(".contact")).toHaveLength(0);
+    expect(wrapper.find(".surface").exists()).toBe(false);
+  });
+});
+
+describe("capped compartment dive", () => {
+  const crowded = (n: number) =>
+    makeBootstrap({
+      records: Array.from({ length: n }, (_, i) =>
+        makeRecord({
+          id: `aux-${i}`,
+          serial: `26${String(1000 + i).padStart(4, "0")}A`,
+          location: "Auxiliary machinery space",
+          component: "ASW-P-02 / TSN-10482",
+          status: "Unassigned",
+          // Older records first, so the oldest are the most critical.
+          createdAt: new Date(Date.UTC(2026, 8, 1 + (i % 28))).toISOString(),
+        }),
+      ),
+    });
+  it("shows the most critical contacts and folds the rest into one marker", async () => {
+    vi.spyOn(window, "matchMedia").mockReturnValue({
+      matches: true,
+    } as MediaQueryList);
+    const { wrapper } = mountSection(RequestWorkspace, crowded(30));
+    await wrapper.findAll(".heat")[3].trigger("click");
+    expect(wrapper.findAll(".contact:not(.overflow)")).toHaveLength(24);
+    const overflow = wrapper.get(".contact.overflow");
+    expect(overflow.text()).toBe("+6");
+    expect(overflow.attributes("aria-label")).toBe(
+      "Show all 30 Auxiliary records in the table",
+    );
+    expect(wrapper.text()).toContain("24 most critical of 30");
+    expect(wrapper.text()).toContain("6 more in the table");
+    const scroll = vi.fn();
+    (wrapper.get(".workspace-card").element as HTMLElement).scrollIntoView =
+      scroll;
+    await overflow.trigger("click");
+    expect(scroll).toHaveBeenCalled();
+  });
+  it("describes a contact on hover and focus without opening it", async () => {
+    vi.spyOn(window, "matchMedia").mockReturnValue({
+      matches: true,
+    } as MediaQueryList);
+    const { wrapper, context } = mountSection(RequestWorkspace, crowded(2));
+    await wrapper.findAll(".heat")[3].trigger("click");
+    const before = context.selectedId.value;
+    const contact = wrapper.findAll(".contact")[0];
+    await contact.trigger("mouseenter");
+    const tip = wrapper.get(".contact-tip");
+    expect(tip.text()).toContain("Pump");
+    expect(tip.text()).toContain("Unassigned");
+    expect(tip.text()).toContain("Click to open");
+    expect(context.selectedId.value).toBe(before);
+    await contact.trigger("mouseleave");
+    expect(wrapper.find(".contact-tip").exists()).toBe(false);
+    await contact.trigger("focus");
+    expect(wrapper.find(".contact-tip").exists()).toBe(true);
+  });
+});

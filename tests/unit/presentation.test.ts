@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  rankByCriticality,
   activityFeed,
   recordAsOf,
   agingDescription,
@@ -302,5 +303,32 @@ describe("activityFeed", () => {
       "Jordan Lee resolved 260051A",
     ]);
     expect(activityFeed([record])[0].location).toBe("Control room");
+  });
+});
+
+describe("rankByCriticality", () => {
+  it("puts stale first, then aging, SUBSAFE ties, then the oldest", () => {
+    const now = Date.parse(at(30));
+    const rows = [
+      makeRecord({ id: "closed", status: "ESR Closed" }),
+      makeRecord({ id: "ok", status: "Unassigned", createdAt: at(29) }),
+      makeRecord({ id: "warn", status: "Unassigned", createdAt: at(25) }),
+      makeRecord({ id: "stale-old", status: "Unassigned", createdAt: at(2) }),
+      makeRecord({ id: "stale-new", status: "Unassigned", createdAt: at(20) }),
+      makeRecord({
+        id: "stale-subsafe",
+        status: "Unassigned",
+        createdAt: at(21),
+        attributes: ["SUBSAFE"],
+      }),
+    ];
+    expect(rankByCriticality(rows, now).map((r) => r.record.id)).toEqual([
+      "stale-subsafe",
+      "stale-old",
+      "stale-new",
+      "warn",
+      "ok",
+      "closed",
+    ]);
   });
 });
