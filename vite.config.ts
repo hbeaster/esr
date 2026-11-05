@@ -1,7 +1,8 @@
 import { defineConfig } from "vitest/config";
 import vue from "@vitejs/plugin-vue";
+import { simulatedApiPlugin } from "./host/simulated/plugin";
 export default defineConfig(({ mode }) => ({
-  plugins: [vue({ customElement: /\.ce\.vue$/ })],
+  plugins: [vue({ customElement: /\.ce\.vue$/ }), simulatedApiPlugin()],
   server: {
     port: 5173,
     proxy: {

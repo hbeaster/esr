@@ -5,7 +5,7 @@ using Xunit;
 namespace Esr.Tests;
 public sealed class WorkflowTests
 {
-    readonly Workflow w = new(JsonSerializer.Deserialize<StoreData>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "seed.json")), JsonConfig.Options)!);
+    readonly Workflow w = new(JsonSerializer.Deserialize<StoreData>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "test-data.json")), JsonConfig.Options)!);
     Actor User(string id) => w.Data.Users.First(u => u.Id == id);
     static JsonObject D(string json) => JsonNode.Parse(json)!.AsObject();
     EsrRecord Create() => w.Create(User("requestor"), D("""{"title":"Test request","name":"Alex Morgan","shop":"31","phone":"555-0131","references":"DEMO-1","condition":"Coupling wear","jcn":"N/A"}"""));

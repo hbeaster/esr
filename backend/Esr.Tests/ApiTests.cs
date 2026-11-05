@@ -2,8 +2,20 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json.Nodes;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
 namespace Esr.Tests;
+public sealed class DefaultDataTests
+{
+    [Fact] public async Task ApiStartsWithoutRecordsOrTemplates()
+    {
+        await using var factory = new WebApplicationFactory<Program>(); var client = factory.CreateClient();
+        var session = await (await client.PostAsJsonAsync("/api/demo/session", new { userId = "engineer" })).Content.ReadFromJsonAsync<JsonObject>();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", session!["token"]!.GetValue<string>());
+        var bootstrap = await client.GetFromJsonAsync<JsonObject>("/api/bootstrap");
+        Assert.Empty(bootstrap!["records"]!.AsArray()); Assert.Empty(bootstrap["templates"]!.AsArray()); Assert.NotEmpty(bootstrap["users"]!.AsArray());
+    }
+}
 public sealed class ApiTests : IClassFixture<CracnFactory>
 {
     readonly HttpClient client;

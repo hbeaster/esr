@@ -4,6 +4,21 @@ const selectRole = async (page: Page, id: string, name: string) => {
   await page.getByLabel("Demo identity").selectOption(id);
   await expect(page.locator(".profile")).toContainText(name);
 };
+/** The API ships without records, so each test creates what it uses. */
+const createRequest = async (page: Page, title: string) => {
+  await selectRole(page, "requestor", "Alex Morgan");
+  await page.getByRole("button", { name: "New request", exact: false }).click();
+  await page.getByLabel("Request title").fill(title);
+  await page.getByLabel("Job Control Number").fill("JCN-260184");
+  await page.getByRole("button", { name: "Import LDS" }).click();
+  await expect(page.locator(".lds-result")).toContainText("ASW-P-02");
+  await page.getByLabel("References", { exact: true }).fill("SYNTHETIC-REF-1");
+  await page
+    .getByLabel("Condition / finding", { exact: true })
+    .fill("Uneven wear on seawater pump coupling face during inspection.");
+  await page.getByRole("button", { name: "Submit request" }).click();
+  await expect(page.getByRole("heading", { name: title })).toBeVisible();
+};
 const confirm = async (page: Page) => {
   await page
     .getByRole("button", { name: "Confirm & sign", exact: true })
@@ -47,7 +62,12 @@ test("request → assignment → resolution → approval → shop → division �
   await expect(
     page.getByRole("heading", { name: "Conceptual summary" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Use in draft" }).first().click();
+  await page
+    .getByLabel("Resolution", { exact: true })
+    .fill("Inspect and restore the coupling face.");
+  await page
+    .getByLabel("Engineering rationale", { exact: true })
+    .fill("Restoration meets the cited acceptance criteria.");
   await page.getByLabel("1. DFS Required?").selectOption("yes");
   await page.getByLabel("DFS reference / document number").fill("DFS-E2E-001");
   await page.getByLabel("2. TVD Required?").selectOption("no");
@@ -104,10 +124,13 @@ test("workspace search, template library and mobile layout", async ({
   await expect(
     page.getByRole("heading", { name: "Service requests" }),
   ).toBeVisible();
-  await page.getByLabel("Search requests").fill("auxiliary seawater");
+  const title = `E2E searchable request ${Date.now()}`;
+  await createRequest(page, title);
+  await page.getByRole("button", { name: "All requests" }).click();
+  await page.getByLabel("Search requests").fill(title);
   await expect(page.locator("tbody tr")).toHaveCount(1);
   await page.getByRole("button", { name: "Template library" }).click();
-  await expect(page.locator(".template-card")).toHaveCount(3);
+  await expect(page.locator(".template-card")).toHaveCount(0);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole("button", { name: "All requests" }).click();
   await expect(
@@ -123,6 +146,8 @@ test("cross-facility review allows comments but no engineering actions", async (
   page,
 }) => {
   await page.goto("/");
+  const title = `E2E cross-facility request ${Date.now()}`;
+  await createRequest(page, title);
   await selectRole(page, "admin", "Drew Ellis");
   await page.getByRole("button", { name: "Permissions", exact: false }).click();
   await page.getByLabel("Access to the other TRF").selectOption("review");
@@ -130,9 +155,7 @@ test("cross-facility review allows comments but no engineering actions", async (
   await expect(page.getByRole("status")).toContainText("Permissions updated");
   await selectRole(page, "remote", "Riley Parker");
   await page.getByRole("button", { name: "All requests" }).click();
-  await page
-    .getByRole("button", { name: "Open Auxiliary seawater pump" })
-    .click();
+  await page.getByRole("button", { name: `Open ${title}` }).click();
   await expect(page.getByText("Cross-facility review access")).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Sign & submit for approval" }),

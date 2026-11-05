@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import type { Bootstrap, LdsData } from "../../src/types";
 const fixture: Bootstrap = JSON.parse(
   readFileSync(
-    new URL("../../backend/Esr.Api/seed.json", import.meta.url),
+    new URL("../../backend/Esr.Tests/test-data.json", import.meta.url),
     "utf8",
   ),
 );
