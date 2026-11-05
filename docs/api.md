@@ -1,6 +1,6 @@
 # API contract
 
-Base URL defaults to `/api`. All endpoints except `/demo/*` and `/health/*` require `Authorization: Bearer <token>`. Requests and errors use JSON; errors are `{ "error": "Human readable reason" }` with HTTP 400 (validation), 401 (identity), 403 (permission), 404 (missing), or 409 (workflow/stale version).
+Base URL defaults to `/api`. All endpoints except `/demo/*` and `/health/*` require `Authorization: Bearer <token>`. Requests and errors use JSON; errors are `{ "error": "Human readable reason" }` with HTTP 400 (validation), 401 (identity), 403 (permission), 404 (missing), 409 (workflow/stale version), or 502 (the CRACN API behind `GET /lds` and `POST /records` is unreachable or failing).
 
 | Method / path | Request | Response |
 | --- | --- | --- |
@@ -35,6 +35,8 @@ Action bodies:
 | `attach` | `{name,type,section,base64}` | Requestor on initiation or draft editor |
 
 `dfs` and `tvd` are `yes` or `no`, with references mandatory for `yes`. `attributes` accepts `Level 1`, `Requires Rev`, `SOC`, `SUBSAFE`. Completion accepts `Completed`, `Deferred`, `Other`, `Canceled`. All but Completed require an explanation. `section` accepts `Condition`, `Reference`, `Continuation`. Files are PNG, JPEG, WebP, PDF or TXT, maximum 15 MB per file and 20 files per record.
+
+`GET /lds` and `POST /records` resolve the JCN through the CRACN API (`cracn_openapi.json`, at the backend's `Cracn:BaseUrl`): `workStatement` comes from the job's `csmpSummary`, `refit` from its refit number, and `component`/`location` from its configuration item (`equipmentName / equipmentSerialNumber`). An unknown JCN returns 404; an unreachable or failing CRACN returns 502. `jcn: "N/A"` skips the lookup.
 
 Records carry a monotonically increasing `version`. The component submits it on actions; a stale version fails with 409. Mutations are validated on a deep copy and committed under a store lock. Record DTOs omit the binary attachment payload; downloads require authenticated access. Snapshots preserve attachment bytes and all signature evidence.
 

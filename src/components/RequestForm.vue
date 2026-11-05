@@ -16,7 +16,7 @@ const { busy, form, ldsResult, importLds, createRequest, closeDialog } =
     <div class="lds-box">
       <div class="section-heading">
         <h3>Link a work package</h3>
-        <span class="small-tag">MOCK LDS</span>
+        <span class="small-tag">CRACN</span>
       </div>
       <label class="check"><input
         v-model="form.noJcn"

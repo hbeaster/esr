@@ -119,7 +119,6 @@ public sealed class StoreData
     public List<Actor> Users { get; set; } = [];
     public Dictionary<string, Permission> Permissions { get; set; } = [];
     public List<EngineeringTemplate> Templates { get; set; } = [];
-    public Dictionary<string, LdsData> Lds { get; set; } = [];
     public int Sequence { get; set; } = 42;
 }
 public sealed class RuleException(string message, int status = 400) : Exception(message)
