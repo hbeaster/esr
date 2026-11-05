@@ -6,9 +6,23 @@ services:
       - "127.0.0.1:8080:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
+      # JCN lookups go to the CRACN API; here, the mock built from cracn_openapi.json.
+      Cracn__BaseUrl: http://cracn-mock:4010
+    depends_on:
+      - cracn-mock
     read_only: true
     tmpfs:
       - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+  cracn-mock:
+    build:
+      context: .
+      dockerfile: mocks/cracn/Dockerfile
+    image: cracn-mock:local
+    read_only: true
     security_opt:
       - no-new-privileges:true
     cap_drop:

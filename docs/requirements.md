@@ -1,6 +1,6 @@
 # PRD implementation and validation matrix
 
-This is a synthetic, end-to-end demonstration. “Implemented” describes demo behavior, not production certification.
+This is a synthetic, end-to-end demonstration. “Implemented” describes demo behavior, not production certification. The source PRD is split per section in `docs/prd/`.
 
 | PRD requirement | Implementation | Verification |
 | --- | --- | --- |
@@ -9,15 +9,16 @@ This is a synthetic, end-to-end demonstration. “Implemented” describes demo 
 | UI component boundaries | 17 focused child components, typed instance context, dialog focus composable | Vue Test Utils unit tests and browser regressions |
 | ESLint defaults | Recommended ESLint, typescript-eslint, and Vue presets without rule overrides | Lint passes with zero warnings |
 | Docker / Kubernetes | Multi-stage image, Compose, Kustomize deployment/service | Passed Docker build and hardened-container smoke test; Kustomize rendering (no cluster rollout) |
-| Initiation required fields / JCN optional | Required form fields; two synthetic LDS JCNs or N/A | Browser creation/import; HTTP LDS test |
-| Assignment / serial | Supervisor assigns local engineer, generates YYNNNN | Workflow tests; full browser flow |
+| Initiation required fields / JCN optional | Name, shop, phone, references, and condition. References and condition use a rich text editor. Supporting files can be chosen in the request form and on the record. A request title is not collected. A JCN is 13 characters (`12345WX019999`: 5 digits, 4 alphanumerics, `0001`–`9999`), validated, then resolved from the mock CRACN API (`cracn_openapi.json`), or N/A | Browser creation/import; CRACN mapping and record-creation HTTP tests |
+| Assignment / serial | Supervisor assigns a local engineer and issues `YY` + `0001`–`9999` + revision `A` | Workflow tests; full browser flow |
 | Reject/delete | Commented return with requestor resubmit; confirmed deletion of unassigned request | Domain resubmission test; role validation |
-| Manual resolution / rationale | Draft editor with saved technical text | Workflow tests; browser editor |
+| Manual resolution / rationale | Draft editor with saved technical text. Resolution and rationale use a rich text editor | Workflow tests; browser editor |
 | Assisted summary / matches / copying | Labeled deterministic mock summary, ranked historical matches, clipboard and insertion | HTTP search; browser search/insertion |
-| Approved templates | Three synthetic supervisor-approved templates | Browser library test |
+| Approved templates | Library and insert flow; the API ships none, and the dev-only simulated data has three synthetic templates | Component browser insert test; browser library and insert test in simulated mode |
 | High-resolution attachments / preview | Original file bytes, authenticated previews, section classification | HTTP byte roundtrip; browser upload |
 | DFS / TVD sequential questions | Conditional prompts and references, server validation | Missing DFS reference unit test; browser entry |
-| Attributes / document labels | Table, record header and PDF metadata | Browser SUBSAFE/DFS; PDF unit test |
+| Attributes / document labels | Record header and PDF metadata | Browser SUBSAFE/DFS; PDF unit test |
+| ESR table | Serial, JCN, Refit, Requester, Shop Code, Condition, Resolution, SWBS, Status, Assigned Engineer, and Date Initiated. Each column can be shown or hidden, and clicking its header sorts the visible rows | Column toggle and sort unit tests; browser layout |
 | JWT identity signatures | Server-verified demo JWT supplies identity | Tampering and spoofed payload tests |
 | Engineer / supervisor approvals | State changes, role checks, locked issued text | Domain workflow / immutability tests; browser handoff |
 | Delegated dual signing | Admin permission and mandatory comment | Dual signature unit test |
@@ -33,7 +34,7 @@ This is a synthetic, end-to-end demonstration. “Implemented” describes demo 
 ## Explicit decisions and remaining production work
 
 - User selected supervisor-approved templates and copy-forward revisions with retained history.
-- Serial ambiguity resolved as six-digit base `YYNNNN`, with revision suffix `A` through `ZZ`.
+- ESR numbers are `[2-digit year][0001-9999][A-ZZ]`. Assignment issues revision `A`. `260001ZZ` is the last revision of the first 2026 number.
 - The MLP demonstrated here is the complete synthetic role handoff. Production rollout scope still requires stakeholder agreement.
 - Live LDS, semantic/AI infrastructure, production identity/digital signing, persistence, certified PDF blocks/layout and durable audit storage are intentionally mocked or deferred.
 - The generated PDF prints JPEG and standard non-interlaced 8-bit PNG continuation images and embeds every original. WebP and other PNG variants retain UI preview and original-download support.

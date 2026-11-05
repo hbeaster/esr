@@ -1,0 +1,5364 @@
+{
+ "generatedFrom": {
+  "title": "CRACN API",
+  "version": "0.6.1",
+  "seed": 20260184
+ },
+ "resources": {
+  "/api/v1/aggregations/niinSupersessions": [
+   {
+    "supersededNiin": "1V7KHB911",
+    "supersedingNiin": {
+     "ref": "NIINs/CZSBXM500",
+     "uniqueness": {
+      "niin": "CZSBXM500"
+     }
+    }
+   },
+   {
+    "supersededNiin": "GCI6YG780",
+    "supersedingNiin": {
+     "ref": "NIINs/JDI9B8580",
+     "uniqueness": {
+      "niin": "JDI9B8580"
+     }
+    }
+   },
+   {
+    "supersededNiin": "PFA9RO706",
+    "supersedingNiin": {
+     "ref": "NIINs/CZSBXM500",
+     "uniqueness": {
+      "niin": "CZSBXM500"
+     }
+    }
+   },
+   {
+    "supersededNiin": "1AXECX803",
+    "supersedingNiin": {
+     "ref": "NIINs/JDI9B8580",
+     "uniqueness": {
+      "niin": "JDI9B8580"
+     }
+    }
+   },
+   {
+    "supersededNiin": "YSGGYA847",
+    "supersedingNiin": {
+     "ref": "NIINs/1WXWY5364",
+     "uniqueness": {
+      "niin": "1WXWY5364"
+     }
+    }
+   }
+  ],
+  "/api/v1/aggregations/refitToKeyEvents": [
+   {
+    "keyEvent": {
+     "description": "UNDOCKING HOOK",
+     "initialRelativeDay": 563,
+     "ref": "keyEvents/1",
+     "relationshipAttributes": {
+      "refitRelativeDay": 6385
+     },
+     "uniqueness": {
+      "keyEventNumber": 1
+     }
+    },
+    "refit": {
+     "completeDate": "2026-07-06T00:00:00.000Z",
+     "isDrydock": false,
+     "keyEventManagedIndicator": false,
+     "ref": "boats/EE2NH/refits/M896",
+     "startDate": "2025-03-09T00:00:00.000Z",
+     "uniqueness": {
+      "refitNumber": "M896",
+      "uic": "EE2NH"
+     }
+    }
+   },
+   {
+    "keyEvent": {
+     "description": "Replace overhaul",
+     "ref": "keyEvents/2",
+     "relationshipAttributes": {
+      "refitRelativeDay": 163
+     },
+     "uniqueness": {
+      "keyEventNumber": 2
+     }
+    },
+    "refit": {
+     "completeDate": "2025-10-22T00:00:00.000Z",
+     "isDrydock": false,
+     "ref": "boats/EE2NH/refits/E485",
+     "refitType": "Coupling gasket sensor sensor bearing",
+     "startDate": "2025-04-01T00:00:00.000Z",
+     "uniqueness": {
+      "refitNumber": "E485",
+      "uic": "EE2NH"
+     }
+    }
+   },
+   {
+    "keyEvent": {
+     "description": "Inspect hydraulic",
+     "initialRelativeDay": 6495,
+     "ref": "keyEvents/4",
+     "relationshipAttributes": {
+      "refitRelativeDay": 1483
+     },
+     "uniqueness": {
+      "keyEventNumber": 4
+     }
+    },
+    "refit": {
+     "completeDate": "2026-02-23T00:00:00.000Z",
+     "ref": "boats/EE2NH/refits/E485",
+     "refitType": "Seawater actuator repair gasket",
+     "startDate": "2026-06-25T00:00:00.000Z",
+     "uniqueness": {
+      "refitNumber": "E485",
+      "uic": "EE2NH"
+     }
+    }
+   },
+   {
+    "keyEvent": {
+     "description": "Bearing repair overhaul",
+     "initialRelativeDay": 1971,
+     "ref": "keyEvents/1",
+     "relationshipAttributes": {
+      "refitRelativeDay": 1908
+     },
+     "uniqueness": {
+      "keyEventNumber": 1
+     }
+    },
+    "refit": {
+     "completeDate": "2026-06-17T00:00:00.000Z",
+     "keyEventManagedIndicator": true,
+     "ref": "boats/EE2NH/refits/M896",
+     "startDate": "2025-02-26T00:00:00.000Z",
+     "uniqueness": {
+      "refitNumber": "M896",
+      "uic": "EE2NH"
+     }
+    }
+   },
+   {
+    "keyEvent": {
+     "description": "Align flange inspect rep",
+     "initialRelativeDay": 2450,
+     "ref": "keyEvents/2",
+     "relationshipAttributes": {},
+     "uniqueness": {
+      "keyEventNumber": 2
+     }
+    },
+    "refit": {
+     "completeDate": "2025-04-04T00:00:00.000Z",
+     "isDrydock": false,
+     "keyEventManagedIndicator": false,
+     "ref": "boats/T607K/refits/X741",
+     "refitType": "Gasket repair replace inspect pump",
+     "startDate": "2025-09-01T00:00:00.000Z",
+     "uniqueness": {
+      "refitNumber": "X741",
+      "uic": "T607K"
+     }
+    }
+   }
+  ],
+  "/api/v1/boats": [
+   {
+    "brokerUic": "TJBZX",
+    "hasRefitStatusReporting": false,
+    "hasRwpReviewProcess": true,
+    "hullNumber": "726",
+    "insurv": "Y",
+    "isRovFunded": false,
+    "iuc": "AC5",
+    "lastJsnUsed": "M999",
+    "lazyDelete": false,
+    "level": "1",
+    "metadata": {
+     "name": "boats/21036",
+     "resourceType": "cracn.projectblue.mil/Boat"
+    },
+    "name": "USS OHIO",
+    "shipType": "SSGN",
+    "statusReportingFrequency": "5",
+    "tycom": "SP",
+    "uic": "21036",
+    "shipClass": "USS OHIO"
+   },
+   {
+    "brokerUic": "UX0XC",
+    "hasRefitStatusReporting": true,
+    "hasRwpReviewProcess": true,
+    "hullNumber": "MG9T",
+    "isRovFunded": true,
+    "iuc": "FDN",
+    "level": "1",
+    "metadata": {
+     "name": "boats/T607K",
+     "resourceType": "cracn.projectblue.mil/Boat"
+    },
+    "name": "Sensor replace fla",
+    "numberOfAvailableDays": 5332,
+    "shipType": "SSGN",
+    "snapiiIndicator": "Y",
+    "statusReportingFrequency": "D",
+    "tycom": "J4",
+    "uic": "T607K"
+   },
+   {
+    "hasCsmpOwnership": false,
+    "hasTdmsUic": false,
+    "hasTridentUic": false,
+    "hullNumber": "B8G",
+    "insurv": "S",
+    "isRovFunded": false,
+    "lazyDelete": true,
+    "level": "1",
+    "metadata": {
+     "name": "boats/EE2NH",
+     "resourceType": "cracn.projectblue.mil/Boat"
+    },
+    "name": "Flange align beari",
+    "shipClass": "Auxiliar",
+    "shipType": "B",
+    "snapiiIndicator": "X",
+    "tycom": "7",
+    "uic": "EE2NH"
+   },
+   {
+    "hasRefitStatusReporting": true,
+    "hasTdmsUic": false,
+    "hasTridentUic": false,
+    "hullNumber": "HBC",
+    "isRovFunded": false,
+    "iuc": "PRAF",
+    "lastJsnUsed": "N896",
+    "level": "1",
+    "metadata": {
+     "name": "boats/Y9UI3",
+     "resourceType": "cracn.projectblue.mil/Boat"
+    },
+    "name": "USS OHIO",
+    "shipClass": "Pump pan",
+    "shipType": "XALH",
+    "tycom": "SD",
+    "uic": "Y9UI3"
+   },
+   {
+    "brokerUic": "PJC8U",
+    "hasCsmpOwnership": false,
+    "hasTdmsUic": true,
+    "hasTridentUic": true,
+    "hullNumber": "GE6",
+    "insurv": "9",
+    "isRovFunded": false,
+    "iuc": "TT0",
+    "lastJsnUsed": "H612",
+    "lazyDelete": true,
+    "level": "2",
+    "metadata": {
+     "name": "boats/47O5S",
+     "resourceType": "cracn.projectblue.mil/Boat"
+    },
+    "name": "Coupling motor act",
+    "shipType": "SUCP",
+    "tycom": "3",
+    "uic": "47O5S"
+   }
+  ],
+  "/api/v1/boats/21036/configurationItems": [
+   {
+    "canonicalParent": {
+     "ref": "boats/21036",
+     "uniqueness": {
+      "uic": "21036"
+     }
+    },
+    "eic": "AF5A000",
+    "equipmentName": "ASW-P-02",
+    "equipmentSerialNumber": "TSN-10482",
+    "hsc": "6286FCA00000",
+    "location": "Auxiliary machinery space",
+    "metadata": {
+     "name": "boats/21036/configurationItems/6286FCA00000",
+     "resourceType": "cracn.projectblue.mil/ConfigurationItem"
+    },
+    "noncanonicalRefs": {}
+   },
+   {
+    "canonicalParent": {
+     "ref": "boats/21036",
+     "uniqueness": {
+      "uic": "21036"
+     }
+    },
+    "eic": "VA21400",
+    "equipmentName": "VLV-214",
+    "equipmentSerialNumber": "TSN-20871",
+    "hsc": "4521VLV21400",
+    "metadata": {
+     "name": "boats/21036/configurationItems/4521VLV21400",
+     "resourceType": "cracn.projectblue.mil/ConfigurationItem"
+    },
+    "partIdentifier": "Seawater auxiliary",
+    "location": "Forward equipment space"
+   }
+  ],
+  "/api/v1/boats/21036/refits": [
+   {
+    "canonicalParent": {
+     "ref": "boats/21036",
+     "uniqueness": {
+      "uic": "21036"
+     }
+    },
+    "completeDate": "2026-05-29T00:00:00.000Z",
+    "metadata": {
+     "name": "boats/21036/refits/A014",
+     "resourceType": "cracn.projectblue.mil/Refit"
+    },
+    "refitNumber": "A014",
+    "startDate": "2026-01-12T00:00:00.000Z",
+    "refitType": "Selected restricted availability",
+    "isDrydock": false
+   },
+   {
+    "canonicalParent": {
+     "ref": "boats/21036",
+     "uniqueness": {
+      "uic": "21036"
+     }
+    },
+    "completeDate": "2026-09-30T00:00:00.000Z",
+    "keyEventManagedIndicator": false,
+    "metadata": {
+     "name": "boats/21036/refits/A018",
+     "resourceType": "cracn.projectblue.mil/Refit"
+    },
+    "noncanonicalRefs": {
+     "keyEvents": []
+    },
+    "refitNumber": "A018",
+    "startDate": "2026-06-15T00:00:00.000Z",
+    "refitType": "Incremental refit",
+    "isDrydock": true
+   }
+  ],
+  "/api/v1/boats/47O5S/configurationItems": [
+   {
+    "canonicalParent": {
+     "ref": "boats/47O5S",
+     "uniqueness": {
+      "uic": "47O5S"
+     }
+    },
+    "hsc": "CXU6R7",
+    "metadata": {
+     "name": "boats/47O5S/configurationItems/CXU6R7",
+     "resourceType": "cracn.projectblue.mil/ConfigurationItem"
+    }
+   },
+   {
+    "canonicalParent": {
+     "ref": "boats/47O5S",
+     "uniqueness": {
+      "uic": "47O5S"
+     }
+    },
+    "eic": "Inspect auxiliary sensor coupling",
+    "equipmentSerialNumber": "Bearing sensor",
+    "hsc": "95JLSL",
+    "location": "Sensor flange bearing",
+    "metadata": {
+     "name": "boats/47O5S/configurationItems/95JLSL",
+     "resourceType": "cracn.projectblue.mil/ConfigurationItem"
+    },
+    "partIdentifier": "Auxiliary hydraulic repair"
+   }
+  ],
+  "/api/v1/boats/47O5S/refits": [
+   {
+    "canonicalParent": {
+     "ref": "boats/47O5S",
+     "uniqueness": {
+      "uic": "47O5S"
+     }
+    },
+    "completeDate": "2026-03-17T00:00:00.000Z",
+    "isDrydock": true,
+    "metadata": {
+     "name": "boats/47O5S/refits/H420",
+     "resourceType": "cracn.projectblue.mil/Refit"
+    },
+    "noncanonicalRefs": {},
+    "refitNumber": "H420",
+    "refitType": "Flange panel align",
+    "startDate": "2026-09-13T00:00:00.000Z"
+   },
+   {
+    "canonicalParent": {
+     "ref": "boats/47O5S",
+     "uniqueness": {
+      "uic": "47O5S"
+     }
+    },
+    "completeDate": "2026-09-14T00:00:00.000Z",
+    "isDrydock": false,
+    "metadata": {
+     "name": "boats/47O5S/refits/U791",
+     "resourceType": "cracn.projectblue.mil/Refit"
+    },
+    "noncanonicalRefs": {
+     "keyEvents": [
+      {
+       "ref": "keyEvents/2",
+       "refitRelativeDay": 8949,
+       "uniqueness": {
+        "keyEventNumber": 2
+       }
+      }
+     ]
+    },
+    "refitNumber": "U791",
+    "refitType": "Pump pump",
+    "startDate": "2026-05-05T00:00:00.000Z"
+   }
+  ],
+  "/api/v1/boats/EE2NH/configurationItems": [
+   {
+    "canonicalParent": {
+     "ref": "boats/EE2NH",
+     "uniqueness": {
+      "uic": "EE2NH"
+     }
+    },
+    "eic": "Overhaul hydraulic hydraulic",
+    "equipmentName": "Align pump replace",
+    "equipmentSerialNumber": "Valve inspect actuator",
+    "hsc": "GBUP10BVA",
+    "metadata": {
+     "name": "boats/EE2NH/configurationItems/GBUP10BVA",
+     "resourceType": "cracn.projectblue.mil/ConfigurationItem"
+    }
+   },
+   {
+    "canonicalParent": {
+     "ref": "boats/EE2NH",
+     "uniqueness": {
+      "uic": "EE2NH"
+     }
+    },
+    "eic": "Motor sensor actuator actuator",
+    "hsc": "XVQX1",
+    "metadata": {
+     "name": "boats/EE2NH/configurationItems/XVQX1",
+     "resourceType": "cracn.projectblue.mil/ConfigurationItem"
+    },
+    "partIdentifier": "Hydraulic hydraulic overhaul replace val"
+   }
+  ],
+  "/api/v1/boats/EE2NH/refits": [
+   {
+    "canonicalParent": {
+     "ref": "boats/EE2NH",
+     "uniqueness": {
+      "uic": "EE2NH"
+     }
+    },
+    "completeDate": "2026-03-26T00:00:00.000Z",
+    "metadata": {
+     "name": "boats/EE2NH/refits/M896",
+     "resourceType": "cracn.projectblue.mil/Refit"
+    },
+    "noncanonicalRefs": {},
+    "refitNumber": "M896",
+    "refitType": "Gasket coupling panel",
+    "startDate": "2025-12-17T00:00:00.000Z"
+   },
+   {
+    "canonicalParent": {
+     "ref": "boats/EE2NH",
+     "uniqueness": {
+      "uic": "EE2NH"
+     }
+    },
+    "completeDate": "2025-08-31T00:00:00.000Z",
+    "isDrydock": true,
+    "metadata": {
+     "name": "boats/EE2NH/refits/E485",
+     "resourceType": "cracn.projectblue.mil/Refit"
+    },
+    "noncanonicalRefs": {
+     "keyEvents": [
+      {
+       "ref": "keyEvents/5",
+       "uniqueness": {
+        "keyEventNumber": 5
+       }
+      },
+      {
+       "ref": "keyEvents/4",
+       "refitRelativeDay": 4067,
+       "uniqueness": {
+        "keyEventNumber": 4
+       }
+      }
+     ]
+    },
+    "refitNumber": "E485",
+    "startDate": "2026-02-02T00:00:00.000Z"
+   }
+  ],
+  "/api/v1/boats/T607K/configurationItems": [
+   {
+    "canonicalParent": {
+     "ref": "boats/T607K",
+     "uniqueness": {
+      "uic": "T607K"
+     }
+    },
+    "eic": "Gasket sensor overhaul gasket",
+    "hsc": "J6XJZ515",
+    "location": "Overhaul seawater",
+    "metadata": {
+     "name": "boats/T607K/configurationItems/J6XJZ515",
+     "resourceType": "cracn.projectblue.mil/ConfigurationItem"
+    },
+    "noncanonicalRefs": {
+     "ric": {
+      "ref": "RICs/RIC47709",
+      "uniqueness": {
+       "ric": "RIC47709"
+      }
+     }
+    },
+    "partIdentifier": "Motor sensor"
+   },
+   {
+    "canonicalParent": {
+     "ref": "boats/T607K",
+     "uniqueness": {
+      "uic": "T607K"
+     }
+    },
+    "eic": "Replace auxiliary overhaul valve",
+    "equipmentName": "Replace coupling align replace",
+    "hsc": "KBD8TAF5JV",
+    "location": "Coupling overhaul bearing motor",
+    "metadata": {
+     "name": "boats/T607K/configurationItems/KBD8TAF5JV",
+     "resourceType": "cracn.projectblue.mil/ConfigurationItem"
+    },
+    "noncanonicalRefs": {},
+    "partIdentifier": "Panel coupling inspect gasket panel"
+   }
+  ],
+  "/api/v1/boats/T607K/refits": [
+   {
+    "canonicalParent": {
+     "ref": "boats/T607K",
+     "uniqueness": {
+      "uic": "T607K"
+     }
+    },
+    "completeDate": "2025-08-31T00:00:00.000Z",
+    "isDrydock": false,
+    "metadata": {
+     "name": "boats/T607K/refits/X741",
+     "resourceType": "cracn.projectblue.mil/Refit"
+    },
+    "noncanonicalRefs": {
+     "keyEvents": [
+      {
+       "ref": "keyEvents/3",
+       "uniqueness": {
+        "keyEventNumber": 3
+       }
+      }
+     ]
+    },
+    "refitNumber": "X741",
+    "refitType": "Gasket overhaul",
+    "startDate": "2026-09-18T00:00:00.000Z"
+   },
+   {
+    "canonicalParent": {
+     "ref": "boats/T607K",
+     "uniqueness": {
+      "uic": "T607K"
+     }
+    },
+    "completeDate": "2025-05-15T00:00:00.000Z",
+    "isDrydock": false,
+    "keyEventManagedIndicator": false,
+    "metadata": {
+     "name": "boats/T607K/refits/F118",
+     "resourceType": "cracn.projectblue.mil/Refit"
+    },
+    "noncanonicalRefs": {},
+    "refitNumber": "F118",
+    "startDate": "2025-09-12T00:00:00.000Z"
+   }
+  ],
+  "/api/v1/boats/Y9UI3/configurationItems": [
+   {
+    "canonicalParent": {
+     "ref": "boats/Y9UI3",
+     "uniqueness": {
+      "uic": "Y9UI3"
+     }
+    },
+    "equipmentName": "Pump overhaul valve",
+    "equipmentSerialNumber": "Valve repair",
+    "hsc": "S7E1URC28",
+    "metadata": {
+     "name": "boats/Y9UI3/configurationItems/S7E1URC28",
+     "resourceType": "cracn.projectblue.mil/ConfigurationItem"
+    },
+    "noncanonicalRefs": {
+     "ric": {
+      "ref": "RICs/RIC47709",
+      "uniqueness": {
+       "ric": "RIC47709"
+      }
+     }
+    },
+    "partIdentifier": "Actuator auxiliary pump actuator sensor"
+   },
+   {
+    "canonicalParent": {
+     "ref": "boats/Y9UI3",
+     "uniqueness": {
+      "uic": "Y9UI3"
+     }
+    },
+    "eic": "Overhaul valve valve motor overhaul",
+    "equipmentSerialNumber": "Bearing inspect sensor align",
+    "hsc": "QM08X6",
+    "metadata": {
+     "name": "boats/Y9UI3/configurationItems/QM08X6",
+     "resourceType": "cracn.projectblue.mil/ConfigurationItem"
+    },
+    "noncanonicalRefs": {
+     "ric": {
+      "ref": "RICs/RIC47709",
+      "uniqueness": {
+       "ric": "RIC47709"
+      }
+     }
+    }
+   }
+  ],
+  "/api/v1/boats/Y9UI3/refits": [
+   {
+    "canonicalParent": {
+     "ref": "boats/Y9UI3",
+     "uniqueness": {
+      "uic": "Y9UI3"
+     }
+    },
+    "completeDate": "2025-12-12T00:00:00.000Z",
+    "metadata": {
+     "name": "boats/Y9UI3/refits/N430",
+     "resourceType": "cracn.projectblue.mil/Refit"
+    },
+    "noncanonicalRefs": {
+     "keyEvents": [
+      {
+       "ref": "keyEvents/2",
+       "uniqueness": {
+        "keyEventNumber": 2
+       }
+      }
+     ]
+    },
+    "refitNumber": "N430",
+    "startDate": "2025-01-23T00:00:00.000Z"
+   },
+   {
+    "canonicalParent": {
+     "ref": "boats/Y9UI3",
+     "uniqueness": {
+      "uic": "Y9UI3"
+     }
+    },
+    "completeDate": "2026-05-22T00:00:00.000Z",
+    "isDrydock": true,
+    "keyEventManagedIndicator": true,
+    "metadata": {
+     "name": "boats/Y9UI3/refits/G427",
+     "resourceType": "cracn.projectblue.mil/Refit"
+    },
+    "noncanonicalRefs": {
+     "keyEvents": [
+      {
+       "ref": "keyEvents/1",
+       "refitRelativeDay": 7978,
+       "uniqueness": {
+        "keyEventNumber": 1
+       }
+      }
+     ]
+    },
+    "refitNumber": "G427",
+    "refitType": "Bearing bearing overhaul",
+    "startDate": "2025-06-21T00:00:00.000Z"
+   }
+  ],
+  "/api/v1/cageCodes": [
+   {
+    "cage": "349F6",
+    "metadata": {
+     "name": "cageCodes/349F6",
+     "resourceType": "cracn.projectblue.mil/CageCode"
+    }
+   },
+   {
+    "cage": "RESDG",
+    "metadata": {
+     "name": "cageCodes/RESDG",
+     "resourceType": "cracn.projectblue.mil/CageCode"
+    }
+   },
+   {
+    "cage": "QGFO2",
+    "metadata": {
+     "name": "cageCodes/QGFO2",
+     "resourceType": "cracn.projectblue.mil/CageCode"
+    }
+   },
+   {
+    "cage": "SERO7",
+    "metadata": {
+     "name": "cageCodes/SERO7",
+     "resourceType": "cracn.projectblue.mil/CageCode"
+    }
+   },
+   {
+    "cage": "I8URC",
+    "metadata": {
+     "name": "cageCodes/I8URC",
+     "resourceType": "cracn.projectblue.mil/CageCode"
+    }
+   }
+  ],
+  "/api/v1/cageCodes/349F6/supplyParts": [
+   {
+    "canonicalParent": {
+     "ref": "cageCodes/349F6",
+     "uniqueness": {
+      "cage": "349F6"
+     }
+    },
+    "metadata": {
+     "name": "cageCodes/349F6/supplyParts/1",
+     "resourceType": "cracn.projectblue.mil/SupplyPart"
+    },
+    "noncanonicalRefs": {
+     "niin": {
+      "ref": "NIINs/JDI9B8580",
+      "uniqueness": {
+       "niin": "JDI9B8580"
+      }
+     }
+    },
+    "prePrevYearHits": 971482,
+    "previousYearHits": 77937,
+    "referenceNumber": "Pump flange",
+    "supplyPartId": 1
+   },
+   {
+    "canonicalParent": {
+     "ref": "cageCodes/349F6",
+     "uniqueness": {
+      "cage": "349F6"
+     }
+    },
+    "currentYearHits": 369548,
+    "metadata": {
+     "name": "cageCodes/349F6/supplyParts/2",
+     "resourceType": "cracn.projectblue.mil/SupplyPart"
+    },
+    "noncanonicalRefs": {
+     "niin": {
+      "ref": "NIINs/1WXWY5364",
+      "uniqueness": {
+       "niin": "1WXWY5364"
+      }
+     }
+    },
+    "partNumberEstablishedDate": "2026-02-24T00:00:00.000Z",
+    "prePrevYearHits": 734557,
+    "referenceNumber": "Overhaul inspect sensor",
+    "supplyPartId": 2
+   }
+  ],
+  "/api/v1/cageCodes/I8URC/supplyParts": [
+   {
+    "canonicalParent": {
+     "ref": "cageCodes/I8URC",
+     "uniqueness": {
+      "cage": "I8URC"
+     }
+    },
+    "metadata": {
+     "name": "cageCodes/I8URC/supplyParts/1",
+     "resourceType": "cracn.projectblue.mil/SupplyPart"
+    },
+    "noncanonicalRefs": {
+     "niin": {
+      "ref": "NIINs/E9OKQ0698",
+      "uniqueness": {
+       "niin": "E9OKQ0698"
+      }
+     }
+    },
+    "partNumberEstablishedDate": "2026-09-19T00:00:00.000Z",
+    "prePrevYearHits": 469956,
+    "previousYearHits": 705712,
+    "referenceNumber": "Align coupling hydraulic",
+    "supplyPartId": 1
+   },
+   {
+    "canonicalParent": {
+     "ref": "cageCodes/I8URC",
+     "uniqueness": {
+      "cage": "I8URC"
+     }
+    },
+    "currentYearHits": 752570,
+    "metadata": {
+     "name": "cageCodes/I8URC/supplyParts/2",
+     "resourceType": "cracn.projectblue.mil/SupplyPart"
+    },
+    "noncanonicalRefs": {
+     "niin": {
+      "ref": "NIINs/CZSBXM500",
+      "uniqueness": {
+       "niin": "CZSBXM500"
+      }
+     }
+    },
+    "partNumberEstablishedDate": "2025-11-23T00:00:00.000Z",
+    "prePrevYearHits": 116221,
+    "previousYearHits": 369704,
+    "referenceNumber": "Repair coupling sensor panel mot",
+    "supplyPartId": 2
+   }
+  ],
+  "/api/v1/cageCodes/QGFO2/supplyParts": [
+   {
+    "canonicalParent": {
+     "ref": "cageCodes/QGFO2",
+     "uniqueness": {
+      "cage": "QGFO2"
+     }
+    },
+    "metadata": {
+     "name": "cageCodes/QGFO2/supplyParts/1",
+     "resourceType": "cracn.projectblue.mil/SupplyPart"
+    },
+    "noncanonicalRefs": {
+     "niin": {
+      "ref": "NIINs/N1ZXHA200",
+      "uniqueness": {
+       "niin": "N1ZXHA200"
+      }
+     }
+    },
+    "partNumberEstablishedDate": "2026-04-26T00:00:00.000Z",
+    "prePrevYearHits": 691814,
+    "referenceNumber": "Actuator motor replace coupling",
+    "supplyPartId": 1
+   },
+   {
+    "canonicalParent": {
+     "ref": "cageCodes/QGFO2",
+     "uniqueness": {
+      "cage": "QGFO2"
+     }
+    },
+    "metadata": {
+     "name": "cageCodes/QGFO2/supplyParts/2",
+     "resourceType": "cracn.projectblue.mil/SupplyPart"
+    },
+    "noncanonicalRefs": {
+     "niin": {
+      "ref": "NIINs/CZSBXM500",
+      "uniqueness": {
+       "niin": "CZSBXM500"
+      }
+     }
+    },
+    "partNumberEstablishedDate": "2025-06-11T00:00:00.000Z",
+    "referenceNumber": "Panel inspect actuator motor sen",
+    "supplyPartId": 2
+   }
+  ],
+  "/api/v1/cageCodes/RESDG/supplyParts": [
+   {
+    "canonicalParent": {
+     "ref": "cageCodes/RESDG",
+     "uniqueness": {
+      "cage": "RESDG"
+     }
+    },
+    "currentYearHits": 328943,
+    "metadata": {
+     "name": "cageCodes/RESDG/supplyParts/1",
+     "resourceType": "cracn.projectblue.mil/SupplyPart"
+    },
+    "noncanonicalRefs": {
+     "niin": {
+      "ref": "NIINs/N1ZXHA200",
+      "uniqueness": {
+       "niin": "N1ZXHA200"
+      }
+     }
+    },
+    "partNumberEstablishedDate": "2025-10-30T00:00:00.000Z",
+    "prePrevYearHits": 292173,
+    "referenceNumber": "Replace actuator bearing bearing",
+    "supplyPartId": 1
+   },
+   {
+    "canonicalParent": {
+     "ref": "cageCodes/RESDG",
+     "uniqueness": {
+      "cage": "RESDG"
+     }
+    },
+    "currentYearHits": 926404,
+    "metadata": {
+     "name": "cageCodes/RESDG/supplyParts/2",
+     "resourceType": "cracn.projectblue.mil/SupplyPart"
+    },
+    "noncanonicalRefs": {
+     "niin": {
+      "ref": "NIINs/N1ZXHA200",
+      "uniqueness": {
+       "niin": "N1ZXHA200"
+      }
+     }
+    },
+    "previousYearHits": 584156,
+    "referenceNumber": "Auxiliary actuator flange",
+    "supplyPartId": 2
+   }
+  ],
+  "/api/v1/cageCodes/SERO7/supplyParts": [
+   {
+    "canonicalParent": {
+     "ref": "cageCodes/SERO7",
+     "uniqueness": {
+      "cage": "SERO7"
+     }
+    },
+    "currentYearHits": 730297,
+    "metadata": {
+     "name": "cageCodes/SERO7/supplyParts/1",
+     "resourceType": "cracn.projectblue.mil/SupplyPart"
+    },
+    "noncanonicalRefs": {
+     "niin": {
+      "ref": "NIINs/E9OKQ0698",
+      "uniqueness": {
+       "niin": "E9OKQ0698"
+      }
+     }
+    },
+    "partNumberEstablishedDate": "2025-02-26T00:00:00.000Z",
+    "prePrevYearHits": 364903,
+    "referenceNumber": "Motor gasket flange actuator gas",
+    "supplyPartId": 1
+   },
+   {
+    "canonicalParent": {
+     "ref": "cageCodes/SERO7",
+     "uniqueness": {
+      "cage": "SERO7"
+     }
+    },
+    "metadata": {
+     "name": "cageCodes/SERO7/supplyParts/2",
+     "resourceType": "cracn.projectblue.mil/SupplyPart"
+    },
+    "noncanonicalRefs": {
+     "niin": {
+      "ref": "NIINs/1WXWY5364",
+      "uniqueness": {
+       "niin": "1WXWY5364"
+      }
+     }
+    },
+    "prePrevYearHits": 461920,
+    "previousYearHits": 393842,
+    "referenceNumber": "Sensor gasket seawater valve bea",
+    "supplyPartId": 2
+   }
+  ],
+  "/api/v1/constraints/dynamicEnum": [
+   {
+    "categorization": "Sensor seawater",
+    "description": "Coupling gasket inspect",
+    "enumName": "iucScreeningCode",
+    "metadata": {
+     "name": "Repair coupling panel seawater",
+     "resourceType": "Flange bearing repair panel auxiliary"
+    }
+   },
+   {
+    "categorization": "Flange panel coupling repair actuator",
+    "description": "SPECIAL WORK REQUIREMENTS",
+    "enumName": "maintenanceTypeCode",
+    "metadata": {
+     "name": "Bearing sensor",
+     "resourceType": "Hydraulic seawater gasket"
+    }
+   },
+   {
+    "categorization": "Overhaul flange flange bearing",
+    "description": "Replace repair",
+    "enumName": "safetyHazard",
+    "metadata": {
+     "name": "Auxiliary overhaul pump",
+     "resourceType": "Flange actuator flange seawater seawater"
+    }
+   },
+   {
+    "categorization": null,
+    "description": "Inspect auxiliary",
+    "enumName": "documentType",
+    "metadata": {
+     "name": "Pump repair align coupling",
+     "resourceType": "Align panel flange inspect align"
+    }
+   },
+   {
+    "categorization": "Auxiliary overhaul bearing inspect seawa",
+    "description": "Sensor repair valve hydraulic motor",
+    "enumName": "typeAvailability",
+    "metadata": {
+     "name": "Pump flange",
+     "resourceType": "Sensor pump overhaul valve"
+    }
+   }
+  ],
+  "/api/v1/constraints/dynamicEnum/cognizanceSymbol/dynamicEnumValues": [
+   {
+    "description": "AERONAUTICAL SUPPORT EQUIP",
+    "metadata": {
+     "name": "Motor inspect",
+     "resourceType": "Seawater coupling flange actuator"
+    },
+    "value": "AE"
+   },
+   {
+    "description": "Valve hydraulic flange panel ali",
+    "metadata": {
+     "name": "Inspect sensor replace",
+     "resourceType": "Overhaul bearing overhaul hydraulic"
+    },
+    "value": "RI"
+   },
+   {
+    "description": "AERONAUTICAL SUPPORT EQUIP",
+    "metadata": {
+     "name": "Hydraulic flange replace",
+     "resourceType": "Seawater actuator sensor sensor"
+    },
+    "value": "UW"
+   },
+   {
+    "description": "Auxiliary panel repair",
+    "metadata": {
+     "name": "Valve flange repair",
+     "resourceType": "Actuator hydraulic repair gasket"
+    },
+    "value": "0X"
+   },
+   {
+    "description": "Hydraulic auxiliary motor seawat",
+    "metadata": {
+     "name": "Actuator repair actuator",
+     "resourceType": "Overhaul motor seawater"
+    },
+    "value": "0O"
+   }
+  ],
+  "/api/v1/constraints/dynamicEnum/deferralReason/dynamicEnumValues": [
+   {
+    "description": "Motor flange",
+    "metadata": {
+     "name": "Valve coupling actuator",
+     "resourceType": "Pump repair pump repair seawater"
+    },
+    "value": "Y"
+   },
+   {
+    "description": "Replace panel",
+    "lazyDelete": true,
+    "metadata": {
+     "name": "Align panel repair motor overhaul",
+     "resourceType": "Hydraulic motor"
+    },
+    "value": "5"
+   },
+   {
+    "description": "Flange flange hydraulic",
+    "lazyDelete": false,
+    "metadata": {
+     "name": "Repair bearing",
+     "resourceType": "Actuator repair"
+    },
+    "value": "0"
+   },
+   {
+    "description": "LACK OF MATERIAL",
+    "metadata": {
+     "name": "Valve actuator align seawater seawater",
+     "resourceType": "Replace overhaul flange auxiliary"
+    },
+    "value": "7"
+   },
+   {
+    "description": "Flange sensor motor",
+    "metadata": {
+     "name": "Hydraulic valve",
+     "resourceType": "Flange pump"
+    },
+    "value": "K"
+   }
+  ],
+  "/api/v1/constraints/dynamicEnum/documentType/dynamicEnumValues": [
+   {
+    "description": "CHANGING THIS RECORD DOES WONDERS",
+    "metadata": {
+     "name": "Flange auxiliary actuator",
+     "resourceType": "Inspect sensor valve replace"
+    },
+    "value": "HYG"
+   },
+   {
+    "description": "Replace sensor coupling",
+    "metadata": {
+     "name": "Actuator bearing pump repair",
+     "resourceType": "Seawater hydraulic"
+    },
+    "value": "UFO"
+   },
+   {
+    "description": "CHANGING THIS RECORD DOES WONDERS",
+    "metadata": {
+     "name": "Auxiliary motor sensor valve hydraulic",
+     "resourceType": "Auxiliary coupling actuator"
+    },
+    "value": "GUJ"
+   },
+   {
+    "description": "CHANGING THIS RECORD DOES WONDERS",
+    "metadata": {
+     "name": "Coupling inspect align",
+     "resourceType": "Flange valve align"
+    },
+    "value": "YHL"
+   },
+   {
+    "description": "Hydraulic valve actuator gasket",
+    "metadata": {
+     "name": "Motor replace align actuator",
+     "resourceType": "Hydraulic hydraulic repair repair"
+    },
+    "value": "OWB"
+   }
+  ],
+  "/api/v1/constraints/dynamicEnum/immsDepartment/dynamicEnumValues": [
+   {
+    "description": "Overhaul motor senso",
+    "lazyDelete": false,
+    "metadata": {
+     "name": "Gasket sensor overhaul replace align",
+     "resourceType": "Pump overhaul inspect repair actuator"
+    },
+    "value": "Q"
+   },
+   {
+    "description": "Motor actuator seawa",
+    "lazyDelete": false,
+    "metadata": {
+     "name": "Coupling replace actuator inspect repair",
+     "resourceType": "Panel gasket repair"
+    },
+    "value": "5"
+   },
+   {
+    "description": "WEAPONS",
+    "metadata": {
+     "name": "Bearing coupling valve",
+     "resourceType": "Auxiliary gasket"
+    },
+    "value": "V"
+   },
+   {
+    "description": "Panel coupling valve",
+    "lazyDelete": true,
+    "metadata": {
+     "name": "Flange motor",
+     "resourceType": "Sensor motor"
+    },
+    "value": "R"
+   },
+   {
+    "description": "Seawater bearing gas",
+    "lazyDelete": true,
+    "metadata": {
+     "name": "Auxiliary valve bearing pump pump",
+     "resourceType": "Hydraulic flange bearing inspect couplin"
+    },
+    "value": "E"
+   }
+  ],
+  "/api/v1/constraints/dynamicEnum/iuc/dynamicEnumValues": [
+   {
+    "description": "Auxiliary inspe",
+    "metadata": {
+     "name": "Gasket overhaul repair",
+     "resourceType": "Pump bearing"
+    },
+    "value": "Z"
+   },
+   {
+    "description": "SUB SQUADRON 20",
+    "metadata": {
+     "name": "Repair gasket inspect pump actuator",
+     "resourceType": "Replace align"
+    },
+    "value": "9WSR"
+   },
+   {
+    "description": "Coupling hydrau",
+    "metadata": {
+     "name": "Sensor hydraulic",
+     "resourceType": "Repair repair"
+    },
+    "value": "865"
+   },
+   {
+    "description": "Bearing inspect",
+    "metadata": {
+     "name": "Inspect overhaul actuator panel",
+     "resourceType": "Pump pump pump valve"
+    },
+    "value": "4Y"
+   },
+   {
+    "description": "Actuator panel",
+    "metadata": {
+     "name": "Valve seawater",
+     "resourceType": "Motor panel align align gasket"
+    },
+    "value": "R"
+   }
+  ],
+  "/api/v1/constraints/dynamicEnum/iucScreeningCode/dynamicEnumValues": [
+   {
+    "description": "Actuator bearin",
+    "lazyDelete": true,
+    "metadata": {
+     "name": "Inspect hydraulic",
+     "resourceType": "Sensor repair actuator sensor"
+    },
+    "value": "IM8Z"
+   },
+   {
+    "description": "Flange overhaul",
+    "lazyDelete": false,
+    "metadata": {
+     "name": "Motor actuator flange panel actuator",
+     "resourceType": "Flange repair flange"
+    },
+    "value": "0S"
+   },
+   {
+    "description": "Gasket replace",
+    "metadata": {
+     "name": "Valve bearing flange pump actuator",
+     "resourceType": "Inspect inspect overhaul flange"
+    },
+    "value": "U0"
+   },
+   {
+    "description": "Motor align",
+    "lazyDelete": false,
+    "metadata": {
+     "name": "Coupling flange gasket",
+     "resourceType": "Actuator flange pump"
+    },
+    "value": "PC"
+   },
+   {
+    "description": "Flange pump mot",
+    "lazyDelete": false,
+    "metadata": {
+     "name": "Repair sensor panel pump pump",
+     "resourceType": "Gasket flange align"
+    },
+    "value": "7XA"
+   }
+  ],
+  "/api/v1/constraints/dynamicEnum/maintenanceTypeCode/dynamicEnumValues": [
+   {
+    "description": "Align coupling",
+    "lazyDelete": false,
+    "metadata": {
+     "name": "Motor panel gasket auxiliary inspect",
+     "resourceType": "Overhaul bearing repair panel"
+    },
+    "value": "T"
+   },
+   {
+    "description": "SERVICING",
+    "lazyDelete": true,
+    "metadata": {
+     "name": "Inspect actuator sensor",
+     "resourceType": "Repair coupling pump seawater"
+    },
+    "value": "P"
+   },
+   {
+    "description": "Repair gasket auxiliary",
+    "lazyDelete": false,
+    "metadata": {
+     "name": "Coupling panel",
+     "resourceType": "Flange coupling coupling"
+    },
+    "value": "E"
+   },
+   {
+    "description": "Coupling seawater seawater mot",
+    "lazyDelete": true,
+    "metadata": {
+     "name": "Repair flange bearing motor auxiliary",
+     "resourceType": "Replace motor replace repair"
+    },
+    "value": "R"
+   },
+   {
+    "description": "Bearing hydraulic flange",
+    "lazyDelete": false,
+    "metadata": {
+     "name": "Bearing align overhaul",
+     "resourceType": "Motor align"
+    },
+    "value": "6"
+   }
+  ],
+  "/api/v1/constraints/dynamicEnum/materialAdviceCode/dynamicEnumValues": [
+   {
+    "description": "DO NOT SUBSTITUTE",
+    "lazyDelete": false,
+    "metadata": {
+     "name": "Inspect flange coupling",
+     "resourceType": "Coupling auxiliary"
+    },
+    "value": "9D"
+   },
+   {
+    "description": "DO NOT SUBSTITUTE",
+    "lazyDelete": false,
+    "metadata": {
+     "name": "Replace bearing flange align",
+     "resourceType": "Actuator hydraulic replace gasket replac"
+    },
+    "value": "3"
+   },
+   {
+    "description": "DO NOT SUBSTITUTE",
+    "metadata": {
+     "name": "Repair seawater",
+     "resourceType": "Auxiliary replace pump pump replace"
+    },
+    "value": "NS"
+   },
+   {
+    "description": "Align coupling inspect align bearing",
+    "metadata": {
+     "name": "Gasket seawater",
+     "resourceType": "Flange sensor bearing valve"
+    },
+    "value": "F"
+   },
+   {
+    "description": "Panel pump replace actuator",
+    "lazyDelete": true,
+    "metadata": {
+     "name": "Seawater actuator",
+     "resourceType": "Motor align sensor"
+    },
+    "value": "NO"
+   }
+  ],
+  "/api/v1/constraints/dynamicEnum/materialLocation/dynamicEnumValues": [
+   {
+    "description": "BREMERT SHOP STORE",
+    "metadata": {
+     "name": "Panel pump actuator repair",
+     "resourceType": "Sensor auxiliary overhaul auxiliary repl"
+    },
+    "value": "K"
+   },
+   {
+    "description": "Gasket pump actuat",
+    "metadata": {
+     "name": "Pump panel align overhaul actuator",
+     "resourceType": "Hydraulic sensor sensor actuator align"
+    },
+    "value": "H"
+   },
+   {
+    "description": "Inspect gasket bea",
+    "metadata": {
+     "name": "Inspect pump",
+     "resourceType": "Inspect hydraulic"
+    },
+    "value": "N"
+   },
+   {
+    "description": "Motor gasket coupl",
+    "metadata": {
+     "name": "Replace coupling",
+     "resourceType": "Repair sensor bearing auxiliary coupling"
+    },
+    "value": "K"
+   },
+   {
+    "description": "BREMERT SHOP STORE",
+    "metadata": {
+     "name": "Panel replace",
+     "resourceType": "Actuator actuator bearing bearing"
+    },
+    "value": "I"
+   }
+  ],
+  "/api/v1/constraints/dynamicEnum/priority/dynamicEnumValues": [
+   {
+    "description": "Overhaul panel a",
+    "metadata": {
+     "name": "Actuator repair motor",
+     "resourceType": "Gasket valve gasket flange"
+    },
+    "value": "0"
+   },
+   {
+    "description": "Replace hydrauli",
+    "lazyDelete": true,
+    "metadata": {
+     "name": "Flange repair",
+     "resourceType": "Actuator inspect"
+    },
+    "value": "H"
+   },
+   {
+    "description": "MANDATORY",
+    "metadata": {
+     "name": "Align panel",
+     "resourceType": "Auxiliary overhaul flange"
+    },
+    "value": "L"
+   },
+   {
+    "description": "MANDATORY",
+    "lazyDelete": true,
+    "metadata": {
+     "name": "Replace overhaul inspect valve",
+     "resourceType": "Hydraulic motor repair"
+    },
+    "value": "6"
+   },
+   {
+    "description": "MANDATORY",
+    "lazyDelete": false,
+    "metadata": {
+     "name": "Flange seawater inspect",
+     "resourceType": "Replace actuator overhaul overhaul valve"
+    },
+    "value": "I"
+   }
+  ],
+  "/api/v1/constraints/dynamicEnum/refitApplicabilityCode/dynamicEnumValues": [
+   {
+    "description": "Inspect bearing",
+    "metadata": {
+     "name": "Replace panel align",
+     "resourceType": "Auxiliary coupling flange align motor"
+    },
+    "value": "G"
+   },
+   {
+    "description": "SCHEDULED BUT NOT ACCOMP (CANCELLED/REJECTED)",
+    "lazyDelete": false,
+    "metadata": {
+     "name": "Replace repair",
+     "resourceType": "Inspect coupling overhaul actuator flang"
+    },
+    "value": "F"
+   },
+   {
+    "description": "Valve replace",
+    "lazyDelete": false,
+    "metadata": {
+     "name": "Overhaul inspect motor inspect",
+     "resourceType": "Inspect seawater auxiliary align pump"
+    },
+    "value": "8"
+   },
+   {
+    "description": "Sensor motor",
+    "lazyDelete": false,
+    "metadata": {
+     "name": "Replace repair panel flange",
+     "resourceType": "Pump valve"
+    },
+    "value": "U"
+   },
+   {
+    "description": "SCHEDULED BUT NOT ACCOMP (CANCELLED/REJECTED)",
+    "metadata": {
+     "name": "Valve sensor flange seawater flange",
+     "resourceType": "Auxiliary coupling"
+    },
+    "value": "K"
+   }
+  ],
+  "/api/v1/constraints/dynamicEnum/safetyHazard/dynamicEnumValues": [
+   {
+    "description": "COMBUSTIBLE MATERIALS",
+    "metadata": {
+     "name": "Coupling overhaul repair hydraulic pump",
+     "resourceType": "Panel seawater bearing"
+    },
+    "value": "F"
+   },
+   {
+    "description": "Auxiliary motor",
+    "metadata": {
+     "name": "Replace pump seawater",
+     "resourceType": "Coupling valve inspect hydraulic overhau"
+    },
+    "value": "2"
+   },
+   {
+    "description": "Sensor motor auxiliary",
+    "metadata": {
+     "name": "Auxiliary valve inspect",
+     "resourceType": "Gasket seawater"
+    },
+    "value": "K"
+   },
+   {
+    "description": "COMBUSTIBLE MATERIALS",
+    "metadata": {
+     "name": "Motor flange actuator actuator replace",
+     "resourceType": "Bearing align hydraulic motor bearing"
+    },
+    "value": "A"
+   },
+   {
+    "description": "Sensor auxiliary",
+    "lazyDelete": false,
+    "metadata": {
+     "name": "Auxiliary pump gasket",
+     "resourceType": "Inspect flange motor inspect"
+    },
+    "value": "G"
+   }
+  ],
+  "/api/v1/constraints/dynamicEnum/specialWorkRequirement/dynamicEnumValues": [
+   {
+    "description": "Gasket gasket overha",
+    "lazyDelete": true,
+    "metadata": {
+     "name": "Bearing align align",
+     "resourceType": "Valve motor hydraulic motor"
+    },
+    "value": "L5"
+   },
+   {
+    "description": "SUBSAFE",
+    "metadata": {
+     "name": "Replace gasket auxiliary gasket flange",
+     "resourceType": "Coupling sensor"
+    },
+    "value": "A"
+   },
+   {
+    "description": "Valve pump valve",
+    "metadata": {
+     "name": "Bearing sensor motor sensor",
+     "resourceType": "Inspect pump"
+    },
+    "value": "SR"
+   },
+   {
+    "description": "Auxiliary sensor ins",
+    "lazyDelete": false,
+    "metadata": {
+     "name": "Valve overhaul bearing coupling",
+     "resourceType": "Repair replace"
+    },
+    "value": "T"
+   },
+   {
+    "description": "Valve auxiliary valv",
+    "lazyDelete": false,
+    "metadata": {
+     "name": "Panel seawater",
+     "resourceType": "Bearing flange flange coupling seawater"
+    },
+    "value": "WS"
+   }
+  ],
+  "/api/v1/constraints/dynamicEnum/tycom/dynamicEnumValues": [
+   {
+    "description": "Coupling pump",
+    "dpCenter": "Sensor sea",
+    "metadata": {
+     "name": "Flange replace align auxiliary motor",
+     "resourceType": "Coupling auxiliary pump"
+    },
+    "value": "DZ"
+   },
+   {
+    "description": "Flange auxiliar",
+    "metadata": {
+     "name": "Sensor actuator panel actuator",
+     "resourceType": "Actuator auxiliary gasket bearing overha"
+    },
+    "value": "K"
+   },
+   {
+    "description": "Motor flange se",
+    "dpCenter": "Overhaul s",
+    "metadata": {
+     "name": "Repair seawater",
+     "resourceType": "Align sensor gasket auxiliary"
+    },
+    "value": "MS"
+   },
+   {
+    "description": "Overhaul pump h",
+    "dpCenter": "Bearing in",
+    "metadata": {
+     "name": "Panel bearing",
+     "resourceType": "Sensor actuator"
+    },
+    "value": "0"
+   },
+   {
+    "description": "Seawater repair",
+    "dpCenter": "Repair mot",
+    "metadata": {
+     "name": "Bearing flange",
+     "resourceType": "Align replace pump"
+    },
+    "value": "9"
+   }
+  ],
+  "/api/v1/constraints/dynamicEnum/tycomScreeningCode/dynamicEnumValues": [
+   {
+    "description": "Bearing seawater valve sensor",
+    "lazyDelete": true,
+    "metadata": {
+     "name": "Sensor sensor hydraulic",
+     "resourceType": "Panel coupling overhaul"
+    },
+    "value": "Z"
+   },
+   {
+    "description": "DEPOT ACCOMPLISH",
+    "lazyDelete": false,
+    "metadata": {
+     "name": "Valve auxiliary replace",
+     "resourceType": "Motor panel pump repair panel"
+    },
+    "value": "V"
+   },
+   {
+    "description": "Sensor motor bearing align actuator",
+    "metadata": {
+     "name": "Coupling motor actuator bearing replace",
+     "resourceType": "Actuator sensor bearing inspect seawater"
+    },
+    "value": "J"
+   },
+   {
+    "description": "DEPOT ACCOMPLISH",
+    "lazyDelete": false,
+    "metadata": {
+     "name": "Valve overhaul inspect motor",
+     "resourceType": "Sensor valve"
+    },
+    "value": "B"
+   },
+   {
+    "description": "Sensor sensor sensor panel replace",
+    "lazyDelete": false,
+    "metadata": {
+     "name": "Actuator panel panel",
+     "resourceType": "Coupling align seawater replace motor"
+    },
+    "value": "8"
+   }
+  ],
+  "/api/v1/constraints/dynamicEnum/typeAvailability/dynamicEnumValues": [
+   {
+    "description": "Actuator flange repair",
+    "metadata": {
+     "name": "Gasket panel",
+     "resourceType": "Panel coupling hydraulic auxiliary"
+    },
+    "value": "L"
+   },
+   {
+    "description": "Pump flange auxiliary gasket v",
+    "lazyDelete": true,
+    "metadata": {
+     "name": "Overhaul motor overhaul valve",
+     "resourceType": "Flange inspect flange inspect bearing"
+    },
+    "value": "8"
+   },
+   {
+    "description": "Valve valve bearing coupling a",
+    "lazyDelete": false,
+    "metadata": {
+     "name": "Sensor gasket",
+     "resourceType": "Flange panel sensor panel actuator"
+    },
+    "value": "7"
+   },
+   {
+    "description": "Auxiliary panel coupling align",
+    "metadata": {
+     "name": "Motor inspect replace align",
+     "resourceType": "Pump panel motor gasket"
+    },
+    "value": "J"
+   },
+   {
+    "description": "ENGINEERING INVESTIGATION",
+    "lazyDelete": true,
+    "metadata": {
+     "name": "Sensor bearing auxiliary panel",
+     "resourceType": "Flange repair inspect"
+    },
+    "value": "R"
+   }
+  ],
+  "/api/v1/constraints/dynamicEnum/unitOfIssue/dynamicEnumValues": [
+   {
+    "description": "Gasket flang",
+    "metadata": {
+     "name": "Repair actuator inspect hydraulic",
+     "resourceType": "Flange motor pump coupling align"
+    },
+    "value": "ZE"
+   },
+   {
+    "description": "Actuator rep",
+    "metadata": {
+     "name": "Gasket inspect",
+     "resourceType": "Bearing panel sensor"
+    },
+    "value": "FH"
+   },
+   {
+    "description": "Sensor repla",
+    "metadata": {
+     "name": "Overhaul auxiliary actuator",
+     "resourceType": "Replace replace"
+    },
+    "value": "XN"
+   },
+   {
+    "description": "Sensor auxil",
+    "metadata": {
+     "name": "Replace hydraulic",
+     "resourceType": "Pump replace sensor"
+    },
+    "value": "KI"
+   },
+   {
+    "description": "Align align",
+    "metadata": {
+     "name": "Flange replace inspect bearing inspect",
+     "resourceType": "Bearing sensor valve panel overhaul"
+    },
+    "value": "CO"
+   }
+  ],
+  "/api/v1/departments": [
+   {
+    "department": "X",
+    "description": "Valve pump valve ac",
+    "metadata": {
+     "name": "departments/X",
+     "resourceType": "cracn.projectblue.mil/Department"
+    }
+   },
+   {
+    "department": "U",
+    "description": "Overhaul hydraulic",
+    "metadata": {
+     "name": "departments/U",
+     "resourceType": "cracn.projectblue.mil/Department"
+    }
+   },
+   {
+    "department": "J",
+    "description": "Seawater valve auxi",
+    "metadata": {
+     "name": "departments/J",
+     "resourceType": "cracn.projectblue.mil/Department"
+    }
+   },
+   {
+    "department": "Q",
+    "description": "Gasket bearing coup",
+    "metadata": {
+     "name": "departments/Q",
+     "resourceType": "cracn.projectblue.mil/Department"
+    }
+   },
+   {
+    "department": "O",
+    "description": "Hydraulic repair fl",
+    "metadata": {
+     "name": "departments/O",
+     "resourceType": "cracn.projectblue.mil/Department"
+    }
+   }
+  ],
+  "/api/v1/departments/J/divisions": [
+   {
+    "canonicalParent": {
+     "ref": "departments/J",
+     "uniqueness": {
+      "department": "J"
+     }
+    },
+    "description": "Motor align overhau",
+    "division": "A",
+    "metadata": {
+     "name": "departments/J/divisions/A",
+     "resourceType": "cracn.projectblue.mil/Division"
+    }
+   },
+   {
+    "canonicalParent": {
+     "ref": "departments/J",
+     "uniqueness": {
+      "department": "J"
+     }
+    },
+    "description": "Motor inspect align",
+    "division": "Q",
+    "metadata": {
+     "name": "departments/J/divisions/Q",
+     "resourceType": "cracn.projectblue.mil/Division"
+    }
+   }
+  ],
+  "/api/v1/departments/J/divisions/A/branches": [
+   {
+    "branch": "8",
+    "canonicalParent": {
+     "ref": "departments/J/divisions/A",
+     "uniqueness": {
+      "department": "J",
+      "division": "A"
+     }
+    },
+    "description": "Bearing align pump",
+    "metadata": {
+     "name": "departments/J/divisions/A/branches/8",
+     "resourceType": "cracn.projectblue.mil/Branch"
+    }
+   },
+   {
+    "branch": "Q",
+    "canonicalParent": {
+     "ref": "departments/J/divisions/A",
+     "uniqueness": {
+      "department": "J",
+      "division": "A"
+     }
+    },
+    "description": "Panel auxiliary pan",
+    "metadata": {
+     "name": "departments/J/divisions/A/branches/Q",
+     "resourceType": "cracn.projectblue.mil/Branch"
+    }
+   }
+  ],
+  "/api/v1/departments/J/divisions/Q/branches": [
+   {
+    "branch": "3",
+    "canonicalParent": {
+     "ref": "departments/J/divisions/Q",
+     "uniqueness": {
+      "department": "J",
+      "division": "Q"
+     }
+    },
+    "description": "Motor coupling pump",
+    "metadata": {
+     "name": "departments/J/divisions/Q/branches/3",
+     "resourceType": "cracn.projectblue.mil/Branch"
+    }
+   },
+   {
+    "branch": "G",
+    "canonicalParent": {
+     "ref": "departments/J/divisions/Q",
+     "uniqueness": {
+      "department": "J",
+      "division": "Q"
+     }
+    },
+    "description": "Valve pump inspect",
+    "metadata": {
+     "name": "departments/J/divisions/Q/branches/G",
+     "resourceType": "cracn.projectblue.mil/Branch"
+    }
+   }
+  ],
+  "/api/v1/departments/O/divisions": [
+   {
+    "canonicalParent": {
+     "ref": "departments/O",
+     "uniqueness": {
+      "department": "O"
+     }
+    },
+    "description": "Auxiliary bearing h",
+    "division": "F",
+    "metadata": {
+     "name": "departments/O/divisions/F",
+     "resourceType": "cracn.projectblue.mil/Division"
+    }
+   },
+   {
+    "canonicalParent": {
+     "ref": "departments/O",
+     "uniqueness": {
+      "department": "O"
+     }
+    },
+    "description": "Overhaul panel over",
+    "division": "Q",
+    "metadata": {
+     "name": "departments/O/divisions/Q",
+     "resourceType": "cracn.projectblue.mil/Division"
+    }
+   }
+  ],
+  "/api/v1/departments/O/divisions/F/branches": [
+   {
+    "branch": "C",
+    "canonicalParent": {
+     "ref": "departments/O/divisions/F",
+     "uniqueness": {
+      "department": "O",
+      "division": "F"
+     }
+    },
+    "description": "Flange auxiliary pa",
+    "metadata": {
+     "name": "departments/O/divisions/F/branches/C",
+     "resourceType": "cracn.projectblue.mil/Branch"
+    }
+   },
+   {
+    "branch": "K",
+    "canonicalParent": {
+     "ref": "departments/O/divisions/F",
+     "uniqueness": {
+      "department": "O",
+      "division": "F"
+     }
+    },
+    "description": "Valve align",
+    "metadata": {
+     "name": "departments/O/divisions/F/branches/K",
+     "resourceType": "cracn.projectblue.mil/Branch"
+    }
+   }
+  ],
+  "/api/v1/departments/O/divisions/Q/branches": [
+   {
+    "branch": "S",
+    "canonicalParent": {
+     "ref": "departments/O/divisions/Q",
+     "uniqueness": {
+      "department": "O",
+      "division": "Q"
+     }
+    },
+    "description": "Sensor bearing flan",
+    "metadata": {
+     "name": "departments/O/divisions/Q/branches/S",
+     "resourceType": "cracn.projectblue.mil/Branch"
+    }
+   },
+   {
+    "branch": "8",
+    "canonicalParent": {
+     "ref": "departments/O/divisions/Q",
+     "uniqueness": {
+      "department": "O",
+      "division": "Q"
+     }
+    },
+    "description": "Coupling align valv",
+    "metadata": {
+     "name": "departments/O/divisions/Q/branches/8",
+     "resourceType": "cracn.projectblue.mil/Branch"
+    }
+   }
+  ],
+  "/api/v1/departments/Q/divisions": [
+   {
+    "canonicalParent": {
+     "ref": "departments/Q",
+     "uniqueness": {
+      "department": "Q"
+     }
+    },
+    "description": "Bearing align",
+    "division": "5",
+    "metadata": {
+     "name": "departments/Q/divisions/5",
+     "resourceType": "cracn.projectblue.mil/Division"
+    }
+   },
+   {
+    "canonicalParent": {
+     "ref": "departments/Q",
+     "uniqueness": {
+      "department": "Q"
+     }
+    },
+    "description": "Overhaul seawater",
+    "division": "0",
+    "metadata": {
+     "name": "departments/Q/divisions/0",
+     "resourceType": "cracn.projectblue.mil/Division"
+    }
+   }
+  ],
+  "/api/v1/departments/Q/divisions/0/branches": [
+   {
+    "branch": "U",
+    "canonicalParent": {
+     "ref": "departments/Q/divisions/0",
+     "uniqueness": {
+      "department": "Q",
+      "division": "0"
+     }
+    },
+    "description": "Auxiliary bearing h",
+    "metadata": {
+     "name": "departments/Q/divisions/0/branches/U",
+     "resourceType": "cracn.projectblue.mil/Branch"
+    }
+   },
+   {
+    "branch": "7",
+    "canonicalParent": {
+     "ref": "departments/Q/divisions/0",
+     "uniqueness": {
+      "department": "Q",
+      "division": "0"
+     }
+    },
+    "description": "Actuator sensor val",
+    "metadata": {
+     "name": "departments/Q/divisions/0/branches/7",
+     "resourceType": "cracn.projectblue.mil/Branch"
+    }
+   }
+  ],
+  "/api/v1/departments/Q/divisions/5/branches": [
+   {
+    "branch": "E",
+    "canonicalParent": {
+     "ref": "departments/Q/divisions/5",
+     "uniqueness": {
+      "department": "Q",
+      "division": "5"
+     }
+    },
+    "description": "Auxiliary align ove",
+    "metadata": {
+     "name": "departments/Q/divisions/5/branches/E",
+     "resourceType": "cracn.projectblue.mil/Branch"
+    }
+   },
+   {
+    "branch": "Z",
+    "canonicalParent": {
+     "ref": "departments/Q/divisions/5",
+     "uniqueness": {
+      "department": "Q",
+      "division": "5"
+     }
+    },
+    "description": "Bearing actuator hy",
+    "metadata": {
+     "name": "departments/Q/divisions/5/branches/Z",
+     "resourceType": "cracn.projectblue.mil/Branch"
+    }
+   }
+  ],
+  "/api/v1/departments/U/divisions": [
+   {
+    "canonicalParent": {
+     "ref": "departments/U",
+     "uniqueness": {
+      "department": "U"
+     }
+    },
+    "description": "Overhaul align moto",
+    "division": "K",
+    "metadata": {
+     "name": "departments/U/divisions/K",
+     "resourceType": "cracn.projectblue.mil/Division"
+    }
+   },
+   {
+    "canonicalParent": {
+     "ref": "departments/U",
+     "uniqueness": {
+      "department": "U"
+     }
+    },
+    "description": "Pump hydraulic valv",
+    "division": "2",
+    "metadata": {
+     "name": "departments/U/divisions/2",
+     "resourceType": "cracn.projectblue.mil/Division"
+    }
+   }
+  ],
+  "/api/v1/departments/U/divisions/2/branches": [
+   {
+    "branch": "A",
+    "canonicalParent": {
+     "ref": "departments/U/divisions/2",
+     "uniqueness": {
+      "department": "U",
+      "division": "2"
+     }
+    },
+    "description": "Panel repair actuat",
+    "metadata": {
+     "name": "departments/U/divisions/2/branches/A",
+     "resourceType": "cracn.projectblue.mil/Branch"
+    }
+   },
+   {
+    "branch": "B",
+    "canonicalParent": {
+     "ref": "departments/U/divisions/2",
+     "uniqueness": {
+      "department": "U",
+      "division": "2"
+     }
+    },
+    "description": "Valve valve",
+    "metadata": {
+     "name": "departments/U/divisions/2/branches/B",
+     "resourceType": "cracn.projectblue.mil/Branch"
+    }
+   }
+  ],
+  "/api/v1/departments/U/divisions/K/branches": [
+   {
+    "branch": "6",
+    "canonicalParent": {
+     "ref": "departments/U/divisions/K",
+     "uniqueness": {
+      "department": "U",
+      "division": "K"
+     }
+    },
+    "description": "Gasket hydraulic fl",
+    "metadata": {
+     "name": "departments/U/divisions/K/branches/6",
+     "resourceType": "cracn.projectblue.mil/Branch"
+    }
+   },
+   {
+    "branch": "1",
+    "canonicalParent": {
+     "ref": "departments/U/divisions/K",
+     "uniqueness": {
+      "department": "U",
+      "division": "K"
+     }
+    },
+    "description": "Hydraulic actuator",
+    "metadata": {
+     "name": "departments/U/divisions/K/branches/1",
+     "resourceType": "cracn.projectblue.mil/Branch"
+    }
+   }
+  ],
+  "/api/v1/departments/X/divisions": [
+   {
+    "canonicalParent": {
+     "ref": "departments/X",
+     "uniqueness": {
+      "department": "X"
+     }
+    },
+    "description": "Gasket overhaul cou",
+    "division": "M",
+    "metadata": {
+     "name": "departments/X/divisions/M",
+     "resourceType": "cracn.projectblue.mil/Division"
+    }
+   },
+   {
+    "canonicalParent": {
+     "ref": "departments/X",
+     "uniqueness": {
+      "department": "X"
+     }
+    },
+    "description": "Flange seawater",
+    "division": "R",
+    "metadata": {
+     "name": "departments/X/divisions/R",
+     "resourceType": "cracn.projectblue.mil/Division"
+    }
+   }
+  ],
+  "/api/v1/departments/X/divisions/M/branches": [
+   {
+    "branch": "T",
+    "canonicalParent": {
+     "ref": "departments/X/divisions/M",
+     "uniqueness": {
+      "department": "X",
+      "division": "M"
+     }
+    },
+    "description": "Valve pump",
+    "metadata": {
+     "name": "departments/X/divisions/M/branches/T",
+     "resourceType": "cracn.projectblue.mil/Branch"
+    }
+   },
+   {
+    "branch": "E",
+    "canonicalParent": {
+     "ref": "departments/X/divisions/M",
+     "uniqueness": {
+      "department": "X",
+      "division": "M"
+     }
+    },
+    "description": "Actuator actuator h",
+    "metadata": {
+     "name": "departments/X/divisions/M/branches/E",
+     "resourceType": "cracn.projectblue.mil/Branch"
+    }
+   }
+  ],
+  "/api/v1/departments/X/divisions/R/branches": [
+   {
+    "branch": "0",
+    "canonicalParent": {
+     "ref": "departments/X/divisions/R",
+     "uniqueness": {
+      "department": "X",
+      "division": "R"
+     }
+    },
+    "description": "Bearing hydraulic",
+    "metadata": {
+     "name": "departments/X/divisions/R/branches/0",
+     "resourceType": "cracn.projectblue.mil/Branch"
+    }
+   },
+   {
+    "branch": "Q",
+    "canonicalParent": {
+     "ref": "departments/X/divisions/R",
+     "uniqueness": {
+      "department": "X",
+      "division": "R"
+     }
+    },
+    "description": "Pump valve pump ins",
+    "metadata": {
+     "name": "departments/X/divisions/R/branches/Q",
+     "resourceType": "cracn.projectblue.mil/Branch"
+    }
+   }
+  ],
+  "/api/v1/jobs": [
+   {
+    "autoCloseManHours": false,
+    "csmpSummary": "Inspect auxiliary seawater pump coupling",
+    "dfr": "1",
+    "firstContact": "Auxiliary overhaul pump",
+    "flags": {
+     "isControlledWorkPackage": false,
+     "isTriper": false
+    },
+    "history": {
+     "awrCompletedDate": "2026-03-25T00:00:00.000Z",
+     "recordedDate": "2025-06-15T00:00:00.000Z",
+     "whenDiscovered": "2026-10-07T00:00:00.000Z"
+    },
+    "integratedPriority": 52,
+    "iuc": "3",
+    "jcnOrMjfcn": "21036WX010184",
+    "kind": "ActiveJob",
+    "metadata": {
+     "name": "jobs/21036WX010184",
+     "resourceType": "cracn.projectblue.mil/Job"
+    },
+    "noncanonicalRefs": {
+     "copiedFromJob": null,
+     "refit": {
+      "ref": "boats/21036/refits/A014",
+      "uniqueness": {
+       "uic": "21036",
+       "refitNumber": "A014"
+      }
+     },
+     "configurationItem": {
+      "ref": "boats/21036/configurationItems/6286FCA00000",
+      "uniqueness": {
+       "uic": "21036",
+       "hsc": "6286FCA00000"
+      }
+     }
+    },
+    "priority": "2",
+    "specialPurpose": "Actuator sensor",
+    "swr": [],
+    "tycom": "65",
+    "narrative": "Coupling face shows uneven wear during scheduled inspection. Evaluate and restore alignment."
+   },
+   {
+    "autoCloseManHours": false,
+    "cki": "Overhaul repair replace actuator",
+    "csmpSummary": "Restore valve actuator mounting hardware",
+    "dfr": "E",
+    "firstContact": "Sensor overhaul pump repair",
+    "flags": {
+     "isControlledWorkPackage": false,
+     "isTriper": false
+    },
+    "history": {
+     "awrCompletedDate": "2026-01-01T00:00:00.000Z",
+     "issuedDate": "2025-02-09T00:00:00.000Z",
+     "screenedDate": "2025-09-05T00:00:00.000Z",
+     "whenDiscovered": "2026-08-11T00:00:00.000Z"
+    },
+    "iuc": "922",
+    "jcnOrMjfcn": "21036WX020207",
+    "kind": "ActiveJob",
+    "maintenanceRequirementNumbers": [],
+    "metadata": {
+     "name": "jobs/21036WX020207",
+     "resourceType": "cracn.projectblue.mil/Job"
+    },
+    "noncanonicalRefs": {
+     "configurationItem": {
+      "ref": "boats/21036/configurationItems/4521VLV21400",
+      "uniqueness": {
+       "hsc": "4521VLV21400",
+       "uic": "21036"
+      }
+     },
+     "copiedFromJob": null,
+     "refit": {
+      "ref": "boats/21036/refits/A018",
+      "uniqueness": {
+       "refitNumber": "A018",
+       "uic": "21036"
+      }
+     }
+    },
+    "priority": "3",
+    "specialPurpose": "Motor overhaul seawater",
+    "supplementaryDocuments": [
+     {
+      "availabilityIndicator": false,
+      "supplementalInformationDocumentNumber": "Flange overhaul inspect align"
+     },
+     {
+      "availabilityIndicator": true,
+      "supplementalInformationDocumentNumber": "Actuator flange pump actuator seawater"
+     }
+    ],
+    "tycom": "K",
+    "narrative": "Actuator mounting bolts found loose; restore hardware to drawing torque values."
+   },
+   {
+    "autoCloseManHours": false,
+    "csmpSummary": "Gasket actuator inspect align hydraulic",
+    "firstContact": "Bearing pump",
+    "flags": {
+     "isControlledWorkPackage": false,
+     "isTriper": false
+    },
+    "history": {
+     "issuedDate": "2025-01-07T00:00:00.000Z",
+     "recordedDate": "2026-08-20T00:00:00.000Z",
+     "whenDiscovered": "2025-07-02T00:00:00.000Z"
+    },
+    "integratedPriority": 6,
+    "jcnOrMjfcn": "71204POAH7469",
+    "kind": "MasterJob",
+    "metadata": {
+     "name": "jobs/71204POAH7469",
+     "resourceType": "cracn.projectblue.mil/Job"
+    },
+    "narrative": "Panel align flange overhaul panel",
+    "noncanonicalRefs": {
+     "configurationItem": {
+      "ref": "boats/47O5S/configurationItems/CXU6R7",
+      "uniqueness": {
+       "hsc": "CXU6R7",
+       "uic": "47O5S"
+      }
+     },
+     "copiedFromJob": {
+      "ref": "jobs/37702J1FN2025",
+      "uniqueness": {
+       "jcnOrMjfcn": "37702J1FN2025"
+      }
+     }
+    },
+    "priority": "7",
+    "rate": "Repair motor",
+    "safetyHazard": "M",
+    "secondContact": "Valve panel auxiliary hydraulic align",
+    "specialPurpose": "Coupling coupling flange panel flange",
+    "supplementaryDocuments": [],
+    "swr": [
+     "R"
+    ],
+    "typeAvailabilityCode": "I"
+   },
+   {
+    "autoCloseManHours": false,
+    "csmpSummary": "Motor hydraulic replace overhaul pump",
+    "flags": {
+     "isControlledWorkPackage": true,
+     "isTriper": true
+    },
+    "history": {
+     "actionTakenDate": "2026-09-18T00:00:00.000Z",
+     "recordedDate": "2025-03-03T00:00:00.000Z",
+     "screenedDate": "2025-05-04T00:00:00.000Z"
+    },
+    "integratedPriority": 89,
+    "jcnOrMjfcn": "37702J1FN2025",
+    "kind": "ActiveJob",
+    "maintenanceRequirementNumbers": [
+     "Inspect motor flange pump inspect"
+    ],
+    "metadata": {
+     "name": "jobs/37702J1FN2025",
+     "resourceType": "cracn.projectblue.mil/Job"
+    },
+    "narrative": "Panel replace hydraulic pump coupling",
+    "noncanonicalRefs": {
+     "refit": {
+      "ref": "boats/47O5S/refits/H420",
+      "uniqueness": {
+       "refitNumber": "H420",
+       "uic": "47O5S"
+      }
+     }
+    },
+    "priority": "R",
+    "safetyHazard": "S",
+    "specialPurpose": "Flange sensor pump",
+    "swr": [
+     "Y"
+    ],
+    "tycom": "1"
+   },
+   {
+    "autoCloseManHours": false,
+    "cki": "Panel actuator gasket gasket gasket",
+    "csmpSummary": "Panel flange",
+    "firstContact": "Sensor actuator overhaul bearing replace",
+    "flags": {
+     "isControlledWorkPackage": false,
+     "isTriper": true
+    },
+    "history": {
+     "actionTakenDate": "2026-06-21T00:00:00.000Z",
+     "awrCompletedDate": "2025-11-05T00:00:00.000Z",
+     "screenedDate": "2025-05-07T00:00:00.000Z"
+    },
+    "iuc": "DZ",
+    "jcnOrMjfcn": "39763QI375724",
+    "kind": "ActiveJob",
+    "maintenanceRequirementNumbers": [
+     "Hydraulic seawater coupling panel",
+     "Align overhaul pump seawater inspect"
+    ],
+    "metadata": {
+     "name": "jobs/39763QI375724",
+     "resourceType": "cracn.projectblue.mil/Job"
+    },
+    "narrative": "Pump replace actuator bearing flange",
+    "noncanonicalRefs": {},
+    "priority": "O",
+    "rate": "Flange sensor replace",
+    "safetyHazard": "3",
+    "swr": [
+     "Z4"
+    ],
+    "typeAvailabilityCode": "8"
+   }
+  ],
+  "/api/v1/jobs/21036WX010184/jobMaterials": [
+   {
+    "advCode": "Overhaul pump valve",
+    "canonicalParent": {
+     "ref": "jobs/21036WX010184",
+     "uniqueness": {
+      "jcnOrMjfcn": "21036WX010184"
+     }
+    },
+    "jmlin": 1,
+    "metadata": {
+     "name": "jobs/21036WX010184/jobMaterials/1",
+     "resourceType": "cracn.projectblue.mil/JobMaterial"
+    },
+    "noncanonicalRefs": {
+     "keyOp": {
+      "ref": "jobs/21036WX010184/keyOps/1",
+      "uniqueness": {
+       "jcnOrMjfcn": "21036WX010184",
+       "keyOpNumber": 1
+      }
+     },
+     "ric": {
+      "ref": "RICs/RIC33972",
+      "uniqueness": {
+       "ric": "RIC33972"
+      }
+     },
+     "supplyPart": {
+      "ref": "cageCodes/349F6/supplyParts/1",
+      "uniqueness": {
+       "cage": "349F6",
+       "supplyPartId": 1
+      }
+     }
+    },
+    "priority": "Overhaul flange",
+    "quantity": 33,
+    "requirementCondition": "Replace replace",
+    "sourceCode": "Flange repair bearing hydraulic replace",
+    "twdPrint": false
+   },
+   {
+    "canonicalParent": {
+     "ref": "jobs/21036WX010184",
+     "uniqueness": {
+      "jcnOrMjfcn": "21036WX010184"
+     }
+    },
+    "demandCode": "Seawater seawater auxiliary",
+    "jmlin": 2,
+    "metadata": {
+     "name": "jobs/21036WX010184/jobMaterials/2",
+     "resourceType": "cracn.projectblue.mil/JobMaterial"
+    },
+    "priority": "Hydraulic inspect repair auxiliary",
+    "quantity": 86,
+    "requirementCondition": "Panel motor motor auxiliary",
+    "sourceCode": "Seawater overhaul",
+    "twdPrint": true
+   }
+  ],
+  "/api/v1/jobs/21036WX010184/keyOps": [
+   {
+    "awcRequest": true,
+    "canonicalParent": {
+     "ref": "jobs/21036WX010184",
+     "uniqueness": {
+      "jcnOrMjfcn": "21036WX010184"
+     }
+    },
+    "hatchRequired": false,
+    "inJeopardy": true,
+    "keyOpNumber": 1,
+    "manHours": {
+     "actual": 99,
+     "estimated": 93
+    },
+    "managementAction": false,
+    "metadata": {
+     "name": "jobs/21036WX010184/keyOps/1",
+     "resourceType": "cracn.projectblue.mil/KeyOp"
+    },
+    "relativeSchedule": {
+     "completeBefore": false,
+     "completeDay": 10,
+     "startBefore": true,
+     "startDay": 97
+    },
+    "rework": false
+   },
+   {
+    "canonicalParent": {
+     "ref": "jobs/21036WX010184",
+     "uniqueness": {
+      "jcnOrMjfcn": "21036WX010184"
+     }
+    },
+    "keyOpNumber": 2,
+    "manHours": {
+     "actual": 3,
+     "estimated": 34
+    },
+    "managementAction": true,
+    "metadata": {
+     "name": "jobs/21036WX010184/keyOps/2",
+     "resourceType": "cracn.projectblue.mil/KeyOp"
+    },
+    "relativeSchedule": {
+     "completeBefore": false,
+     "completeDay": 49,
+     "startBefore": false,
+     "startDay": 90
+    }
+   }
+  ],
+  "/api/v1/jobs/21036WX010184/planningForm": {
+   "canonicalParent": {
+    "ref": "jobs/21036WX010184",
+    "uniqueness": {
+     "jcnOrMjfcn": "21036WX010184"
+    }
+   },
+   "estimatedHours": 76.14,
+   "estimatedMaterialCost": 838.89,
+   "hatchFieldProperty": "Coupling hydraulic align",
+   "jobOccursBeforeKeyEvent": null,
+   "metadata": {
+    "name": "jobs/21036WX010184/planningForm",
+    "resourceType": "cracn.projectblue.mil/PlanningForm"
+   },
+   "noncanonicalRefs": {
+    "keyEvent": {
+     "ref": "keyEvents/5",
+     "uniqueness": {
+      "keyEventNumber": 5
+     }
+    },
+    "leadWorkCenter": {
+     "ref": "workCenters/WI",
+     "uniqueness": {
+      "workcenter": "WI"
+     }
+    }
+   },
+   "planningAndEngineering": "Auxiliary motor hydraulic",
+   "priority": "8",
+   "typeFieldProperty": "Align actuator sensor seawater coupling",
+   "workStatement": "Gasket sensor"
+  },
+  "/api/v1/jobs/21036WX020207/jobMaterials": [
+   {
+    "canonicalParent": {
+     "ref": "jobs/21036WX020207",
+     "uniqueness": {
+      "jcnOrMjfcn": "21036WX020207"
+     }
+    },
+    "demandCode": "Gasket seawater repair gasket",
+    "jmlin": 1,
+    "metadata": {
+     "name": "jobs/21036WX020207/jobMaterials/1",
+     "resourceType": "cracn.projectblue.mil/JobMaterial"
+    },
+    "noncanonicalRefs": {
+     "deliveryWorkCenter": {
+      "ref": "workCenters/1K4T",
+      "uniqueness": {
+       "workcenter": "1K4T"
+      }
+     },
+     "keyOp": {
+      "ref": "jobs/21036WX020207/keyOps/2",
+      "uniqueness": {
+       "jcnOrMjfcn": "21036WX020207",
+       "keyOpNumber": 2
+      }
+     },
+     "niin": {
+      "ref": "NIINs/E9OKQ0698",
+      "uniqueness": {
+       "niin": "E9OKQ0698"
+      }
+     },
+     "ric": {
+      "ref": "RICs/RIC47709",
+      "uniqueness": {
+       "ric": "RIC47709"
+      }
+     }
+    },
+    "priority": "Seawater valve repair",
+    "quantity": 85,
+    "requirementCondition": "Valve valve sensor",
+    "twdPrint": false
+   },
+   {
+    "canonicalParent": {
+     "ref": "jobs/21036WX020207",
+     "uniqueness": {
+      "jcnOrMjfcn": "21036WX020207"
+     }
+    },
+    "demandCode": "Overhaul seawater inspect auxiliary seaw",
+    "jmlin": 2,
+    "metadata": {
+     "name": "jobs/21036WX020207/jobMaterials/2",
+     "resourceType": "cracn.projectblue.mil/JobMaterial"
+    },
+    "noncanonicalRefs": {
+     "deliveryWorkCenter": {
+      "ref": "workCenters/J6G",
+      "uniqueness": {
+       "workcenter": "J6G"
+      }
+     },
+     "keyOp": {
+      "ref": "jobs/21036WX010184/keyOps/1",
+      "uniqueness": {
+       "jcnOrMjfcn": "21036WX010184",
+       "keyOpNumber": 1
+      }
+     },
+     "ric": {
+      "ref": "RICs/RIC82094",
+      "uniqueness": {
+       "ric": "RIC82094"
+      }
+     }
+    },
+    "priority": "Gasket bearing valve actuator valve",
+    "quantity": 44,
+    "requirementCondition": "Valve pump",
+    "sourceCode": "Auxiliary bearing hydraulic",
+    "twdPrint": false
+   }
+  ],
+  "/api/v1/jobs/21036WX020207/keyOps": [
+   {
+    "canonicalParent": {
+     "ref": "jobs/21036WX020207",
+     "uniqueness": {
+      "jcnOrMjfcn": "21036WX020207"
+     }
+    },
+    "inJeopardy": false,
+    "keyOpNumber": 1,
+    "manHours": {
+     "actual": 89,
+     "estimated": 85
+    },
+    "managementAction": true,
+    "metadata": {
+     "name": "jobs/21036WX020207/keyOps/1",
+     "resourceType": "cracn.projectblue.mil/KeyOp"
+    },
+    "relativeSchedule": {
+     "completeBefore": false,
+     "completeDay": 28,
+     "startBefore": false,
+     "startDay": 50
+    },
+    "schedule": {
+     "actualCompletion": "2025-05-06T00:00:00.000Z",
+     "scheduledCompletion": "2025-07-10T00:00:00.000Z"
+    }
+   },
+   {
+    "awcRequest": false,
+    "canonicalParent": {
+     "ref": "jobs/21036WX020207",
+     "uniqueness": {
+      "jcnOrMjfcn": "21036WX020207"
+     }
+    },
+    "description": "Coupling seawater coupling",
+    "hatchRequired": false,
+    "keyOpNumber": 2,
+    "manHours": {
+     "actual": 51,
+     "estimated": 9
+    },
+    "metadata": {
+     "name": "jobs/21036WX020207/keyOps/2",
+     "resourceType": "cracn.projectblue.mil/KeyOp"
+    },
+    "relativeSchedule": {
+     "completeBefore": false,
+     "completeDay": 47,
+     "startBefore": false,
+     "startDay": 61
+    },
+    "rework": true
+   }
+  ],
+  "/api/v1/jobs/21036WX020207/planningForm": {
+   "canonicalParent": {
+    "ref": "jobs/21036WX020207",
+    "uniqueness": {
+     "jcnOrMjfcn": "21036WX020207"
+    }
+   },
+   "estimatedHours": 654.79,
+   "estimatedMaterialCost": 460.25,
+   "jobOccursBeforeKeyEvent": true,
+   "metadata": {
+    "name": "jobs/21036WX020207/planningForm",
+    "resourceType": "cracn.projectblue.mil/PlanningForm"
+   },
+   "noncanonicalRefs": {},
+   "planningAndEngineering": "Valve align sensor hydraulic sensor",
+   "priority": "4",
+   "status": {
+    "material": "Motor panel repair",
+    "service": "Auxiliary panel sensor auxiliary hydraul",
+    "ste": "Valve panel align replace"
+   },
+   "typeAvailabilityCode": "G",
+   "typeFieldProperty": "Flange gasket coupling",
+   "workStatement": "Do some work"
+  },
+  "/api/v1/jobs/37702J1FN2025/jobMaterials": [
+   {
+    "advCode": "Coupling repair panel coupling",
+    "canonicalParent": {
+     "ref": "jobs/37702J1FN2025",
+     "uniqueness": {
+      "jcnOrMjfcn": "37702J1FN2025"
+     }
+    },
+    "jmlin": 1,
+    "metadata": {
+     "name": "jobs/37702J1FN2025/jobMaterials/1",
+     "resourceType": "cracn.projectblue.mil/JobMaterial"
+    },
+    "priority": "Coupling coupling actuator",
+    "quantity": 65,
+    "requirementCondition": "Hydraulic coupling hydraulic",
+    "sourceCode": "Repair inspect align hydraulic seawater",
+    "twdPrint": false
+   },
+   {
+    "advCode": "Valve replace gasket",
+    "canonicalParent": {
+     "ref": "jobs/37702J1FN2025",
+     "uniqueness": {
+      "jcnOrMjfcn": "37702J1FN2025"
+     }
+    },
+    "jmlin": 2,
+    "materialsDescription": "Overhaul bearing sensor panel",
+    "metadata": {
+     "name": "jobs/37702J1FN2025/jobMaterials/2",
+     "resourceType": "cracn.projectblue.mil/JobMaterial"
+    },
+    "priority": "Seawater seawater",
+    "quantity": 8,
+    "requirementCondition": "Align auxiliary sensor panel flange",
+    "sourceCode": "Seawater auxiliary panel bearing flange",
+    "twdPrint": false
+   }
+  ],
+  "/api/v1/jobs/37702J1FN2025/keyOps": [
+   {
+    "canonicalParent": {
+     "ref": "jobs/37702J1FN2025",
+     "uniqueness": {
+      "jcnOrMjfcn": "37702J1FN2025"
+     }
+    },
+    "description": "Panel repair repair seawater overhaul",
+    "inJeopardy": true,
+    "keyOpNumber": 1,
+    "manHours": {
+     "actual": 8,
+     "estimated": 7
+    },
+    "metadata": {
+     "name": "jobs/37702J1FN2025/keyOps/1",
+     "resourceType": "cracn.projectblue.mil/KeyOp"
+    },
+    "relativeSchedule": {
+     "completeBefore": true,
+     "completeDay": 64,
+     "startBefore": false,
+     "startDay": 65
+    },
+    "schedule": {
+     "actualCompletion": "2025-09-14T00:00:00.000Z",
+     "scheduledCompletion": "2026-07-20T00:00:00.000Z",
+     "scheduledStart": "2026-07-10T00:00:00.000Z"
+    }
+   },
+   {
+    "canonicalParent": {
+     "ref": "jobs/37702J1FN2025",
+     "uniqueness": {
+      "jcnOrMjfcn": "37702J1FN2025"
+     }
+    },
+    "description": "Inspect actuator",
+    "inJeopardy": true,
+    "keyOpNumber": 2,
+    "manHours": {
+     "actual": 11,
+     "estimated": 2
+    },
+    "managementAction": true,
+    "metadata": {
+     "name": "jobs/37702J1FN2025/keyOps/2",
+     "resourceType": "cracn.projectblue.mil/KeyOp"
+    },
+    "relativeSchedule": {
+     "completeBefore": false,
+     "completeDay": 75,
+     "startBefore": true,
+     "startDay": 63
+    }
+   }
+  ],
+  "/api/v1/jobs/37702J1FN2025/planningForm": {
+   "canonicalParent": {
+    "ref": "jobs/37702J1FN2025",
+    "uniqueness": {
+     "jcnOrMjfcn": "37702J1FN2025"
+    }
+   },
+   "estimatedHours": 120.19,
+   "estimatedMaterialCost": 140.84,
+   "hatchFieldProperty": "Repair coupling motor auxiliary valve",
+   "jobOccursBeforeKeyEvent": false,
+   "metadata": {
+    "name": "jobs/37702J1FN2025/planningForm",
+    "resourceType": "cracn.projectblue.mil/PlanningForm"
+   },
+   "noncanonicalRefs": {
+    "keyEvent": {
+     "ref": "keyEvents/2",
+     "uniqueness": {
+      "keyEventNumber": 2
+     }
+    }
+   },
+   "planningAndEngineering": "Hydraulic pump inspect replace flange",
+   "priority": "N",
+   "workStatement": "Do some work"
+  },
+  "/api/v1/jobs/39763QI375724/jobMaterials": [
+   {
+    "advCode": "Hydraulic flange seawater",
+    "canonicalParent": {
+     "ref": "jobs/39763QI375724",
+     "uniqueness": {
+      "jcnOrMjfcn": "39763QI375724"
+     }
+    },
+    "demandCode": "Overhaul repair valve auxiliary",
+    "jmlin": 1,
+    "metadata": {
+     "name": "jobs/39763QI375724/jobMaterials/1",
+     "resourceType": "cracn.projectblue.mil/JobMaterial"
+    },
+    "noncanonicalRefs": {
+     "deliveryWorkCenter": {
+      "ref": "workCenters/WI",
+      "uniqueness": {
+       "workcenter": "WI"
+      }
+     },
+     "keyOp": {
+      "ref": "jobs/71204POAH7469/keyOps/1",
+      "uniqueness": {
+       "jcnOrMjfcn": "71204POAH7469",
+       "keyOpNumber": 1
+      }
+     },
+     "niin": {
+      "ref": "NIINs/N1ZXHA200",
+      "uniqueness": {
+       "niin": "N1ZXHA200"
+      }
+     },
+     "ric": {
+      "ref": "RICs/RIC32661",
+      "uniqueness": {
+       "ric": "RIC32661"
+      }
+     },
+     "supplyPart": {
+      "ref": "cageCodes/I8URC/supplyParts/1",
+      "uniqueness": {
+       "cage": "I8URC",
+       "supplyPartId": 1
+      }
+     }
+    },
+    "priority": "Gasket auxiliary gasket",
+    "quantity": 92,
+    "requirementCondition": "Valve bearing",
+    "twdPrint": false
+   },
+   {
+    "canonicalParent": {
+     "ref": "jobs/39763QI375724",
+     "uniqueness": {
+      "jcnOrMjfcn": "39763QI375724"
+     }
+    },
+    "jmlin": 2,
+    "materialsDescription": "Actuator seawater bearing actuator",
+    "metadata": {
+     "name": "jobs/39763QI375724/jobMaterials/2",
+     "resourceType": "cracn.projectblue.mil/JobMaterial"
+    },
+    "noncanonicalRefs": {
+     "deliveryWorkCenter": {
+      "ref": "workCenters/1K4T",
+      "uniqueness": {
+       "workcenter": "1K4T"
+      }
+     },
+     "niin": {
+      "ref": "NIINs/CZSBXM500",
+      "uniqueness": {
+       "niin": "CZSBXM500"
+      }
+     },
+     "supplyPart": {
+      "ref": "cageCodes/SERO7/supplyParts/1",
+      "uniqueness": {
+       "cage": "SERO7",
+       "supplyPartId": 1
+      }
+     }
+    },
+    "priority": "Overhaul motor repair inspect align",
+    "quantity": 99,
+    "requirementCondition": "Actuator motor flange",
+    "twdPrint": true
+   }
+  ],
+  "/api/v1/jobs/39763QI375724/keyOps": [
+   {
+    "canonicalParent": {
+     "ref": "jobs/39763QI375724",
+     "uniqueness": {
+      "jcnOrMjfcn": "39763QI375724"
+     }
+    },
+    "description": "Replace auxiliary bearing",
+    "hatchRequired": true,
+    "keyOpNumber": 1,
+    "manHours": {
+     "actual": 13,
+     "estimated": 91
+    },
+    "managementAction": true,
+    "metadata": {
+     "name": "jobs/39763QI375724/keyOps/1",
+     "resourceType": "cracn.projectblue.mil/KeyOp"
+    },
+    "relativeSchedule": {
+     "completeBefore": true,
+     "completeDay": 37,
+     "startBefore": false,
+     "startDay": 58
+    },
+    "rework": false
+   },
+   {
+    "awcRequest": false,
+    "canonicalParent": {
+     "ref": "jobs/39763QI375724",
+     "uniqueness": {
+      "jcnOrMjfcn": "39763QI375724"
+     }
+    },
+    "description": "Seawater pump coupling gasket",
+    "hatchRequired": true,
+    "inJeopardy": true,
+    "keyOpNumber": 2,
+    "manHours": {
+     "actual": 27,
+     "estimated": 4
+    },
+    "managementAction": true,
+    "metadata": {
+     "name": "jobs/39763QI375724/keyOps/2",
+     "resourceType": "cracn.projectblue.mil/KeyOp"
+    },
+    "relativeSchedule": {
+     "completeBefore": false,
+     "completeDay": 61,
+     "startBefore": true,
+     "startDay": 97
+    },
+    "rework": false
+   }
+  ],
+  "/api/v1/jobs/39763QI375724/planningForm": {
+   "canonicalParent": {
+    "ref": "jobs/39763QI375724",
+    "uniqueness": {
+     "jcnOrMjfcn": "39763QI375724"
+    }
+   },
+   "estimatedHours": 216.78,
+   "estimatedMaterialCost": 644.27,
+   "jobOccursBeforeKeyEvent": false,
+   "metadata": {
+    "name": "jobs/39763QI375724/planningForm",
+    "resourceType": "cracn.projectblue.mil/PlanningForm"
+   },
+   "noncanonicalRefs": {
+    "leadWorkCenter": {
+     "ref": "workCenters/1K4T",
+     "uniqueness": {
+      "workcenter": "1K4T"
+     }
+    }
+   },
+   "planningAndEngineering": "Align bearing replace valve sensor",
+   "priority": "X",
+   "typeAvailabilityCode": "1",
+   "typeFieldProperty": "Repair seawater pump sensor coupling",
+   "workStatement": "Actuator inspect flange pump"
+  },
+  "/api/v1/jobs/71204POAH7469/jobMaterials": [
+   {
+    "advCode": "Pump inspect gasket",
+    "canonicalParent": {
+     "ref": "jobs/71204POAH7469",
+     "uniqueness": {
+      "jcnOrMjfcn": "71204POAH7469"
+     }
+    },
+    "jmlin": 1,
+    "materialsDescription": "Gasket align inspect replace motor",
+    "metadata": {
+     "name": "jobs/71204POAH7469/jobMaterials/1",
+     "resourceType": "cracn.projectblue.mil/JobMaterial"
+    },
+    "noncanonicalRefs": {
+     "deliveryWorkCenter": {
+      "ref": "workCenters/X",
+      "uniqueness": {
+       "workcenter": "X"
+      }
+     },
+     "keyOp": {
+      "ref": "jobs/71204POAH7469/keyOps/2",
+      "uniqueness": {
+       "jcnOrMjfcn": "71204POAH7469",
+       "keyOpNumber": 2
+      }
+     },
+     "ric": {
+      "ref": "RICs/RIC82094",
+      "uniqueness": {
+       "ric": "RIC82094"
+      }
+     }
+    },
+    "priority": "Hydraulic panel motor gasket valve",
+    "quantity": 17,
+    "requirementCondition": "Motor actuator align",
+    "sourceCode": "Seawater seawater flange overhaul overha",
+    "twdPrint": false
+   },
+   {
+    "canonicalParent": {
+     "ref": "jobs/71204POAH7469",
+     "uniqueness": {
+      "jcnOrMjfcn": "71204POAH7469"
+     }
+    },
+    "demandCode": "Overhaul auxiliary replace align",
+    "jmlin": 2,
+    "metadata": {
+     "name": "jobs/71204POAH7469/jobMaterials/2",
+     "resourceType": "cracn.projectblue.mil/JobMaterial"
+    },
+    "noncanonicalRefs": {
+     "deliveryWorkCenter": {
+      "ref": "workCenters/EW",
+      "uniqueness": {
+       "workcenter": "EW"
+      }
+     },
+     "niin": {
+      "ref": "NIINs/1WXWY5364",
+      "uniqueness": {
+       "niin": "1WXWY5364"
+      }
+     },
+     "ric": {
+      "ref": "RICs/RIC73381",
+      "uniqueness": {
+       "ric": "RIC73381"
+      }
+     }
+    },
+    "priority": "Auxiliary coupling hydraulic motor",
+    "quantity": 66,
+    "requirementCondition": "Hydraulic overhaul bearing auxiliary",
+    "twdPrint": false
+   }
+  ],
+  "/api/v1/jobs/71204POAH7469/keyOps": [
+   {
+    "canonicalParent": {
+     "ref": "jobs/71204POAH7469",
+     "uniqueness": {
+      "jcnOrMjfcn": "71204POAH7469"
+     }
+    },
+    "keyOpNumber": 1,
+    "manHours": {
+     "actual": 85,
+     "estimated": 65
+    },
+    "managementAction": true,
+    "metadata": {
+     "name": "jobs/71204POAH7469/keyOps/1",
+     "resourceType": "cracn.projectblue.mil/KeyOp"
+    },
+    "relativeSchedule": {
+     "completeBefore": true,
+     "completeDay": 79,
+     "startBefore": true,
+     "startDay": 86
+    }
+   },
+   {
+    "awcRequest": false,
+    "canonicalParent": {
+     "ref": "jobs/71204POAH7469",
+     "uniqueness": {
+      "jcnOrMjfcn": "71204POAH7469"
+     }
+    },
+    "description": "Gasket auxiliary hydraulic pump",
+    "inJeopardy": true,
+    "keyOpNumber": 2,
+    "manHours": {
+     "actual": 91,
+     "estimated": 66
+    },
+    "metadata": {
+     "name": "jobs/71204POAH7469/keyOps/2",
+     "resourceType": "cracn.projectblue.mil/KeyOp"
+    },
+    "relativeSchedule": {
+     "completeBefore": false,
+     "completeDay": 80,
+     "startBefore": true,
+     "startDay": 6
+    },
+    "rework": false,
+    "schedule": {
+     "scheduledCompletion": "2025-01-05T00:00:00.000Z"
+    }
+   }
+  ],
+  "/api/v1/jobs/71204POAH7469/planningForm": {
+   "canonicalParent": {
+    "ref": "jobs/71204POAH7469",
+    "uniqueness": {
+     "jcnOrMjfcn": "71204POAH7469"
+    }
+   },
+   "estimatedHours": 493.5,
+   "estimatedMaterialCost": 606.65,
+   "hatchFieldProperty": "Pump panel",
+   "jobOccursBeforeKeyEvent": null,
+   "metadata": {
+    "name": "jobs/71204POAH7469/planningForm",
+    "resourceType": "cracn.projectblue.mil/PlanningForm"
+   },
+   "noncanonicalRefs": {},
+   "plannerInfo": {},
+   "priority": "8",
+   "workStatement": "Bearing valve motor"
+  },
+  "/api/v1/keyEvents": [
+   {
+    "description": "UNDOCKING HOOK",
+    "keyEventNumber": 1,
+    "metadata": {
+     "name": "keyEvents/1",
+     "resourceType": "cracn.projectblue.mil/KeyEvent"
+    }
+   },
+   {
+    "description": "UNDOCKING HOOK",
+    "keyEventNumber": 2,
+    "metadata": {
+     "name": "keyEvents/2",
+     "resourceType": "cracn.projectblue.mil/KeyEvent"
+    }
+   },
+   {
+    "description": "Hydraulic hydraulic",
+    "keyEventNumber": 3,
+    "metadata": {
+     "name": "keyEvents/3",
+     "resourceType": "cracn.projectblue.mil/KeyEvent"
+    }
+   },
+   {
+    "description": "Inspect seawater sensor",
+    "initialRelativeDay": 4624,
+    "keyEventNumber": 4,
+    "metadata": {
+     "name": "keyEvents/4",
+     "resourceType": "cracn.projectblue.mil/KeyEvent"
+    }
+   },
+   {
+    "description": "UNDOCKING HOOK",
+    "initialRelativeDay": 5219,
+    "keyEventNumber": 5,
+    "metadata": {
+     "name": "keyEvents/5",
+     "resourceType": "cracn.projectblue.mil/KeyEvent"
+    }
+   }
+  ],
+  "/api/v1/masterJobs": [
+   {
+    "autoCloseManHours": true,
+    "csmpSummary": "Gasket panel replace valve cou",
+    "deferralReasonCode": "3",
+    "engineeringDesignChangeNumber": "Bearing motor",
+    "equipmentNounName": "Pump bearing gasket",
+    "hsc": "W8TKKA19DG",
+    "integratedPriority": "GH",
+    "jobEnteredDate": "2025-03-07T00:00:00.000Z",
+    "jobEquipmentLocationCode": "Bearing coupling",
+    "metadata": {
+     "name": "masterJobs/FHPWUCACIPNW6",
+     "resourceType": "cracn.projectblue.mil/MasterJob"
+    },
+    "mjfcn": "FHPWUCACIPNW6",
+    "narrative": "Bearing replace actuator seawater pump",
+    "priority": "S",
+    "secondContact": "Align seawate",
+    "typeAvailabilityCode": "O"
+   },
+   {
+    "autoCloseManHours": true,
+    "deferralReasonCode": "M",
+    "eic": "AQ",
+    "equipmentNounName": "Repair actuator inspect",
+    "firstContact": "Coupling insp",
+    "iucScreeningCode": "4",
+    "jobEnteredDate": "2026-05-13T00:00:00.000Z",
+    "metadata": {
+     "name": "masterJobs/M0BH8XPJ6EXB5",
+     "resourceType": "cracn.projectblue.mil/MasterJob"
+    },
+    "mjfcn": "M0BH8XPJ6EXB5",
+    "narrative": "Hydraulic bearing inspect",
+    "priority": "W",
+    "safetyHazardCode": "R",
+    "secondContact": "Gasket valve",
+    "specialPurpose": "Flange inspect",
+    "typeAvailabilityCode": "Y"
+   },
+   {
+    "deferralReasonCode": "T",
+    "equipmentNounName": "Motor inspect seawater v",
+    "firstContactRate": "MU",
+    "hsc": "KTGLWRLL7B",
+    "iucScreeningCode": "37",
+    "jobEnteredDate": "2025-04-18T00:00:00.000Z",
+    "metadata": {
+     "name": "masterJobs/ZZNBB3T9TJXID",
+     "resourceType": "cracn.projectblue.mil/MasterJob"
+    },
+    "mjfcn": "ZZNBB3T9TJXID",
+    "priority": "H",
+    "secondContact": "Motor panel p",
+    "tycomScreeningCode": "BK",
+    "typeAvailabilityCode": "1"
+   },
+   {
+    "autoCloseManHours": true,
+    "csmpSummary": "Flange overhaul",
+    "deferralReasonCode": "E",
+    "eic": "KY8",
+    "equipmentNounName": "Valve hydraulic valve",
+    "equipmentSerialNumber": "Overhaul sen",
+    "firstContact": "Overhaul gask",
+    "firstContactRate": "Z4",
+    "hsc": "EDZ70NJZ5KN",
+    "integratedPriority": "W42SP",
+    "jobEquipmentLocationCode": "Gasket seawater auxi",
+    "metadata": {
+     "name": "masterJobs/XUG132VTOQ519",
+     "resourceType": "cracn.projectblue.mil/MasterJob"
+    },
+    "mjfcn": "XUG132VTOQ519",
+    "priority": "4",
+    "safetyHazardCode": "B",
+    "specialPurpose": "Gasket seawater gasket a",
+    "tycomScreeningCode": "V",
+    "typeAvailabilityCode": "P"
+   },
+   {
+    "autoCloseManHours": false,
+    "csmpSummary": "Sensor repair actuator",
+    "deferralReasonCode": "F",
+    "eic": "Z1O25",
+    "equipmentNounName": "Coupling auxiliary",
+    "integratedPriority": "5H",
+    "jobEnteredDate": "2025-06-22T00:00:00.000Z",
+    "jobEquipmentLocationCode": "Gasket overhaul gask",
+    "metadata": {
+     "name": "masterJobs/WBFH8TKJALKE5",
+     "resourceType": "cracn.projectblue.mil/MasterJob"
+    },
+    "mjfcn": "WBFH8TKJALKE5",
+    "priority": "2",
+    "ric": "Flange bear",
+    "specialPurpose": "Inspect coupling",
+    "tycomScreeningCode": "GW",
+    "typeAvailabilityCode": "K"
+   }
+  ],
+  "/api/v1/masterJobs/FHPWUCACIPNW6/planningForm": {
+   "canonicalParent": {
+    "ref": "masterJobs/FHPWUCACIPNW6",
+    "uniqueness": {
+     "mjfcn": "FHPWUCACIPNW6"
+    }
+   },
+   "estimatedMaterialCost": "4311.25",
+   "imaScreeningCode": "8K",
+   "metadata": {
+    "name": "masterJobs/FHPWUCACIPNW6/planningForm",
+    "resourceType": "cracn.projectblue.mil/MasterJobPlanning"
+   },
+   "noncanonicalRefs": {},
+   "remarks": {
+    "ima": "Motor valve",
+    "iuc": "Flange flange seawater gasket actuator",
+    "tycom": "Align replace panel gasket"
+   },
+   "swrs": [
+    "5",
+    "E"
+   ]
+  },
+  "/api/v1/masterJobs/FHPWUCACIPNW6/planningForm/keyOps": [
+   {
+    "canonicalParent": {
+     "ref": "masterJobs/FHPWUCACIPNW6/planningForm",
+     "uniqueness": {
+      "mjfcn": "FHPWUCACIPNW6"
+     }
+    },
+    "estimatedManHours": 57121,
+    "keyOp": 1,
+    "metadata": {
+     "name": "masterJobs/FHPWUCACIPNW6/planningForm/keyOps/1",
+     "resourceType": "cracn.projectblue.mil/MasterJobKeyOp"
+    },
+    "noncanonicalRefs": {
+     "workcenters": [
+      {
+       "estimatedManHours": 1761,
+       "ref": "workCenters/X",
+       "uniqueness": {
+        "workcenter": "X"
+       }
+      },
+      {
+       "ref": "workCenters/1K4T",
+       "uniqueness": {
+        "workcenter": "1K4T"
+       }
+      }
+     ]
+    },
+    "relativeCompleteCode": "A",
+    "relativeCompleteDate": 552,
+    "relativeStartCode": "A",
+    "relativeStartDate": 619
+   },
+   {
+    "canonicalParent": {
+     "ref": "masterJobs/FHPWUCACIPNW6/planningForm",
+     "uniqueness": {
+      "mjfcn": "FHPWUCACIPNW6"
+     }
+    },
+    "isHatchRequired": true,
+    "keyOp": 2,
+    "metadata": {
+     "name": "masterJobs/FHPWUCACIPNW6/planningForm/keyOps/2",
+     "resourceType": "cracn.projectblue.mil/MasterJobKeyOp"
+    },
+    "noncanonicalRefs": {
+     "workcenters": [
+      {
+       "estimatedManHours": 6795,
+       "ref": "workCenters/J6G",
+       "uniqueness": {
+        "workcenter": "J6G"
+       }
+      }
+     ]
+    },
+    "relativeCompleteCode": "A",
+    "relativeCompleteDate": 590,
+    "relativeStartCode": "B",
+    "relativeStartDate": 453,
+    "taskStatement": "Replace pump bearing gas"
+   }
+  ],
+  "/api/v1/masterJobs/FHPWUCACIPNW6/planningForm/LTDs": [
+   {
+    "applicableSection": "Flange valve replace actuator gasket",
+    "canonicalParent": {
+     "ref": "masterJobs/FHPWUCACIPNW6/planningForm",
+     "uniqueness": {
+      "mjfcn": "FHPWUCACIPNW6"
+     }
+    },
+    "documentNumber": "Replace coupling align overhaul",
+    "ltdlin": 1,
+    "metadata": {
+     "name": "masterJobs/FHPWUCACIPNW6/planningForm/LTDs/1",
+     "resourceType": "cracn.projectblue.mil/MasterJobLTD"
+    },
+    "noncanonicalRefs": {},
+    "revision": "VEO",
+    "revisionModification": "E",
+    "title": "Align motor flange replace"
+   },
+   {
+    "canonicalParent": {
+     "ref": "masterJobs/FHPWUCACIPNW6/planningForm",
+     "uniqueness": {
+      "mjfcn": "FHPWUCACIPNW6"
+     }
+    },
+    "documentNumber": "Align auxiliary inspect flange",
+    "ltdlin": 2,
+    "mandatoryConditionalCode": false,
+    "metadata": {
+     "name": "masterJobs/FHPWUCACIPNW6/planningForm/LTDs/2",
+     "resourceType": "cracn.projectblue.mil/MasterJobLTD"
+    },
+    "revision": "XMN",
+    "revisionModification": "J3T"
+   }
+  ],
+  "/api/v1/masterJobs/FHPWUCACIPNW6/planningForm/materials": [
+   {
+    "cage": "WTUHQ",
+    "canonicalParent": {
+     "ref": "masterJobs/FHPWUCACIPNW6/planningForm",
+     "uniqueness": {
+      "mjfcn": "FHPWUCACIPNW6"
+     }
+    },
+    "federalSupplyCode": "4960",
+    "keyOp": 97,
+    "mandatoryConditionalCode": false,
+    "metadata": {
+     "name": "masterJobs/FHPWUCACIPNW6/planningForm/materials/10",
+     "resourceType": "cracn.projectblue.mil/MasterJobMaterial"
+    },
+    "mjmlin": 10,
+    "priority": 4,
+    "quantity": 10155,
+    "referenceNumber": "Gasket panel replace align",
+    "shouldPrintInTwd": true,
+    "smic": "DA",
+    "source": "3",
+    "unitOfIssue": "RT",
+    "unitPrice": "3353.51"
+   },
+   {
+    "canonicalParent": {
+     "ref": "masterJobs/FHPWUCACIPNW6/planningForm",
+     "uniqueness": {
+      "mjfcn": "FHPWUCACIPNW6"
+     }
+    },
+    "federalSupplyCode": "3051",
+    "itemNounName": "Inspect actuator se",
+    "keyOp": 46,
+    "mandatoryConditionalCode": false,
+    "materialAdviceCode": "SH",
+    "materialDescription": "Coupling seawater auxiliary coupling replace",
+    "metadata": {
+     "name": "masterJobs/FHPWUCACIPNW6/planningForm/materials/11",
+     "resourceType": "cracn.projectblue.mil/MasterJobMaterial"
+    },
+    "mjmlin": 11,
+    "priority": 8,
+    "ric": "Align hydra",
+    "shouldPrintInTwd": true,
+    "smic": "P",
+    "unitOfIssue": "NV",
+    "unitPrice": "3148.90"
+   }
+  ],
+  "/api/v1/masterJobs/M0BH8XPJ6EXB5/planningForm": {
+   "canonicalParent": {
+    "ref": "masterJobs/M0BH8XPJ6EXB5",
+    "uniqueness": {
+     "mjfcn": "M0BH8XPJ6EXB5"
+    }
+   },
+   "costUpdate": "2026-08-13T00:00:00.000Z",
+   "estimatedMaterialCost": "1077.18",
+   "imaScreeningCode": "R",
+   "metadata": {
+    "name": "masterJobs/M0BH8XPJ6EXB5/planningForm",
+    "resourceType": "cracn.projectblue.mil/MasterJobPlanning"
+   },
+   "noncanonicalRefs": {
+    "keyEvent": {
+     "ref": "keyEvents/3",
+     "uniqueness": {
+      "keyEventNumber": 3
+     }
+    },
+    "leadWorkcenter": {
+     "ref": "workCenters/WI",
+     "uniqueness": {
+      "workcenter": "WI"
+     }
+    }
+   },
+   "remarks": {
+    "ima": "Motor replace gasket",
+    "iuc": "Motor valve repair",
+    "tycom": "Flange seawater"
+   }
+  },
+  "/api/v1/masterJobs/M0BH8XPJ6EXB5/planningForm/keyOps": [
+   {
+    "canonicalParent": {
+     "ref": "masterJobs/M0BH8XPJ6EXB5/planningForm",
+     "uniqueness": {
+      "mjfcn": "M0BH8XPJ6EXB5"
+     }
+    },
+    "estimatedManHours": 47159,
+    "keyOp": 1,
+    "metadata": {
+     "name": "masterJobs/M0BH8XPJ6EXB5/planningForm/keyOps/1",
+     "resourceType": "cracn.projectblue.mil/MasterJobKeyOp"
+    },
+    "noncanonicalRefs": {
+     "workcenters": [
+      {
+       "estimatedManHours": 7316,
+       "ref": "workCenters/J6G",
+       "uniqueness": {
+        "workcenter": "J6G"
+       }
+      },
+      {
+       "estimatedManHours": 5223,
+       "ref": "workCenters/X",
+       "uniqueness": {
+        "workcenter": "X"
+       }
+      }
+     ]
+    },
+    "relativeCompleteCode": "A",
+    "relativeCompleteDate": 408,
+    "relativeStartCode": "B",
+    "relativeStartDate": 158
+   },
+   {
+    "canonicalParent": {
+     "ref": "masterJobs/M0BH8XPJ6EXB5/planningForm",
+     "uniqueness": {
+      "mjfcn": "M0BH8XPJ6EXB5"
+     }
+    },
+    "keyOp": 2,
+    "metadata": {
+     "name": "masterJobs/M0BH8XPJ6EXB5/planningForm/keyOps/2",
+     "resourceType": "cracn.projectblue.mil/MasterJobKeyOp"
+    },
+    "noncanonicalRefs": {
+     "workcenters": [
+      {
+       "estimatedManHours": 711,
+       "ref": "workCenters/J6G",
+       "uniqueness": {
+        "workcenter": "J6G"
+       }
+      }
+     ]
+    },
+    "relativeCompleteCode": "A",
+    "relativeCompleteDate": 281,
+    "relativeStartCode": "B",
+    "relativeStartDate": 964
+   }
+  ],
+  "/api/v1/masterJobs/M0BH8XPJ6EXB5/planningForm/LTDs": [
+   {
+    "canonicalParent": {
+     "ref": "masterJobs/M0BH8XPJ6EXB5/planningForm",
+     "uniqueness": {
+      "mjfcn": "M0BH8XPJ6EXB5"
+     }
+    },
+    "documentTypeCode": "4OP",
+    "ltdlin": 1,
+    "mandatoryConditionalCode": false,
+    "metadata": {
+     "name": "masterJobs/M0BH8XPJ6EXB5/planningForm/LTDs/1",
+     "resourceType": "cracn.projectblue.mil/MasterJobLTD"
+    },
+    "noncanonicalRefs": {},
+    "revision": "TVV2",
+    "revisionModification": "AV3E3"
+   },
+   {
+    "applicableSection": "Gasket flange seawater",
+    "canonicalParent": {
+     "ref": "masterJobs/M0BH8XPJ6EXB5/planningForm",
+     "uniqueness": {
+      "mjfcn": "M0BH8XPJ6EXB5"
+     }
+    },
+    "documentNumber": "Coupling pump inspect bearing",
+    "documentTypeCode": "447",
+    "ltdlin": 2,
+    "metadata": {
+     "name": "masterJobs/M0BH8XPJ6EXB5/planningForm/LTDs/2",
+     "resourceType": "cracn.projectblue.mil/MasterJobLTD"
+    },
+    "noncanonicalRefs": {},
+    "revisionModification": "8U"
+   }
+  ],
+  "/api/v1/masterJobs/M0BH8XPJ6EXB5/planningForm/materials": [
+   {
+    "canonicalParent": {
+     "ref": "masterJobs/M0BH8XPJ6EXB5/planningForm",
+     "uniqueness": {
+      "mjfcn": "M0BH8XPJ6EXB5"
+     }
+    },
+    "itemNounName": "Repair pump replace",
+    "keyOp": 26,
+    "materialDescription": "Seawater pump repair",
+    "metadata": {
+     "name": "masterJobs/M0BH8XPJ6EXB5/planningForm/materials/10",
+     "resourceType": "cracn.projectblue.mil/MasterJobMaterial"
+    },
+    "mjmlin": 10,
+    "niin": "KX3P27827",
+    "noncanonicalRefs": {},
+    "priority": 3,
+    "quantity": 95658,
+    "referenceNumber": "Repair align hydraulic sensor",
+    "shouldPrintInTwd": true,
+    "unitOfIssue": "TJ"
+   },
+   {
+    "cage": "OUXC7",
+    "canonicalParent": {
+     "ref": "masterJobs/M0BH8XPJ6EXB5/planningForm",
+     "uniqueness": {
+      "mjfcn": "M0BH8XPJ6EXB5"
+     }
+    },
+    "demand": "P",
+    "keyOp": 36,
+    "mandatoryConditionalCode": true,
+    "materialAdviceCode": "JX",
+    "metadata": {
+     "name": "masterJobs/M0BH8XPJ6EXB5/planningForm/materials/11",
+     "resourceType": "cracn.projectblue.mil/MasterJobMaterial"
+    },
+    "mjmlin": 11,
+    "noncanonicalRefs": {
+     "workcenter": {
+      "ref": "workCenters/WI",
+      "uniqueness": {
+       "workcenter": "WI"
+      }
+     }
+    },
+    "priority": 4,
+    "quantity": 42688,
+    "referenceNumber": "Overhaul overhaul panel seawater",
+    "ric": "Bearing rep",
+    "shouldPrintInTwd": false,
+    "source": "P",
+    "unitOfIssue": "WK",
+    "unitPrice": "1150.47"
+   }
+  ],
+  "/api/v1/masterJobs/WBFH8TKJALKE5/planningForm": {
+   "canonicalParent": {
+    "ref": "masterJobs/WBFH8TKJALKE5",
+    "uniqueness": {
+     "mjfcn": "WBFH8TKJALKE5"
+    }
+   },
+   "estimatedManHours": 699936,
+   "estimatedMaterialCost": "9336.19",
+   "metadata": {
+    "name": "masterJobs/WBFH8TKJALKE5/planningForm",
+    "resourceType": "cracn.projectblue.mil/MasterJobPlanning"
+   },
+   "mtc": "M",
+   "noncanonicalRefs": {
+    "keyEvent": {
+     "dependencyType": "A",
+     "ref": "keyEvents/4",
+     "uniqueness": {
+      "keyEventNumber": 4
+     }
+    },
+    "leadWorkcenter": {
+     "ref": "workCenters/WI",
+     "uniqueness": {
+      "workcenter": "WI"
+     }
+    }
+   },
+   "plannerName": "Motor seawate",
+   "planningStatuses": {
+    "material": "3AM",
+    "shop": "1",
+    "status1": "KESZ"
+   },
+   "workStatement": "Repair inspect seawater"
+  },
+  "/api/v1/masterJobs/WBFH8TKJALKE5/planningForm/keyOps": [
+   {
+    "canonicalParent": {
+     "ref": "masterJobs/WBFH8TKJALKE5/planningForm",
+     "uniqueness": {
+      "mjfcn": "WBFH8TKJALKE5"
+     }
+    },
+    "isHatchRequired": false,
+    "keyOp": 1,
+    "metadata": {
+     "name": "masterJobs/WBFH8TKJALKE5/planningForm/keyOps/1",
+     "resourceType": "cracn.projectblue.mil/MasterJobKeyOp"
+    },
+    "noncanonicalRefs": {
+     "workcenters": [
+      {
+       "ref": "workCenters/EW",
+       "uniqueness": {
+        "workcenter": "EW"
+       }
+      },
+      {
+       "ref": "workCenters/1K4T",
+       "uniqueness": {
+        "workcenter": "1K4T"
+       }
+      }
+     ]
+    },
+    "relativeCompleteCode": "A",
+    "relativeCompleteDate": 241,
+    "relativeStartCode": "A",
+    "relativeStartDate": 145
+   },
+   {
+    "canonicalParent": {
+     "ref": "masterJobs/WBFH8TKJALKE5/planningForm",
+     "uniqueness": {
+      "mjfcn": "WBFH8TKJALKE5"
+     }
+    },
+    "estimatedManHours": 8274,
+    "isHatchRequired": false,
+    "keyOp": 2,
+    "metadata": {
+     "name": "masterJobs/WBFH8TKJALKE5/planningForm/keyOps/2",
+     "resourceType": "cracn.projectblue.mil/MasterJobKeyOp"
+    },
+    "relativeCompleteCode": "B",
+    "relativeCompleteDate": 661,
+    "relativeStartCode": "B",
+    "relativeStartDate": 779,
+    "taskStatement": "Seawater bearing sensor"
+   }
+  ],
+  "/api/v1/masterJobs/WBFH8TKJALKE5/planningForm/LTDs": [
+   {
+    "canonicalParent": {
+     "ref": "masterJobs/WBFH8TKJALKE5/planningForm",
+     "uniqueness": {
+      "mjfcn": "WBFH8TKJALKE5"
+     }
+    },
+    "documentNumber": "Coupling align inspect repair hy",
+    "documentTypeCode": "0GH",
+    "ltdlin": 1,
+    "mandatoryConditionalCode": false,
+    "metadata": {
+     "name": "masterJobs/WBFH8TKJALKE5/planningForm/LTDs/1",
+     "resourceType": "cracn.projectblue.mil/MasterJobLTD"
+    },
+    "revision": "J3",
+    "revisionModification": "6"
+   },
+   {
+    "applicableSection": "Pump sensor",
+    "canonicalParent": {
+     "ref": "masterJobs/WBFH8TKJALKE5/planningForm",
+     "uniqueness": {
+      "mjfcn": "WBFH8TKJALKE5"
+     }
+    },
+    "ltdlin": 2,
+    "mandatoryConditionalCode": true,
+    "metadata": {
+     "name": "masterJobs/WBFH8TKJALKE5/planningForm/LTDs/2",
+     "resourceType": "cracn.projectblue.mil/MasterJobLTD"
+    }
+   }
+  ],
+  "/api/v1/masterJobs/WBFH8TKJALKE5/planningForm/materials": [
+   {
+    "canonicalParent": {
+     "ref": "masterJobs/WBFH8TKJALKE5/planningForm",
+     "uniqueness": {
+      "mjfcn": "WBFH8TKJALKE5"
+     }
+    },
+    "cognizanceSymbol": "1N",
+    "demand": "N",
+    "itemNounName": "Sensor sensor coupl",
+    "keyOp": 3,
+    "materialAdviceCode": "6",
+    "metadata": {
+     "name": "masterJobs/WBFH8TKJALKE5/planningForm/materials/10",
+     "resourceType": "cracn.projectblue.mil/MasterJobMaterial"
+    },
+    "mjmlin": 10,
+    "niin": "NP6IJ7282",
+    "priority": 8,
+    "quantity": 39973,
+    "referenceNumber": "Repair sensor motor",
+    "shouldPrintInTwd": true,
+    "unitOfIssue": "ES",
+    "unitPrice": "5323.73"
+   },
+   {
+    "canonicalParent": {
+     "ref": "masterJobs/WBFH8TKJALKE5/planningForm",
+     "uniqueness": {
+      "mjfcn": "WBFH8TKJALKE5"
+     }
+    },
+    "demand": "N",
+    "keyOp": 19,
+    "mandatoryConditionalCode": false,
+    "materialAdviceCode": "Q5",
+    "metadata": {
+     "name": "masterJobs/WBFH8TKJALKE5/planningForm/materials/11",
+     "resourceType": "cracn.projectblue.mil/MasterJobMaterial"
+    },
+    "mjmlin": 11,
+    "niin": "TT182U754",
+    "noncanonicalRefs": {
+     "workcenter": {
+      "ref": "workCenters/EW",
+      "uniqueness": {
+       "workcenter": "EW"
+      }
+     }
+    },
+    "priority": 2,
+    "quantity": 54434,
+    "referenceNumber": "Align flange bearing",
+    "ric": "Panel coupl",
+    "shouldPrintInTwd": true,
+    "smic": "C",
+    "unitOfIssue": "EA",
+    "unitPrice": "8869.82"
+   }
+  ],
+  "/api/v1/masterJobs/XUG132VTOQ519/planningForm": {
+   "canonicalParent": {
+    "ref": "masterJobs/XUG132VTOQ519",
+    "uniqueness": {
+     "mjfcn": "XUG132VTOQ519"
+    }
+   },
+   "estimatedManHours": 560861,
+   "estimatedMaterialCost": "5321.85",
+   "imaScreeningCode": "H5",
+   "metadata": {
+    "name": "masterJobs/XUG132VTOQ519/planningForm",
+    "resourceType": "cracn.projectblue.mil/MasterJobPlanning"
+   },
+   "mtc": "B",
+   "noncanonicalRefs": {
+    "leadWorkcenter": {
+     "ref": "workCenters/WI",
+     "uniqueness": {
+      "workcenter": "WI"
+     }
+    }
+   },
+   "plannerName": "Actuator insp",
+   "remarks": {
+    "iuc": "Flange actuator actuator inspect seawater"
+   },
+   "swrs": [
+    "J"
+   ]
+  },
+  "/api/v1/masterJobs/XUG132VTOQ519/planningForm/keyOps": [
+   {
+    "canonicalParent": {
+     "ref": "masterJobs/XUG132VTOQ519/planningForm",
+     "uniqueness": {
+      "mjfcn": "XUG132VTOQ519"
+     }
+    },
+    "estimatedManHours": 88593,
+    "isHatchRequired": true,
+    "keyOp": 1,
+    "metadata": {
+     "name": "masterJobs/XUG132VTOQ519/planningForm/keyOps/1",
+     "resourceType": "cracn.projectblue.mil/MasterJobKeyOp"
+    },
+    "noncanonicalRefs": {
+     "workcenters": []
+    },
+    "relativeCompleteCode": "A",
+    "relativeCompleteDate": 391,
+    "relativeStartCode": "A",
+    "relativeStartDate": 26
+   },
+   {
+    "canonicalParent": {
+     "ref": "masterJobs/XUG132VTOQ519/planningForm",
+     "uniqueness": {
+      "mjfcn": "XUG132VTOQ519"
+     }
+    },
+    "keyOp": 2,
+    "metadata": {
+     "name": "masterJobs/XUG132VTOQ519/planningForm/keyOps/2",
+     "resourceType": "cracn.projectblue.mil/MasterJobKeyOp"
+    },
+    "relativeCompleteCode": "B",
+    "relativeCompleteDate": 856,
+    "relativeStartCode": "A",
+    "relativeStartDate": 487,
+    "taskStatement": "Hydraulic hydraulic bear"
+   }
+  ],
+  "/api/v1/masterJobs/XUG132VTOQ519/planningForm/LTDs": [
+   {
+    "applicableSection": "Seawater actuator motor",
+    "canonicalParent": {
+     "ref": "masterJobs/XUG132VTOQ519/planningForm",
+     "uniqueness": {
+      "mjfcn": "XUG132VTOQ519"
+     }
+    },
+    "documentTypeCode": "SDO",
+    "ltdlin": 1,
+    "mandatoryConditionalCode": true,
+    "metadata": {
+     "name": "masterJobs/XUG132VTOQ519/planningForm/LTDs/1",
+     "resourceType": "cracn.projectblue.mil/MasterJobLTD"
+    },
+    "noncanonicalRefs": {
+     "workcenters": []
+    },
+    "revision": "WJ91"
+   },
+   {
+    "canonicalParent": {
+     "ref": "masterJobs/XUG132VTOQ519/planningForm",
+     "uniqueness": {
+      "mjfcn": "XUG132VTOQ519"
+     }
+    },
+    "documentNumber": "Motor panel panel sensor align",
+    "ltdlin": 2,
+    "mandatoryConditionalCode": false,
+    "metadata": {
+     "name": "masterJobs/XUG132VTOQ519/planningForm/LTDs/2",
+     "resourceType": "cracn.projectblue.mil/MasterJobLTD"
+    },
+    "revision": "QD"
+   }
+  ],
+  "/api/v1/masterJobs/XUG132VTOQ519/planningForm/materials": [
+   {
+    "cage": "XPD3W",
+    "canonicalParent": {
+     "ref": "masterJobs/XUG132VTOQ519/planningForm",
+     "uniqueness": {
+      "mjfcn": "XUG132VTOQ519"
+     }
+    },
+    "demand": "S",
+    "federalSupplyCode": "6237",
+    "keyOp": 44,
+    "mandatoryConditionalCode": false,
+    "metadata": {
+     "name": "masterJobs/XUG132VTOQ519/planningForm/materials/10",
+     "resourceType": "cracn.projectblue.mil/MasterJobMaterial"
+    },
+    "mjmlin": 10,
+    "noncanonicalRefs": {},
+    "priority": 10,
+    "ric": "Actuator au",
+    "shouldPrintInTwd": false,
+    "smic": "65",
+    "unitOfIssue": "HP",
+    "unitPrice": "8415.97"
+   },
+   {
+    "canonicalParent": {
+     "ref": "masterJobs/XUG132VTOQ519/planningForm",
+     "uniqueness": {
+      "mjfcn": "XUG132VTOQ519"
+     }
+    },
+    "cognizanceSymbol": "6R",
+    "federalSupplyCode": "3776",
+    "keyOp": 56,
+    "metadata": {
+     "name": "masterJobs/XUG132VTOQ519/planningForm/materials/11",
+     "resourceType": "cracn.projectblue.mil/MasterJobMaterial"
+    },
+    "mjmlin": 11,
+    "priority": 10,
+    "referenceNumber": "Panel overhaul",
+    "smic": "O",
+    "source": "G",
+    "unitOfIssue": "AR",
+    "unitPrice": "1507.97"
+   }
+  ],
+  "/api/v1/masterJobs/ZZNBB3T9TJXID/planningForm": {
+   "canonicalParent": {
+    "ref": "masterJobs/ZZNBB3T9TJXID",
+    "uniqueness": {
+     "mjfcn": "ZZNBB3T9TJXID"
+    }
+   },
+   "costUpdate": "2025-10-23T00:00:00.000Z",
+   "hatch": "3",
+   "metadata": {
+    "name": "masterJobs/ZZNBB3T9TJXID/planningForm",
+    "resourceType": "cracn.projectblue.mil/MasterJobPlanning"
+   },
+   "noncanonicalRefs": {
+    "keyEvent": {
+     "ref": "keyEvents/3",
+     "uniqueness": {
+      "keyEventNumber": 3
+     }
+    },
+    "leadWorkcenter": {
+     "ref": "workCenters/1K4T",
+     "uniqueness": {
+      "workcenter": "1K4T"
+     }
+    },
+    "planningAndEngineeringWorkcenter": {
+     "ref": "workCenters/1K4T",
+     "uniqueness": {
+      "workcenter": "1K4T"
+     }
+    }
+   },
+   "plannerName": "Coupling moto",
+   "plannerPhone": "19",
+   "remarks": {
+    "ima": "Coupling overhaul"
+   },
+   "swrs": [
+    "B",
+    "BN"
+   ]
+  },
+  "/api/v1/masterJobs/ZZNBB3T9TJXID/planningForm/keyOps": [
+   {
+    "canonicalParent": {
+     "ref": "masterJobs/ZZNBB3T9TJXID/planningForm",
+     "uniqueness": {
+      "mjfcn": "ZZNBB3T9TJXID"
+     }
+    },
+    "estimatedManHours": 93157,
+    "isHatchRequired": false,
+    "keyOp": 1,
+    "metadata": {
+     "name": "masterJobs/ZZNBB3T9TJXID/planningForm/keyOps/1",
+     "resourceType": "cracn.projectblue.mil/MasterJobKeyOp"
+    },
+    "noncanonicalRefs": {
+     "workcenters": []
+    },
+    "relativeCompleteCode": "B",
+    "relativeCompleteDate": 816,
+    "relativeStartCode": "A",
+    "relativeStartDate": 938,
+    "taskStatement": "Bearing auxiliary hydrau"
+   },
+   {
+    "canonicalParent": {
+     "ref": "masterJobs/ZZNBB3T9TJXID/planningForm",
+     "uniqueness": {
+      "mjfcn": "ZZNBB3T9TJXID"
+     }
+    },
+    "estimatedManHours": 65530,
+    "isHatchRequired": false,
+    "keyOp": 2,
+    "metadata": {
+     "name": "masterJobs/ZZNBB3T9TJXID/planningForm/keyOps/2",
+     "resourceType": "cracn.projectblue.mil/MasterJobKeyOp"
+    },
+    "noncanonicalRefs": {
+     "workcenters": [
+      {
+       "estimatedManHours": 912,
+       "ref": "workCenters/WI",
+       "uniqueness": {
+        "workcenter": "WI"
+       }
+      },
+      {
+       "estimatedManHours": 3795,
+       "ref": "workCenters/WI",
+       "uniqueness": {
+        "workcenter": "WI"
+       }
+      }
+     ]
+    },
+    "relativeCompleteCode": "A",
+    "relativeCompleteDate": 788,
+    "relativeStartCode": "A",
+    "relativeStartDate": 41,
+    "taskStatement": "Replace sensor"
+   }
+  ],
+  "/api/v1/masterJobs/ZZNBB3T9TJXID/planningForm/LTDs": [
+   {
+    "applicableSection": "Actuator coupling seawater",
+    "canonicalParent": {
+     "ref": "masterJobs/ZZNBB3T9TJXID/planningForm",
+     "uniqueness": {
+      "mjfcn": "ZZNBB3T9TJXID"
+     }
+    },
+    "documentNumber": "Motor motor coupling",
+    "documentTypeCode": "BQ5",
+    "ltdlin": 1,
+    "metadata": {
+     "name": "masterJobs/ZZNBB3T9TJXID/planningForm/LTDs/1",
+     "resourceType": "cracn.projectblue.mil/MasterJobLTD"
+    },
+    "revision": "H"
+   },
+   {
+    "canonicalParent": {
+     "ref": "masterJobs/ZZNBB3T9TJXID/planningForm",
+     "uniqueness": {
+      "mjfcn": "ZZNBB3T9TJXID"
+     }
+    },
+    "documentNumber": "Seawater inspect coupling pump b",
+    "ltdlin": 2,
+    "mandatoryConditionalCode": false,
+    "metadata": {
+     "name": "masterJobs/ZZNBB3T9TJXID/planningForm/LTDs/2",
+     "resourceType": "cracn.projectblue.mil/MasterJobLTD"
+    },
+    "noncanonicalRefs": {}
+   }
+  ],
+  "/api/v1/masterJobs/ZZNBB3T9TJXID/planningForm/materials": [
+   {
+    "cage": "2JDDZ",
+    "canonicalParent": {
+     "ref": "masterJobs/ZZNBB3T9TJXID/planningForm",
+     "uniqueness": {
+      "mjfcn": "ZZNBB3T9TJXID"
+     }
+    },
+    "demand": "P",
+    "keyOp": 77,
+    "materialDescription": "Gasket pump actuator panel align",
+    "metadata": {
+     "name": "masterJobs/ZZNBB3T9TJXID/planningForm/materials/10",
+     "resourceType": "cracn.projectblue.mil/MasterJobMaterial"
+    },
+    "mjmlin": 10,
+    "niin": "E8TGL1265",
+    "noncanonicalRefs": {
+     "workcenter": {
+      "ref": "workCenters/J6G",
+      "uniqueness": {
+       "workcenter": "J6G"
+      }
+     }
+    },
+    "priority": 12,
+    "quantity": 33303,
+    "smic": "N",
+    "unitOfIssue": "FN",
+    "unitPrice": "1159.38"
+   },
+   {
+    "canonicalParent": {
+     "ref": "masterJobs/ZZNBB3T9TJXID/planningForm",
+     "uniqueness": {
+      "mjfcn": "ZZNBB3T9TJXID"
+     }
+    },
+    "demand": "O",
+    "keyOp": 39,
+    "mandatoryConditionalCode": false,
+    "materialAdviceCode": "K9",
+    "materialDescription": "Overhaul replace inspect sensor",
+    "metadata": {
+     "name": "masterJobs/ZZNBB3T9TJXID/planningForm/materials/11",
+     "resourceType": "cracn.projectblue.mil/MasterJobMaterial"
+    },
+    "mjmlin": 11,
+    "niin": "UMW435620",
+    "priority": 11,
+    "quantity": 90857,
+    "referenceNumber": "Coupling replace",
+    "shouldPrintInTwd": true,
+    "smic": "2",
+    "source": "G",
+    "unitOfIssue": "AR",
+    "unitPrice": "5415.37"
+   }
+  ],
+  "/api/v1/materialJONs": [
+   {
+    "fundCode": "K5",
+    "fundEndDate": "2025-06-12T00:00:00.000Z",
+    "fundStartDate": "2026-06-16T00:00:00.000Z",
+    "fundingOpenedChangedDate": "2025-07-01T00:00:00.000Z",
+    "fundingOpenedChangedUserName": "Actuato",
+    "isFundingOpen": true,
+    "materialJon": "3HV862",
+    "metadata": {
+     "name": "materialJONs/3HV862",
+     "resourceType": "cracn.projectblue.mil/MaterialJON"
+    },
+    "priority1": 10,
+    "priority2": 10,
+    "priority3": 7,
+    "projectCode": "A",
+    "workDescription": "Motor valve pump actuator",
+    "workOrder": "Actuator panel in"
+   },
+   {
+    "fundCode": "O",
+    "fundEndDate": "2025-09-11T00:00:00.000Z",
+    "fundStartDate": "2026-07-06T00:00:00.000Z",
+    "fundingOpenedChangedDate": "2025-12-26T00:00:00.000Z",
+    "fundingOpenedChangedUserName": "Bearing",
+    "materialJon": "6ZTS4S",
+    "metadata": {
+     "name": "materialJONs/6ZTS4S",
+     "resourceType": "cracn.projectblue.mil/MaterialJON"
+    },
+    "priority1": 5,
+    "priority2": 4,
+    "priority3": 12,
+    "projectCode": "20",
+    "workDescription": "Motor inspect hydraulic repair",
+    "workOrder": "Repair auxiliary"
+   },
+   {
+    "fundCode": "WH",
+    "fundEndDate": "2025-07-30T00:00:00.000Z",
+    "fundStartDate": "2025-10-25T00:00:00.000Z",
+    "fundingOpenedChangedDate": "2026-08-20T00:00:00.000Z",
+    "fundingOpenedChangedUserName": "Valve a",
+    "isFundingOpen": true,
+    "materialJon": "5XOR13",
+    "metadata": {
+     "name": "materialJONs/5XOR13",
+     "resourceType": "cracn.projectblue.mil/MaterialJON"
+    },
+    "priority1": 4,
+    "priority2": 11,
+    "priority3": 2,
+    "projectCode": "TOO",
+    "workDescription": "Flange replace pump flange rep",
+    "workOrder": "Panel align repla"
+   },
+   {
+    "fundCode": "I",
+    "fundEndDate": "2026-02-23T00:00:00.000Z",
+    "fundStartDate": "2026-07-29T00:00:00.000Z",
+    "fundingOpenedChangedDate": "2026-06-12T00:00:00.000Z",
+    "fundingOpenedChangedUserName": "Motor i",
+    "isFundingOpen": true,
+    "materialJon": "0JDIW6",
+    "metadata": {
+     "name": "materialJONs/0JDIW6",
+     "resourceType": "cracn.projectblue.mil/MaterialJON"
+    },
+    "priority1": 9,
+    "priority2": 8,
+    "priority3": 3,
+    "projectCode": "AX",
+    "workDescription": "Sensor hydraulic",
+    "workOrder": "Align valve auxil"
+   },
+   {
+    "fundCode": "59",
+    "fundEndDate": "2025-07-24T00:00:00.000Z",
+    "fundStartDate": "2025-02-10T00:00:00.000Z",
+    "fundingOpenedChangedDate": "2025-03-14T00:00:00.000Z",
+    "fundingOpenedChangedUserName": "Bearing",
+    "materialJon": "9RB622",
+    "metadata": {
+     "name": "materialJONs/9RB622",
+     "resourceType": "cracn.projectblue.mil/MaterialJON"
+    },
+    "priority1": 14,
+    "priority2": 1,
+    "priority3": 10,
+    "projectCode": "9FL",
+    "workDescription": "Valve actuator pump",
+    "workOrder": "Valve inspect rep"
+   }
+  ],
+  "/api/v1/MRNs": [
+   {
+    "fullDescription": "Coupling gasket valve",
+    "maintenanceLevel": "SF9",
+    "metadata": {
+     "name": "MRNs/732707",
+     "resourceType": "cracn.projectblue.mil/MRN"
+    },
+    "mrn": "732707",
+    "periodicity": "24",
+    "situationalPeriodicity": "Motor replace seawater panel"
+   },
+   {
+    "fullDescription": "Actuator actuator coupling motor flange",
+    "maintenanceLevel": "H5",
+    "metadata": {
+     "name": "MRNs/897709",
+     "resourceType": "cracn.projectblue.mil/MRN"
+    },
+    "mrn": "897709",
+    "periodicity": "Motor c"
+   },
+   {
+    "fullDescription": "INSPECT MAIN BALLAST TANK",
+    "metadata": {
+     "name": "MRNs/075811",
+     "resourceType": "cracn.projectblue.mil/MRN"
+    },
+    "mrn": "075811",
+    "periodicity": "Flange",
+    "situationalPeriodicity": "Flange repair inspect"
+   },
+   {
+    "fullDescription": "Hydraulic bearing inspect replace",
+    "maintenanceLevel": "WV0",
+    "metadata": {
+     "name": "MRNs/381941",
+     "resourceType": "cracn.projectblue.mil/MRN"
+    },
+    "mrn": "381941",
+    "periodicity": "Bearing"
+   },
+   {
+    "fullDescription": "INSPECT MAIN BALLAST TANK",
+    "maintenanceLevel": "Z7I",
+    "metadata": {
+     "name": "MRNs/570977",
+     "resourceType": "cracn.projectblue.mil/MRN"
+    },
+    "mrn": "570977",
+    "periodicity": "Repair"
+   }
+  ],
+  "/api/v1/NIINs": [
+   {
+    "acquisitionAdviceCode": "G",
+    "crfEstablishedDate": "2025-03-05T00:00:00.000Z",
+    "dataSourceCode": "W",
+    "dateLastReferenced": null,
+    "federalSupplyCode": "1182",
+    "materialControlCode": "E",
+    "materialLocation": "H",
+    "metadata": {
+     "name": "NIINs/1WXWY5364",
+     "resourceType": "cracn.projectblue.mil/NIIN"
+    },
+    "niin": "1WXWY5364",
+    "securityCode": "E",
+    "smic": "LL",
+    "specialMaterialContentCode": "C",
+    "supersededNiins": [
+     "JZXF8F912",
+     "WTC38F328"
+    ],
+    "unitOfIssue": "NA",
+    "unitPrice": "1644.17"
+   },
+   {
+    "crfEstablishedDate": "2026-02-21T00:00:00.000Z",
+    "dataSourceCode": "M",
+    "dateLastReferenced": "2025-03-30T00:00:00.000Z",
+    "demilitarizationCode": "J",
+    "federalSupplyCode": "5761",
+    "isSuspect": true,
+    "itemNounName": "Bearing sensor over",
+    "lastUpdateDate": "2026-04-05T00:00:00.000Z",
+    "metadata": {
+     "name": "NIINs/CZSBXM500",
+     "resourceType": "cracn.projectblue.mil/NIIN"
+    },
+    "netUnitPrice": "2827.29",
+    "niin": "CZSBXM500",
+    "specialMaterialContentCode": "O",
+    "tSlashMIndicator": "R",
+    "unitOfIssue": "WD",
+    "unitPrice": "1407.69",
+    "userCode": "J"
+   },
+   {
+    "cognizanceSymbol": "A7",
+    "crfEstablishedDate": "2025-08-31T00:00:00.000Z",
+    "dateLastReferenced": "2025-10-09T00:00:00.000Z",
+    "federalSupplyCode": "8603",
+    "isSuspect": false,
+    "itemNounName": "Pump pump replace s",
+    "materialControlCode": "Q",
+    "materialLocation": "1",
+    "metadata": {
+     "name": "NIINs/N1ZXHA200",
+     "resourceType": "cracn.projectblue.mil/NIIN"
+    },
+    "netUnitPrice": "4431.95",
+    "niin": "N1ZXHA200",
+    "supersededNiins": [
+     "VT4R5G534",
+     "XEX328191"
+    ],
+    "tSlashMIndicator": "T",
+    "unitOfIssue": "WB",
+    "userCode": "A"
+   },
+   {
+    "changeNoticeActiveDate": "2025-07-03T00:00:00.000Z",
+    "crfEstablishedDate": "2025-06-20T00:00:00.000Z",
+    "dateLastReferenced": "2025-05-28T00:00:00.000Z",
+    "demilitarizationCode": "B",
+    "federalSupplyCode": "2693",
+    "isSuspect": false,
+    "itemNounName": "Coupling replace se",
+    "lastUpdateDate": "2026-08-12T00:00:00.000Z",
+    "materialLocation": "U",
+    "metadata": {
+     "name": "NIINs/E9OKQ0698",
+     "resourceType": "cracn.projectblue.mil/NIIN"
+    },
+    "niin": "E9OKQ0698",
+    "securityCode": "4",
+    "specialMaterialContentCode": "4",
+    "supersededNiins": [],
+    "unitOfIssue": "T8",
+    "unitPrice": "7962.66",
+    "userCode": "K"
+   },
+   {
+    "changeNoticeActiveDate": "2025-10-01T00:00:00.000Z",
+    "dataSourceCode": "9",
+    "dateLastReferenced": "2025-09-10T00:00:00.000Z",
+    "federalSupplyCode": "4653",
+    "itemNounName": "Auxiliary gasket va",
+    "materialControlCode": "K",
+    "materialLocation": "K",
+    "metadata": {
+     "name": "NIINs/JDI9B8580",
+     "resourceType": "cracn.projectblue.mil/NIIN"
+    },
+    "niin": "JDI9B8580",
+    "oldUnitOfIssue": "IG",
+    "specialMaterialContentCode": "T",
+    "tSlashMIndicator": "N",
+    "unitOfIssue": "L4",
+    "unitPrice": "6955.16"
+   }
+  ],
+  "/api/v1/RICs": [
+   {
+    "metadata": {
+     "name": "RICs/RIC33972",
+     "resourceType": "cracn.projectblue.mil/RIC"
+    },
+    "noncanonicalRefs": {},
+    "ric": "RIC33972",
+    "ricType": "XRIC"
+   },
+   {
+    "metadata": {
+     "name": "RICs/RIC47709",
+     "resourceType": "cracn.projectblue.mil/RIC"
+    },
+    "noncanonicalRefs": {
+     "niins": [
+      "NIINs/Z9OPBM736",
+      "NIINs/7606VY117"
+     ]
+    },
+    "ric": "RIC47709",
+    "ricType": "XRIC"
+   },
+   {
+    "metadata": {
+     "name": "RICs/RIC32661",
+     "resourceType": "cracn.projectblue.mil/RIC"
+    },
+    "ric": "RIC32661",
+    "ricType": "APL"
+   },
+   {
+    "metadata": {
+     "name": "RICs/RIC82094",
+     "resourceType": "cracn.projectblue.mil/RIC"
+    },
+    "ric": "RIC82094",
+    "ricType": "APL"
+   },
+   {
+    "metadata": {
+     "name": "RICs/RIC73381",
+     "resourceType": "cracn.projectblue.mil/RIC"
+    },
+    "ric": "RIC73381",
+    "ricType": "APL"
+   }
+  ],
+  "/api/v1/technicalManuals": [
+   {
+    "dataSource": "SDI",
+    "dateEstablished": "2026-07-03T00:00:00.000Z",
+    "documentId": "Actuator auxiliary panel inspect",
+    "documentTypeCode": "777",
+    "lastCheckedOutDate": "2025-11-11T00:00:00.000Z",
+    "metadata": {
+     "name": "technicalManuals/1",
+     "resourceType": "cracn.projectblue.mil/TechnicalManual"
+    },
+    "quantityIssued": 167,
+    "relatedChanges": 3051,
+    "remarks": "Bearing sensor inspect panel",
+    "revision": "SPK",
+    "securityClassification": "B",
+    "stockingPoint": "Sensor ins",
+    "supersedingDocumentId": "Inspect seawater",
+    "technicalCognizanceCode": "M",
+    "technicalManualId": 1
+   },
+   {
+    "change": "0",
+    "dataSource": "SDI",
+    "documentId": "Auxiliary align overhaul hydraul",
+    "documentTypeCode": "2",
+    "effectiveDate": "2025-08-27T00:00:00.000Z",
+    "metadata": {
+     "name": "technicalManuals/2",
+     "resourceType": "cracn.projectblue.mil/TechnicalManual"
+    },
+    "quantityIssued": 428,
+    "quantityOnHand": 931,
+    "relatedChanges": 2977,
+    "remarks": "Coupling pump",
+    "supersedingDocumentId": "Actuator hydraulic hydraulic",
+    "technicalManualId": 2,
+    "title": "Hydraulic coupling hydraulic coupling"
+   },
+   {
+    "dataSource": "SDI",
+    "dateEstablished": "2026-08-02T00:00:00.000Z",
+    "documentId": "Repair inspect repair",
+    "documentTypeCode": "L2G",
+    "metadata": {
+     "name": "technicalManuals/3",
+     "resourceType": "cracn.projectblue.mil/TechnicalManual"
+    },
+    "quantityIssued": 286,
+    "quantityIssuedToDate": 277,
+    "quantityOnHand": 506,
+    "relatedChanges": 2514,
+    "remarks": "Actuator panel panel",
+    "revision": "NOD",
+    "stockingPoint": "Align bear",
+    "supersedingDocumentId": "Sensor overhaul flange motor actuator",
+    "technicalCognizanceCode": "N",
+    "technicalManualId": 3,
+    "title": "Overhaul gasket hydraulic",
+    "verification": "Inspect seawater sen"
+   },
+   {
+    "change": "7V7R",
+    "dateEstablished": "2025-07-07T00:00:00.000Z",
+    "documentId": "Replace inspect actuator align a",
+    "documentTypeCode": "EO",
+    "lastCheckedOutDate": "2025-12-04T00:00:00.000Z",
+    "metadata": {
+     "name": "technicalManuals/4",
+     "resourceType": "cracn.projectblue.mil/TechnicalManual"
+    },
+    "quantityIssued": 432,
+    "quantityOnHand": 919,
+    "relatedChanges": 8307,
+    "remarks": "Coupling inspect inspect",
+    "securityClassification": "N",
+    "supersedingDocumentId": "Sensor auxiliary hydraulic bearing align",
+    "technicalManualId": 4,
+    "verification": "Seawater pump gasket"
+   },
+   {
+    "change": "11",
+    "dataSource": "TRF",
+    "documentId": "Auxiliary hydraulic hydraulic",
+    "documentTypeCode": "A",
+    "effectiveIssue": "Actuator",
+    "lastCheckedOutDate": "2026-03-24T00:00:00.000Z",
+    "metadata": {
+     "name": "technicalManuals/5",
+     "resourceType": "cracn.projectblue.mil/TechnicalManual"
+    },
+    "relatedChanges": 657,
+    "revision": "9IR7",
+    "securityClassification": "K",
+    "stockingPoint": "Auxiliary",
+    "technicalCognizanceCode": "4",
+    "technicalManualId": 5,
+    "title": "Actuator auxiliary align flange"
+   }
+  ],
+  "/api/v1/technicalManuals/1/changes": [
+   {
+    "alteration": "OYS",
+    "canonicalParent": {
+     "ref": "technicalManuals/1",
+     "uniqueness": {
+      "technicalManualId": 1
+     }
+    },
+    "changeEffectiveDate": "2026-03-19T00:00:00.000Z",
+    "changeNumber": "Flange sensor",
+    "changeReceivedDate": "2026-09-18T00:00:00.000Z",
+    "metadata": {
+     "name": "technicalManuals/1/changes/1",
+     "resourceType": "cracn.projectblue.mil/TechnicalManualChange"
+    },
+    "technicalManualChangeId": 1
+   },
+   {
+    "alteration": "F",
+    "canonicalParent": {
+     "ref": "technicalManuals/1",
+     "uniqueness": {
+      "technicalManualId": 1
+     }
+    },
+    "changeEffectiveDate": "2025-06-20T00:00:00.000Z",
+    "changeNumber": "Flange panel seawater",
+    "metadata": {
+     "name": "technicalManuals/1/changes/2",
+     "resourceType": "cracn.projectblue.mil/TechnicalManualChange"
+    },
+    "technicalManualChangeId": 2
+   }
+  ],
+  "/api/v1/technicalManuals/1/printouts": [
+   {
+    "canonicalParent": {
+     "ref": "technicalManuals/1",
+     "uniqueness": {
+      "technicalManualId": 1
+     }
+    },
+    "copyOrSerialNumber": "Align pump",
+    "engineeringChangeRemarks": "Motor actuator auxiliary overhaul",
+    "lastSightedDate": "2025-02-06T00:00:00.000Z",
+    "metadata": {
+     "name": "technicalManuals/1/printouts/1",
+     "resourceType": "cracn.projectblue.mil/TechnicalManualPrintout"
+    },
+    "primaryLocation": "HK70",
+    "technicalManualPrintoutId": 1
+   },
+   {
+    "canonicalParent": {
+     "ref": "technicalManuals/1",
+     "uniqueness": {
+      "technicalManualId": 1
+     }
+    },
+    "currentLocation": "P4W9",
+    "engineeringChangeRemarks": "Panel pump flange hydraulic repair",
+    "lastSightedDate": "2025-09-28T00:00:00.000Z",
+    "metadata": {
+     "name": "technicalManuals/1/printouts/2",
+     "resourceType": "cracn.projectblue.mil/TechnicalManualPrintout"
+    },
+    "primaryLocation": "D6XP",
+    "sightedLocation": "IIO7",
+    "technicalManualPrintoutId": 2
+   }
+  ],
+  "/api/v1/technicalManuals/2/changes": [
+   {
+    "canonicalParent": {
+     "ref": "technicalManuals/2",
+     "uniqueness": {
+      "technicalManualId": 2
+     }
+    },
+    "changeEffectiveDate": "2026-02-07T00:00:00.000Z",
+    "changeNumber": "Align panel seawater",
+    "changeProcessedDate": "2025-04-01T00:00:00.000Z",
+    "metadata": {
+     "name": "technicalManuals/2/changes/1",
+     "resourceType": "cracn.projectblue.mil/TechnicalManualChange"
+    },
+    "technicalManualChangeId": 1
+   },
+   {
+    "canonicalParent": {
+     "ref": "technicalManuals/2",
+     "uniqueness": {
+      "technicalManualId": 2
+     }
+    },
+    "changeEffectiveDate": "2026-03-09T00:00:00.000Z",
+    "changeNumber": "Motor panel flange valve flange",
+    "changeProcessedDate": "2026-05-08T00:00:00.000Z",
+    "changeReceivedDate": "2025-08-11T00:00:00.000Z",
+    "metadata": {
+     "name": "technicalManuals/2/changes/2",
+     "resourceType": "cracn.projectblue.mil/TechnicalManualChange"
+    },
+    "technicalManualChangeId": 2
+   }
+  ],
+  "/api/v1/technicalManuals/2/printouts": [
+   {
+    "canonicalParent": {
+     "ref": "technicalManuals/2",
+     "uniqueness": {
+      "technicalManualId": 2
+     }
+    },
+    "copyOrSerialNumber": "Panel seaw",
+    "currentLocation": "EWZ",
+    "libraryNumber": "5006135968023",
+    "metadata": {
+     "name": "technicalManuals/2/printouts/1",
+     "resourceType": "cracn.projectblue.mil/TechnicalManualPrintout"
+    },
+    "primaryLocation": "YWA",
+    "sightedLocation": "B5OQ",
+    "technicalManualChangeId": 15,
+    "technicalManualPrintoutId": 1
+   },
+   {
+    "canonicalParent": {
+     "ref": "technicalManuals/2",
+     "uniqueness": {
+      "technicalManualId": 2
+     }
+    },
+    "copyOrSerialNumber": "Align coup",
+    "currentLocation": "ERAPHV",
+    "lastSightedDate": "2025-10-27T00:00:00.000Z",
+    "libraryNumber": "9256327570512",
+    "metadata": {
+     "name": "technicalManuals/2/printouts/2",
+     "resourceType": "cracn.projectblue.mil/TechnicalManualPrintout"
+    },
+    "primaryLocation": "WYX",
+    "sightedLocation": "Q3D",
+    "technicalManualChangeId": 66,
+    "technicalManualPrintoutId": 2
+   }
+  ],
+  "/api/v1/technicalManuals/3/changes": [
+   {
+    "canonicalParent": {
+     "ref": "technicalManuals/3",
+     "uniqueness": {
+      "technicalManualId": 3
+     }
+    },
+    "changeEffectiveDate": "2026-03-17T00:00:00.000Z",
+    "changeNumber": "Flange bearing auxiliary",
+    "changeProcessedDate": "2025-07-07T00:00:00.000Z",
+    "metadata": {
+     "name": "technicalManuals/3/changes/1",
+     "resourceType": "cracn.projectblue.mil/TechnicalManualChange"
+    },
+    "technicalManualChangeId": 1
+   },
+   {
+    "canonicalParent": {
+     "ref": "technicalManuals/3",
+     "uniqueness": {
+      "technicalManualId": 3
+     }
+    },
+    "changeEffectiveDate": "2026-02-17T00:00:00.000Z",
+    "changeNumber": "Coupling sensor",
+    "metadata": {
+     "name": "technicalManuals/3/changes/2",
+     "resourceType": "cracn.projectblue.mil/TechnicalManualChange"
+    },
+    "technicalManualChangeId": 2
+   }
+  ],
+  "/api/v1/technicalManuals/3/printouts": [
+   {
+    "canonicalParent": {
+     "ref": "technicalManuals/3",
+     "uniqueness": {
+      "technicalManualId": 3
+     }
+    },
+    "copyOrSerialNumber": "Gasket ali",
+    "currentLocation": "PNG",
+    "engineeringChangeRemarks": "Panel coupling",
+    "metadata": {
+     "name": "technicalManuals/3/printouts/1",
+     "resourceType": "cracn.projectblue.mil/TechnicalManualPrintout"
+    },
+    "primaryLocation": "ZMBW",
+    "technicalManualPrintoutId": 1
+   },
+   {
+    "canonicalParent": {
+     "ref": "technicalManuals/3",
+     "uniqueness": {
+      "technicalManualId": 3
+     }
+    },
+    "copyOrSerialNumber": "Align valv",
+    "engineeringChangeRemarks": "Gasket auxiliary motor inspect coupling",
+    "lastSightedDate": "2025-10-09T00:00:00.000Z",
+    "libraryNumber": "6587391143332",
+    "metadata": {
+     "name": "technicalManuals/3/printouts/2",
+     "resourceType": "cracn.projectblue.mil/TechnicalManualPrintout"
+    },
+    "primaryLocation": "ZX",
+    "sightedLocation": "C9Y8",
+    "technicalManualPrintoutId": 2
+   }
+  ],
+  "/api/v1/technicalManuals/4/changes": [
+   {
+    "alteration": "QXW35",
+    "canonicalParent": {
+     "ref": "technicalManuals/4",
+     "uniqueness": {
+      "technicalManualId": 4
+     }
+    },
+    "changeEffectiveDate": "2026-03-23T00:00:00.000Z",
+    "changeNumber": "Auxiliary seawater valve",
+    "changeProcessedDate": "2025-05-12T00:00:00.000Z",
+    "metadata": {
+     "name": "technicalManuals/4/changes/1",
+     "resourceType": "cracn.projectblue.mil/TechnicalManualChange"
+    },
+    "technicalManualChangeId": 1
+   },
+   {
+    "canonicalParent": {
+     "ref": "technicalManuals/4",
+     "uniqueness": {
+      "technicalManualId": 4
+     }
+    },
+    "changeEffectiveDate": "2025-07-11T00:00:00.000Z",
+    "changeNumber": "Bearing hydraulic",
+    "changeProcessedDate": "2025-05-23T00:00:00.000Z",
+    "metadata": {
+     "name": "technicalManuals/4/changes/2",
+     "resourceType": "cracn.projectblue.mil/TechnicalManualChange"
+    },
+    "technicalManualChangeId": 2
+   }
+  ],
+  "/api/v1/technicalManuals/4/printouts": [
+   {
+    "canonicalParent": {
+     "ref": "technicalManuals/4",
+     "uniqueness": {
+      "technicalManualId": 4
+     }
+    },
+    "engineeringChangeRemarks": "Motor valve valve",
+    "lastSightedDate": "2025-05-13T00:00:00.000Z",
+    "metadata": {
+     "name": "technicalManuals/4/printouts/1",
+     "resourceType": "cracn.projectblue.mil/TechnicalManualPrintout"
+    },
+    "primaryLocation": "BW8KU",
+    "technicalManualChangeId": 39,
+    "technicalManualPrintoutId": 1
+   },
+   {
+    "canonicalParent": {
+     "ref": "technicalManuals/4",
+     "uniqueness": {
+      "technicalManualId": 4
+     }
+    },
+    "copyOrSerialNumber": "Overhaul f",
+    "currentLocation": "KJLIV",
+    "engineeringChangeRemarks": "Panel pump inspect auxiliary",
+    "lastSightedDate": "2026-05-29T00:00:00.000Z",
+    "metadata": {
+     "name": "technicalManuals/4/printouts/2",
+     "resourceType": "cracn.projectblue.mil/TechnicalManualPrintout"
+    },
+    "primaryLocation": "CMXUB",
+    "technicalManualPrintoutId": 2
+   }
+  ],
+  "/api/v1/technicalManuals/5/changes": [
+   {
+    "alteration": "74EH",
+    "canonicalParent": {
+     "ref": "technicalManuals/5",
+     "uniqueness": {
+      "technicalManualId": 5
+     }
+    },
+    "changeEffectiveDate": "2026-02-06T00:00:00.000Z",
+    "changeNumber": "Actuator overhaul gasket pump",
+    "changeProcessedDate": "2025-12-07T00:00:00.000Z",
+    "changeReceivedDate": "2026-04-03T00:00:00.000Z",
+    "metadata": {
+     "name": "technicalManuals/5/changes/1",
+     "resourceType": "cracn.projectblue.mil/TechnicalManualChange"
+    },
+    "technicalManualChangeId": 1
+   },
+   {
+    "alteration": "OOFC6",
+    "canonicalParent": {
+     "ref": "technicalManuals/5",
+     "uniqueness": {
+      "technicalManualId": 5
+     }
+    },
+    "changeEffectiveDate": "2026-09-12T00:00:00.000Z",
+    "changeNumber": "Replace sensor auxiliary hydraul",
+    "changeReceivedDate": "2026-04-05T00:00:00.000Z",
+    "metadata": {
+     "name": "technicalManuals/5/changes/2",
+     "resourceType": "cracn.projectblue.mil/TechnicalManualChange"
+    },
+    "technicalManualChangeId": 2
+   }
+  ],
+  "/api/v1/technicalManuals/5/printouts": [
+   {
+    "canonicalParent": {
+     "ref": "technicalManuals/5",
+     "uniqueness": {
+      "technicalManualId": 5
+     }
+    },
+    "copyOrSerialNumber": "Sensor hyd",
+    "currentLocation": "DIWI1",
+    "engineeringChangeRemarks": "Bearing panel sensor auxiliary overhaul",
+    "lastSightedDate": "2025-08-27T00:00:00.000Z",
+    "libraryNumber": "4135981330031",
+    "metadata": {
+     "name": "technicalManuals/5/printouts/1",
+     "resourceType": "cracn.projectblue.mil/TechnicalManualPrintout"
+    },
+    "primaryLocation": "JRS4EX2",
+    "sightedLocation": "SXLW",
+    "technicalManualPrintoutId": 1
+   },
+   {
+    "canonicalParent": {
+     "ref": "technicalManuals/5",
+     "uniqueness": {
+      "technicalManualId": 5
+     }
+    },
+    "copyOrSerialNumber": "Actuator c",
+    "currentLocation": "ECGTK",
+    "engineeringChangeRemarks": "Panel coupling flange seawater",
+    "lastSightedDate": "2026-06-21T00:00:00.000Z",
+    "metadata": {
+     "name": "technicalManuals/5/printouts/2",
+     "resourceType": "cracn.projectblue.mil/TechnicalManualPrintout"
+    },
+    "primaryLocation": "UAM4L",
+    "sightedLocation": "TRZ40BV",
+    "technicalManualPrintoutId": 2
+   }
+  ],
+  "/api/v1/workCenters": [
+   {
+    "description": "Flange pump actuato",
+    "immsDepartment": "A",
+    "immsWorkcenter": "C4M",
+    "lastUpdateDate": "2025-03-07T00:00:00.000Z",
+    "manpower": {
+     "allowedProductive": {},
+     "allowedProductiveSupport": {
+      "civilian": 108,
+      "military": 571
+     },
+     "assignedProductiveSupport": {
+      "civilian": 457,
+      "military": 711
+     },
+     "staffedBelow65Percent": {
+      "civilian": 70,
+      "military": 38
+     }
+    },
+    "metadata": {
+     "name": "workCenters/J6G",
+     "resourceType": "cracn.projectblue.mil/WorkCenter"
+    },
+    "noncanonicalRefs": {
+     "branch": {
+      "ref": "departments/U/divisions/K/branches/6",
+      "uniqueness": {
+       "branch": "6",
+       "department": "U",
+       "division": "K"
+      }
+     }
+    },
+    "provideAssistWorkcenterCopyOfAwr": "N",
+    "workcenter": "J6G",
+    "workcenterTypeCode": "P"
+   },
+   {
+    "description": "Align valve overhau",
+    "immsDepartment": "1",
+    "immsWorkcenter": "WYK",
+    "lastUpdateDate": "2025-09-25T00:00:00.000Z",
+    "manpower": {
+     "allowedProductive": {
+      "military": 618
+     },
+     "assignedProductive": {},
+     "assignedProductiveSupport": {
+      "military": 854
+     },
+     "staffed65To85Percent": {
+      "military": 30
+     }
+    },
+    "metadata": {
+     "name": "workCenters/X",
+     "resourceType": "cracn.projectblue.mil/WorkCenter"
+    },
+    "noncanonicalRefs": {
+     "branch": {
+      "ref": "departments/U/divisions/2/branches/B",
+      "uniqueness": {
+       "branch": "B",
+       "department": "U",
+       "division": "2"
+      }
+     },
+     "planningAndEngineeringWorkcenter": {
+      "ref": "workCenters/1K4T",
+      "uniqueness": {
+       "workcenter": "1K4T"
+      }
+     }
+    },
+    "provideAssistWorkcenterCopyOfAwr": "N",
+    "workcenter": "X",
+    "workcenterTypeCode": "N"
+   },
+   {
+    "description": "Gasket align",
+    "hasEquipmentDeficiency": true,
+    "immsDepartment": "U",
+    "immsWorkcenter": "AL1",
+    "lastUpdateDate": "2025-04-27T00:00:00.000Z",
+    "manpower": {
+     "allowedProductiveSupport": {
+      "civilian": 711
+     },
+     "assignedProductive": {
+      "civilian": 591,
+      "military": 387
+     },
+     "assignedProductiveSupport": {
+      "civilian": 699,
+      "military": 37
+     },
+     "staffed65To85Percent": {
+      "civilian": 1,
+      "military": 49
+     },
+     "staffedBelow65Percent": {
+      "military": 19
+     }
+    },
+    "metadata": {
+     "name": "workCenters/EW",
+     "resourceType": "cracn.projectblue.mil/WorkCenter"
+    },
+    "noncanonicalRefs": {
+     "branch": {
+      "ref": "departments/J/divisions/Q/branches/G",
+      "uniqueness": {
+       "branch": "G",
+       "department": "J",
+       "division": "Q"
+      }
+     },
+     "planningAndEngineeringWorkcenter": {
+      "ref": "workCenters/J6G",
+      "uniqueness": {
+       "workcenter": "J6G"
+      }
+     }
+    },
+    "provideAssistWorkcenterCopyOfAwr": "Y",
+    "workcenter": "EW",
+    "workcenterTypeCode": "P"
+   },
+   {
+    "description": "Valve sensor auxili",
+    "immsDepartment": "R",
+    "immsWorkcenter": "S819",
+    "lastUpdateDate": "2026-08-01T00:00:00.000Z",
+    "metadata": {
+     "name": "workCenters/1K4T",
+     "resourceType": "cracn.projectblue.mil/WorkCenter"
+    },
+    "noncanonicalRefs": {
+     "branch": {
+      "ref": "departments/U/divisions/K/branches/1",
+      "uniqueness": {
+       "branch": "1",
+       "department": "U",
+       "division": "K"
+      }
+     }
+    },
+    "numberOfAwrCopiesForLeadWorkcenter": 5,
+    "provideAssistWorkcenterCopyOfAwr": "N",
+    "workcenter": "1K4T",
+    "workcenterTypeCode": "P"
+   },
+   {
+    "description": "Auxiliary panel",
+    "hasEquipmentDeficiency": false,
+    "immsDepartment": "Q",
+    "immsWorkcenter": "R7C",
+    "metadata": {
+     "name": "workCenters/WI",
+     "resourceType": "cracn.projectblue.mil/WorkCenter"
+    },
+    "noncanonicalRefs": {
+     "branch": {
+      "ref": "departments/U/divisions/K/branches/6",
+      "uniqueness": {
+       "branch": "6",
+       "department": "U",
+       "division": "K"
+      }
+     },
+     "planningAndEngineeringWorkcenter": {
+      "ref": "workCenters/X",
+      "uniqueness": {
+       "workcenter": "X"
+      }
+     }
+    },
+    "provideAssistWorkcenterCopyOfAwr": "N",
+    "workcenter": "WI",
+    "workcenterTypeCode": "S"
+   }
+  ]
+ }
+}

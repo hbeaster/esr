@@ -6,7 +6,7 @@ import RevisionHistory from "./RevisionHistory.vue";
 import RecordActivity from "./RecordActivity.vue";
 import WorkflowActions from "./WorkflowActions.vue";
 import SignatureRecord from "./SignatureRecord.vue";
-import { steps, statusTone } from "../presentation";
+import { esrRevision, plainText, steps, statusTone } from "../presentation";
 import { useWorkspaceContext } from "../composables/workspaceContext";
 const {
   state,
@@ -35,9 +35,9 @@ const {
       <div>
         <div class="eyebrow">
           {{ record.serial || "AWAITING SERIAL NUMBER" }}
-          <span v-if="record.revision">· REVISION {{ record.serial?.slice(6) }}</span>
+          <span v-if="esrRevision(record.serial) && esrRevision(record.serial) !== 'A'">· REVISION {{ esrRevision(record.serial) }}</span>
         </div>
-        <h1>{{ record.title }}</h1>
+        <h1>{{ record.title || plainText(record.condition) }}</h1>
         <div class="detail-meta">
           <span :class="['badge', statusTone(record.status)]">{{
             record.status

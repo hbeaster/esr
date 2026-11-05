@@ -2,7 +2,7 @@
 
 An embeddable **Vue 3 + TypeScript web component** backed by a thin **ASP.NET Core / .NET 10** demo API. The component uses Shadow DOM, a bundled Vue runtime, and a light theme. The host application is separate from the npm package.
 
-All records, LDS responses, historical matches, identities, signatures and approvals are **synthetic**. The backend keeps data in memory; restarting it resets the demo. The public role selector is a demonstration tool, not an authentication system.
+All records, LDS responses, historical matches, identities, signatures and approvals are **synthetic**. The backend keeps data in memory and starts with no records or templates; it only ships demo identities. JCN lookups go to the CRACN mock. Restarting it resets the demo. The public role selector is a demonstration tool, not an authentication system.
 
 ## Build and package only the component
 
@@ -20,7 +20,7 @@ npm run package:component
 - Type declarations: `dist/component/index.d.ts`
 - Installable npm tarball: `artifacts/trf-esr-workspace-0.1.0.tgz`
 
-The npm allowlist includes only `dist/component/`, this README, the API and host communication contracts, and the license. It excludes the demo host, C# backend, synthetic seed records, deployment files, tests, and source tree. `npm pack` also builds the component through `prepack`. No registry publishing is performed.
+The npm allowlist includes only `dist/component/`, this README, the API and host communication contracts, and the license. It excludes the demo host, C# backend, synthetic data, deployment files, tests, and source tree. `npm pack` also builds the component through `prepack`. No registry publishing is performed.
 
 ### Embed in another application
 
@@ -69,13 +69,28 @@ Requires the [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10
 
 ```sh
 npm ci
-npm run dev:api  # terminal 1: ASP.NET on http://127.0.0.1:5080
-npm run dev      # terminal 2: Vue host on http://127.0.0.1:5173
+npm run dev:cracn  # terminal 1: mock CRACN API on http://127.0.0.1:4010
+npm run dev:api    # terminal 2: ASP.NET on http://127.0.0.1:5080
+npm run dev        # terminal 3: Vue host on http://127.0.0.1:5173
 ```
 
-Use the identity selector above the workspace to follow each role. Start with **Requestor**, create a request, switch to **Supervisor** to assign it, then **Engineer**, **Supervisor**, **Shop**, and **Division Head** for the full workflow. Administrator can grant cross-TRF review and delegated signatures. Demo JCNs are `JCN-260184` and `JCN-260207`; `N/A` is supported.
+### CRACN API and mock data
+
+JCN context (work statement, refit, component, location) comes from the **CRACN API** described by `cracn_openapi.json`. The backend reads `GET /api/v1/jobs/{jcn}` for the work statement and refit, then the job's configuration item for the component and location. It does this both for **Import LDS** and when a request is submitted, so saved records and PDFs carry the CRACN values.
+
+`Cracn:BaseUrl` (environment variable `Cracn__BaseUrl`) defaults to the local mock at `http://127.0.0.1:4010`. Point it at a real CRACN deployment and set `Cracn:Token` to its service bearer token. If CRACN is unreachable, lookups fail with 502 and requests can still be submitted with `N/A`.
+
+`mocks/cracn/` turns the spec into a stateful mock server. It routes every operation in the spec. It serves list, get, create, update and delete from in-memory state seeded with `mocks/cracn/data.json`, supports `limit`, `offset`, `filters` and `orderBy` (as JSON query values), allows every `auth/*` check, and generates responses for other operations from their schemas. It accepts any non-empty bearer token, and `POST /__mock/reset` restores the seed data. The data is generated deterministically from the spec, with the demo records in `mocks/cracn/curated.mjs` merged in. After changing either the spec or that file, run `npm run mock:generate`; `npm run mock:check` (part of `validate`) fails when `data.json` is stale.
+
+The workspace starts empty. Use the identity selector above the workspace to follow each role. Start with **Requestor**, create a request, switch to **Supervisor** to assign it, then **Engineer**, **Supervisor**, **Shop**, and **Division Head** for the full workflow. Administrator can grant cross-TRF review and delegated signatures. Demo JCNs are `21036WX010184` and `21036WX020207`; every other job in the mock data (for example `71204POAH7469`) also resolves, and `N/A` is supported.
 
 A host-only build is available with `npm run build:host`, producing `dist/host/`. The Docker build copies this into ASP.NET's `wwwroot` so one server serves both the host and API.
+
+### Simulated data (dev only)
+
+With `npm run dev`, the top-right **Use fake data** button is the only way to see pre-populated data. It switches the workspace to a generated dataset of 60 records and 3 templates, covering every workflow status, returned requests, deferrals, revisions, attachments and long text. An amber **SIMULATED DATA** badge shows while it is on, and the choice survives a reload. Select **Use API data** to switch back.
+
+The dataset comes from the Vite dev server, so the .NET API and CRACN mock do not need to be running. Fake mode is read-only: workflow actions and PDF export show an error explaining this, because those rules and the PDF generator live in the backend. The button, badge and dataset are not included in production host builds or the npm package.
 
 ## Docker
 
@@ -86,7 +101,7 @@ docker run --rm -p 127.0.0.1:8080:8080 esr-demo:local
 docker compose up --build
 ```
 
-Open `http://localhost:8080`. The multi-stage image builds Vue with Node and the backend with .NET, then runs only the ASP.NET runtime as a non-root user. Health endpoints are `/health/live` and `/health/ready`.
+Open `http://localhost:8080`. Compose also builds and starts the CRACN mock (`mocks/cracn/Dockerfile`) and points the backend at it. With plain `docker run`, pass `-e Cracn__BaseUrl=…` for a reachable CRACN, otherwise JCN lookups fail and only `N/A` requests can be submitted. The multi-stage image builds Vue with Node and the backend with .NET, then runs only the ASP.NET runtime as a non-root user. Health endpoints are `/health/live` and `/health/ready`.
 
 ## Kubernetes
 
@@ -94,13 +109,14 @@ Build and load `esr-demo:local` into your local cluster, or push it to your own 
 
 ```sh
 # Local kind example:
-kind load docker-image esr-demo:local
+docker build -f mocks/cracn/Dockerfile -t cracn-mock:local .
+kind load docker-image esr-demo:local cracn-mock:local
 kubectl apply -k deploy/k8s
 kubectl rollout status deployment/esr-demo
 kubectl port-forward service/esr-demo 8080:80
 ```
 
-For a registry, use a kustomize overlay or `kubectl set image deployment/esr-demo esr=YOUR_REGISTRY/esr-demo:TAG`. Add your ingress/TLS policy in the deployment environment. No cluster changes or remote publication are performed by the build commands.
+The pod runs the CRACN mock as a sidecar on `localhost:4010`. For a real CRACN, remove the sidecar and set `Cracn__BaseUrl` on the `esr` container. For a registry, use a kustomize overlay or `kubectl set image deployment/esr-demo esr=YOUR_REGISTRY/esr-demo:TAG`. Add your ingress/TLS policy in the deployment environment. No cluster changes or remote publication are performed by the build commands.
 
 The manifest includes startup/readiness/liveness probes, CPU/memory requests and limits, a read-only root filesystem, dropped capabilities, and a temporary volume. **Keep one replica**: demo records and JWT signing keys are process-local. Production scaling requires shared persistence and a real identity provider. `Recreate` avoids concurrent mock stores during rollout.
 
@@ -113,7 +129,7 @@ npm test                       # Vitest + Vue Test Utils component/controller un
 npm run test:component          # browser integration with isolated API fixtures
 npm run test:backend            # xUnit domain and ASP.NET HTTP integration tests
 npx playwright install chromium
-npm run test:e2e                # actual Vue host + actual .NET backend in Chromium
+npm run test:e2e                # actual Vue host + actual .NET backend + CRACN mock in Chromium
 npm run validate               # unit tests, component browser tests, both builds, backend tests, full-flow browser tests
 ```
 
@@ -142,10 +158,10 @@ UI sections share a typed, instance-local Vue injection context. No state is sha
 - The reusable component is independent of the demo host and .NET server.
 - Workflow rules and permissions are enforced by the API, not only hidden buttons.
 - Signatures derive name and user ID from a server-verified demo JWT, ignoring submitted signature identities.
-- Supervisor-approved templates only, per the agreed policy. Templates are maintained in the synthetic catalog.
+- Supervisor-approved templates only, per the agreed policy. The API ships no templates; the catalog needs a production source, and the dev-only simulated data includes samples.
 - New revisions copy prior content, retain frozen prior versions, and require fresh signatures.
 - Rejected initiation requests stay `Unassigned` with a returned flag/comment, preserving the five-state primary workflow. The requestor can update and resubmit.
-- Base serials are `YYNNNN`; revisions append `A`–`ZZ`. This resolves the PRD's ambiguous initial suffix using the explicit revision requirement.
+- ESR numbers are a two-digit year, a sequence from `0001` to `9999`, and a revision from `A` to `ZZ`. Assignment issues revision `A`. `260001ZZ` is the last revision of the first number in 2026.
 - Shop deferral sets `ESR Issued – Deferred`. Division Head must explicitly acknowledge that disposition before closing.
 - PDF export is a paginated engineering record with references, attributes, signatures, comments, audit trail, and embedded original attachments. JPEG and standard non-interlaced 8-bit PNG images are rendered on printable continuation pages. All original files are also embedded; WebP and other PNG variants are retained as originals with UI previews. The PDF is a demonstration layout, not a certified facility form.
 - Historical “AI” results use deterministic term overlap and a synthetic summary. They are not real generative or semantic search results and are labeled accordingly.
@@ -164,10 +180,11 @@ UI sections share a typed, instance-local Vue injection context. No state is sha
 | `src/types.ts` | Shared domain DTOs and public component types |
 | `src/index.ts` | Custom element registration and package exports |
 | `host/main.ts` | Demo-only identity selector and host initialization |
+| `host/simulated/` | Dev-only fake dataset, read-only API, Vite plugin, and toggle |
 | `backend/Esr.Api/Workflow.cs` | Authorization, transitions, revisions, validation |
 | `backend/Esr.Api/DemoIdentity.cs` | Ephemeral signed demo JWTs |
 | `backend/Esr.Api/PdfExport.cs` | Paginated PDF and embedded attachments |
-| `backend/Esr.Tests/` | Domain and HTTP integration tests |
+| `backend/Esr.Tests/` | Domain and HTTP integration tests, with sample data in `test-data.json` |
 | `tests/unit/` | Vitest and Vue Test Utils unit tests |
 | `tests/component/` | Isolated component browser tests and bundle smoke test |
 | `tests/e2e/` | Full browser workflow against ASP.NET |

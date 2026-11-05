@@ -3,9 +3,14 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 22 * 1024 * 1024);
-var seed = JsonSerializer.Deserialize<StoreData>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "seed.json")), JsonConfig.Options)!;
+// Only local runs and tests can load other data; deployed environments always use the shipped seed.
+var dataFile = builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("Testing") ? builder.Configuration["Demo:DataFile"] : null;
+var seed = JsonSerializer.Deserialize<StoreData>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, dataFile ?? "seed.json")), JsonConfig.Options)!;
 var workflow = new Workflow(seed); var identity = new DemoIdentity();
 builder.Services.AddSingleton(workflow); builder.Services.AddSingleton(identity);
+// JCN context comes from the CRACN API (cracn_openapi.json); locally that is the mock in mocks/cracn.
+var cracn = builder.Configuration.GetSection("Cracn").Get<CracnOptions>() ?? new CracnOptions();
+builder.Services.AddHttpClient<ILdsSource, CracnLdsSource>(cracn.Apply);
 var app = builder.Build();
 app.Use(async (context, next) =>
 {
@@ -26,10 +31,16 @@ app.MapGet("/api/demo/users", () => seed.Users);
 app.MapPost("/api/demo/session", (JsonObject d) => { var user = seed.Users.Find(u => u.Id == d["userId"]?.GetValue<string>()) ?? throw new RuleException("Unknown demo identity."); return Results.Ok(new { user, token = identity.Issue(user) }); });
 Actor User(HttpContext c) => identity.Validate(c.Request.Headers.Authorization.ToString().Replace("Bearer ", "", StringComparison.Ordinal), seed.Users);
 app.MapGet("/api/bootstrap", (HttpContext c) => { var a = User(c); lock (workflow.Sync) return Results.Ok(new { user = a, users = seed.Users, templates = seed.Templates, permissions = seed.Permissions, records = workflow.Visible(a).Select(Workflow.Public).ToArray() }); });
-app.MapGet("/api/lds", (HttpContext c, string jcn) => { User(c); return seed.Lds.TryGetValue(jcn, out var found) ? Results.Ok(found) : throw new RuleException("JCN not found. Try JCN-260184 or JCN-260207, or select N/A.", 404); });
+app.MapGet("/api/lds", async (HttpContext c, string jcn, ILdsSource lds) => { User(c); return Results.Ok(await lds.Lookup(Workflow.Jcn(jcn), c.RequestAborted)); });
 app.MapPost("/api/history/search", (HttpContext c, JsonObject d) => { var a = User(c); lock (workflow.Sync) return Results.Ok(workflow.Search(a, d)); });
 app.MapPost("/api/permissions", (HttpContext c, JsonObject d) => { var a = User(c); lock (workflow.Sync) { workflow.SetPermission(a, d); return Results.Ok(seed.Permissions); } });
-app.MapPost("/api/records", (HttpContext c, JsonObject d) => { var a = User(c); lock (workflow.Sync) return Results.Ok(Workflow.Public(workflow.Create(a, d))); });
+app.MapPost("/api/records", async (HttpContext c, JsonObject d, ILdsSource lds) =>
+{
+    var a = User(c); var jcn = d["jcn"] is JsonValue v && v.TryGetValue<string>(out var s) ? s.Trim() : "";
+    // Resolve the JCN before taking the store lock; Create re-validates the rest of the request.
+    var context = jcn is "" or "N/A" ? null : await lds.Lookup(Workflow.Jcn(jcn), c.RequestAborted);
+    lock (workflow.Sync) return Results.Ok(Workflow.Public(workflow.Create(a, d, context)));
+});
 app.MapGet("/api/records/{id}", (HttpContext c, string id) => { var a = User(c); lock (workflow.Sync) return Results.Ok(Workflow.Public(workflow.Find(a, id))); });
 app.MapGet("/api/records/{id}/pdf", (HttpContext c, string id, int? revision) =>
 {

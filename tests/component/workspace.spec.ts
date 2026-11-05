@@ -1,12 +1,22 @@
 import { test, expect } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import type { Bootstrap, LdsData } from "../../src/types";
-const fixture: Bootstrap & { lds: Record<string, LdsData> } = JSON.parse(
+const fixture: Bootstrap = JSON.parse(
   readFileSync(
-    new URL("../../backend/Esr.Api/seed.json", import.meta.url),
+    new URL("../../backend/Esr.Tests/test-data.json", import.meta.url),
     "utf8",
   ),
 );
+/** What the backend returns from CRACN for the demo JCN (see mocks/cracn). */
+const lds: Record<string, LdsData> = {
+  "21036WX010184": {
+    workStatement: "Inspect auxiliary seawater pump coupling",
+    refit: "A014",
+    component: "ASW-P-02 / TSN-10482",
+    location: "Auxiliary machinery space",
+    swbs: "6286FCA00000",
+  },
+};
 test.beforeEach(async ({ page }) => {
   const data = structuredClone(fixture);
   let user = data.users.find((u) => u.id === "engineer")!;
@@ -21,7 +31,7 @@ test.beforeEach(async ({ page }) => {
       result = { user, token: "synthetic-test-token" };
     } else if (path === "/api/bootstrap") result = { ...data, user };
     else if (path === "/api/lds")
-      result = data.lds[new URL(request.url()).searchParams.get("jcn") || ""];
+      result = lds[new URL(request.url()).searchParams.get("jcn") || ""];
     else if (path === "/api/history/search")
       result = {
         summary: "Synthetic test summary of coupling wear.",
@@ -79,7 +89,7 @@ test("editor inserts approved template, answers sequential prompts, and saves", 
 }) => {
   await page.goto("/");
   await page
-    .getByRole("button", { name: "Open Auxiliary seawater pump" })
+    .getByRole("button", { name: "Open 260037A" })
     .click();
   await page.getByRole("tab", { name: "Resolution", exact: true }).click();
   await page.getByRole("button", { name: "Insert template" }).click();
@@ -88,8 +98,8 @@ test("editor inserts approved template, answers sequential prompts, and saves", 
     .getByRole("button", { name: "Insert template" })
     .first()
     .click();
-  await expect(page.getByLabel("Resolution", { exact: true })).toHaveValue(
-    /Isolate the affected component/,
+  await expect(page.getByLabel("Resolution", { exact: true })).toContainText(
+    "Isolate the affected component",
   );
   await page.getByLabel("1. DFS Required?").selectOption("no");
   await page.getByLabel("2. TVD Required?").selectOption("yes");
@@ -110,13 +120,13 @@ test("new request LDS import, modal keyboard and API errors", async ({
 }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "New request" }).click();
-  await page.getByLabel("Job Control Number").fill("JCN-260184");
+  await page.getByLabel("Job Control Number").fill("21036WX010184");
   await page.getByRole("button", { name: "Import LDS" }).click();
   await expect(page.locator(".lds-result")).toContainText("ASW-P-02");
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toBeHidden();
   await page
-    .getByRole("button", { name: "Open Auxiliary seawater pump" })
+    .getByRole("button", { name: "Open 260037A" })
     .click();
   await page
     .getByRole("button", { name: "Sign & submit for approval" })
