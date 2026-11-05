@@ -5,6 +5,7 @@ import {
   filterRecords,
   normalizeJcn,
   plainText,
+  markdownToRichText,
   steps,
 } from "../presentation";
 import { useDialogFocus } from "./useDialogFocus";
@@ -20,6 +21,8 @@ import type {
   FilePreview,
   HistoricalMatch,
   HistorySearch,
+  ChatMessage,
+  ChatReply,
   LdsData,
   Permission,
   RecordTab,
@@ -97,6 +100,13 @@ export function useWorkspace(
   const searchResult = ref<HistorySearch | null>(null),
     preview = ref<FilePreview | null>(null),
     historySnapshot = ref<EsrRecord | null>(null);
+  const chat = reactive({
+    messages: [] as ChatMessage[],
+    input: "",
+    sending: false,
+    model: "",
+    mock: false,
+  });
   const comment = ref(""),
     attachmentSection = ref<AttachmentSection>("Continuation"),
     requestSection = ref<AttachmentSection>("Condition"),
@@ -258,6 +268,7 @@ export function useWorkspace(
     tab.value = "overview";
     historySnapshot.value = null;
     searchResult.value = null;
+    clearChat();
     error.value = "";
     notice.value = "";
     resetDraft();
@@ -409,6 +420,45 @@ export function useWorkspace(
       });
     });
   }
+  function clearChat() {
+    chat.messages = [];
+    chat.input = "";
+    chat.model = "";
+    chat.mock = false;
+  }
+  /** Chat has its own pending flag so a slow model reply does not lock the rest of the workspace. */
+  async function sendChat() {
+    const content = chat.input.trim();
+    const recordId = selectedId.value;
+    if (!content || chat.sending || !recordId) return;
+    chat.messages.push({ role: "user", content });
+    chat.input = "";
+    chat.sending = true;
+    error.value = "";
+    try {
+      const result = await api()<ChatReply>("/assistant/chat", {
+        recordId,
+        messages: chat.messages,
+      });
+      if (selectedId.value !== recordId) return;
+      chat.messages.push({ role: "assistant", content: result.reply });
+      chat.model = result.model;
+      chat.mock = result.mock;
+    } catch (e) {
+      if (selectedId.value !== recordId) return;
+      chat.messages.pop();
+      chat.input = content;
+      error.value =
+        e instanceof Error ? e.message : "An unexpected error occurred.";
+      emit("workspace-error", { message: error.value });
+    } finally {
+      chat.sending = false;
+    }
+  }
+  function insertChat(content: string, field: "resolution" | "rationale") {
+    draft[field] = appendRichText(draft[field], markdownToRichText(content));
+    notice.value = `Assistant text added to the ${field}. Review and save the draft before signing.`;
+  }
   async function copyMatch(match: HistoricalMatch) {
     await run(async () => {
       await navigator.clipboard.writeText(
@@ -553,6 +603,7 @@ export function useWorkspace(
     draft,
     form,
     searchResult,
+    chat,
     preview,
     historySnapshot,
     comment,
@@ -586,6 +637,9 @@ export function useWorkspace(
     action,
     confirmAction,
     findHistory,
+    sendChat,
+    clearChat,
+    insertChat,
     copyMatch,
     useMatch,
     applyTemplate,

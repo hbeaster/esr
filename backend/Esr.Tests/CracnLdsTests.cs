@@ -79,5 +79,9 @@ public sealed class CracnFactory : WebApplicationFactory<Program>
     // The shipped seed.json has no records, so API tests load the sample data.
     protected override void ConfigureWebHost(IWebHostBuilder builder) =>
         builder.UseSetting("Demo:DataFile", Path.Combine(AppContext.BaseDirectory, "test-data.json")).UseSetting("Cracn:BaseUrl", "http://cracn.test").ConfigureTestServices(s =>
-            s.AddHttpClient<ILdsSource, CracnLdsSource>().ConfigurePrimaryHttpMessageHandler(() => new CracnDataHandler()));
+        {
+            s.AddHttpClient<ILdsSource, CracnLdsSource>().ConfigurePrimaryHttpMessageHandler(() => new CracnDataHandler());
+            // Never spend a developer's real Chat__ApiKey from the test run.
+            s.AddSingleton<IChatModel, MockChatModel>();
+        });
 }

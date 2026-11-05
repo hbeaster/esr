@@ -9,6 +9,7 @@ import type { WorkspaceContext } from "../../src/composables/workspaceContext";
 import type { Bootstrap } from "../../src/types";
 import { makeBootstrap, makeRecord, engineer } from "../fixtures";
 import ResolutionEditor from "../../src/components/ResolutionEditor.vue";
+import AssistantChat from "../../src/components/AssistantChat.vue";
 import TemplatePicker from "../../src/components/TemplatePicker.vue";
 import SignatureRecord from "../../src/components/SignatureRecord.vue";
 import WorkflowActions from "../../src/components/WorkflowActions.vue";
@@ -88,6 +89,86 @@ describe("resolution components", () => {
     );
     expect(context.draft.rationale).toContain("Document applicable criteria.");
     expect(context.current.value?.resolution).toBe("Inspect the coupling.");
+  });
+});
+
+describe("assistant chat", () => {
+  it("sends the transcript for the open record and inserts a reply into the draft", async () => {
+    const { wrapper, context } = mountSection(AssistantChat);
+    const fetch = vi.fn().mockResolvedValue(
+      jsonResponse({
+        reply: "Check **coupling** alignment.",
+        model: "gpt-test",
+        mock: false,
+      }),
+    );
+    vi.stubGlobal("fetch", fetch);
+    await wrapper.get("textarea").setValue("What should I inspect?");
+    await wrapper.get("form").trigger("submit");
+    await flushPromises();
+    const [url, init] = fetch.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("/api/assistant/chat");
+    expect(JSON.parse(String(init.body))).toEqual({
+      recordId: context.selectedId.value,
+      messages: [{ role: "user", content: "What should I inspect?" }],
+    });
+    expect(wrapper.findAll(".chat-bubble").map((b) => b.text())).toEqual([
+      "What should I inspect?",
+      "Check coupling alignment.",
+    ]);
+    expect(wrapper.get(".chat-message.assistant strong").text()).toBe(
+      "coupling",
+    );
+    expect(wrapper.text()).toContain("Model: gpt-test");
+    const add = wrapper
+      .findAll("button")
+      .find((b) => b.text() === "Add to rationale");
+    await add!.trigger("click");
+    expect(context.draft.rationale).toContain(
+      "Check <strong>coupling</strong> alignment.",
+    );
+    expect(context.draft.rationale).not.toContain("**");
+  });
+  it("labels the mock and restores the message when the provider fails", async () => {
+    const { wrapper, context, emit } = mountSection(AssistantChat);
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({
+              error: "The chat provider rejected the configured API key.",
+            }),
+            { status: 502 },
+          ),
+        )
+        .mockResolvedValueOnce(
+          jsonResponse({ reply: "Mock reply", model: "mock", mock: true }),
+        ),
+    );
+    await wrapper.get("textarea").setValue("Hello");
+    await wrapper.get("form").trigger("submit");
+    await flushPromises();
+    expect(context.chat.messages).toEqual([]);
+    expect(context.chat.input).toBe("Hello");
+    expect(emit).toHaveBeenCalledWith("workspace-error", {
+      message: "The chat provider rejected the configured API key.",
+    });
+    await wrapper.get("form").trigger("submit");
+    await flushPromises();
+    expect(wrapper.text()).toContain(
+      "Mock assistant: no API key is configured",
+    );
+  });
+  it("is only offered while the draft is editable", () => {
+    const editable = mountSection(ResolutionEditor);
+    expect(editable.wrapper.find(".chat").exists()).toBe(true);
+    const issued = mountSection(
+      ResolutionEditor,
+      makeBootstrap({ records: [makeRecord({ status: "ESR Issued" })] }),
+    );
+    expect(issued.wrapper.find(".chat").exists()).toBe(false);
   });
 });
 

