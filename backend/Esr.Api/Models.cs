@@ -122,6 +122,7 @@ public sealed class StoreData
     public int Sequence { get; set; } = 42;
     public int SequenceYear { get; set; } = 2026;
 }
+public sealed record HistoricalMatch(string Id, string? Serial, string Title, string Resolution, string Rationale, int Similarity);
 public sealed class RuleException(string message, int status = 400) : Exception(message)
 {
     public int Status { get; } = status;

@@ -9,6 +9,10 @@ builder.Services.AddSingleton(workflow); builder.Services.AddSingleton(identity)
 // JCN context comes from the CRACN API (cracn_openapi.json); locally that is the mock in mocks/cracn.
 var cracn = builder.Configuration.GetSection("Cracn").Get<CracnOptions>() ?? new CracnOptions();
 builder.Services.AddHttpClient<ILdsSource, CracnLdsSource>(cracn.Apply);
+// Chat__ApiKey (and optionally Chat__BaseUrl, Chat__Model) enable a real model; otherwise a labeled mock answers.
+var chat = builder.Configuration.GetSection("Chat").Get<ChatOptions>() ?? new ChatOptions();
+builder.Services.AddSingleton(chat);
+if (chat.Configured) builder.Services.AddHttpClient<IChatModel, OpenAiCompatibleChat>(chat.Apply); else builder.Services.AddSingleton<IChatModel, MockChatModel>();
 var app = builder.Build();
 app.Use(async (context, next) =>
 {
@@ -31,6 +35,15 @@ Actor User(HttpContext c) => identity.Validate(c.Request.Headers.Authorization.T
 app.MapGet("/api/bootstrap", (HttpContext c) => { var a = User(c); lock (workflow.Sync) return Results.Ok(new { user = a, users = seed.Users, templates = seed.Templates, permissions = seed.Permissions, records = workflow.Visible(a).Select(Workflow.Public).ToArray() }); });
 app.MapGet("/api/lds", async (HttpContext c, string jcn, ILdsSource lds) => { User(c); return Results.Ok(await lds.Lookup(jcn, c.RequestAborted)); });
 app.MapPost("/api/history/search", (HttpContext c, JsonObject d) => { var a = User(c); lock (workflow.Sync) return Results.Ok(workflow.Search(a, d)); });
+app.MapPost("/api/assistant/chat", async (HttpContext c, JsonObject d, IChatModel model) =>
+{
+    var a = User(c); var turns = AssistantChat.Parse(d);
+    var id = d["recordId"] is JsonValue v && v.TryGetValue<string>(out var s) ? s : throw new RuleException("recordId is required.");
+    // Build the grounded prompt under the lock, then release it before the slow provider call.
+    string prompt; lock (workflow.Sync) prompt = workflow.ChatPrompt(a, id);
+    var result = await model.Complete([new ChatTurn("system", prompt), .. turns], c.RequestAborted);
+    return Results.Ok(new { reply = result.Reply, model = result.Model, mock = result.Mock });
+});
 app.MapPost("/api/permissions", (HttpContext c, JsonObject d) => { var a = User(c); lock (workflow.Sync) { workflow.SetPermission(a, d); return Results.Ok(seed.Permissions); } });
 app.MapPost("/api/records", async (HttpContext c, JsonObject d, ILdsSource lds) =>
 {

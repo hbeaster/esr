@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useWorkspaceContext } from "../composables/workspaceContext";
+import AssistantChat from "./AssistantChat.vue";
 const {
   state,
   busy,
@@ -67,6 +68,7 @@ const {
         No historical matches are available.
       </p>
     </div>
+    <AssistantChat v-if="editable" />
     <form
       class="card padded"
       @submit.prevent="saveDraft"

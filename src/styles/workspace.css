@@ -976,6 +976,67 @@ tbody tr:last-child td {
   font-size: 9px;
   color: #9198a3;
 }
+.chat-log {
+  max-height: 360px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 14px 0;
+  padding: 12px;
+  background: var(--esr-bg);
+  border: 1px solid #e9ebee;
+  border-radius: 8px;
+}
+.chat-empty,
+.chat-pending {
+  font-size: 11px;
+  margin: 0;
+}
+.chat-message {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 85%;
+}
+.chat-message.user {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+.chat-role {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #788291;
+}
+.chat-bubble {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #e3e6ea;
+}
+.chat-message.user .chat-bubble {
+  background: var(--esr-accent-soft);
+  border-color: transparent;
+  color: var(--esr-accent-text);
+}
+.chat-message .action-row button {
+  font-size: 10px;
+}
+.chat-compose {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+.chat-compose label {
+  flex: 1;
+  min-width: 0;
+}
 .match {
   border-top: 1px solid #e9ebee;
   padding: 17px 0;

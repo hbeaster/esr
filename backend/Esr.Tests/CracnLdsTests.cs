@@ -77,5 +77,9 @@ public sealed class CracnFactory : WebApplicationFactory<Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder) =>
         builder.UseSetting("Cracn:BaseUrl", "http://cracn.test").ConfigureTestServices(s =>
-            s.AddHttpClient<ILdsSource, CracnLdsSource>().ConfigurePrimaryHttpMessageHandler(() => new CracnDataHandler()));
+            {
+            s.AddHttpClient<ILdsSource, CracnLdsSource>().ConfigurePrimaryHttpMessageHandler(() => new CracnDataHandler());
+            // Never spend a developer's real Chat__ApiKey from the test run.
+            s.AddSingleton<IChatModel, MockChatModel>();
+        });
 }

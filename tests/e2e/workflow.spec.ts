@@ -144,3 +144,23 @@ test("cross-facility review allows comments but no engineering actions", async (
   await page.getByRole("button", { name: "Post comment" }).click();
   await expect(page.locator(".comment")).toContainText("Riley Parker");
 });
+test("engineer chats with the assistant and adds a reply to the draft", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await selectRole(page, "engineer", "");
+  await page.getByLabel("Search requests").fill("auxiliary seawater");
+  await page.locator("tbody tr .record-link").first().click();
+  await page.getByRole("tab", { name: "Resolution", exact: true }).click();
+  await page.getByLabel("Message").fill("What should I inspect first?");
+  await page.getByRole("button", { name: "Send", exact: true }).click();
+  // The reply is the labeled mock unless the API was started with Chat__ApiKey.
+  await expect(
+    page.locator(".chat-message.assistant .chat-bubble"),
+  ).not.toBeEmpty();
+  await expect(page.locator(".chat small")).toContainText(
+    /Mock assistant|Model:/,
+  );
+  await page.getByRole("button", { name: "Add to rationale" }).click();
+  await expect(page.getByLabel("Engineering rationale")).not.toHaveValue("");
+});

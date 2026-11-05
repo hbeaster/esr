@@ -172,6 +172,16 @@ export interface HistorySearch {
   summary: string;
   matches: HistoricalMatch[];
 }
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+/** Response of POST /assistant/chat. `mock` is true when the API has no provider key configured. */
+export interface ChatReply {
+  reply: string;
+  model: string;
+  mock: boolean;
+}
 export interface FilePreview {
   name: string;
   type: string;

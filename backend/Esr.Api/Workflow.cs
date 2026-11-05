@@ -112,8 +112,19 @@ public sealed class Workflow(StoreData data)
     }
     public object Search(Actor actor, JsonObject d)
     {
-        var condition = Required(d, "condition"); var terms = Tokens(condition);
-        return new { summary = $"Inspection finding: {condition[..Math.Min(condition.Length, 210)]}", matches = Visible(actor).Where(r => r.Status == "ESR Closed").Select(r => new { r.Id, r.Serial, r.Title, r.Resolution, r.Rationale, similarity = (int)Math.Round(100.0 * terms.Intersect(Tokens(r.Condition)).Count() / Math.Max(terms.Count, 1)) }).OrderByDescending(r => r.similarity).Take(3) };
+        var condition = Required(d, "condition");
+        return new { summary = $"Inspection finding: {condition[..Math.Min(condition.Length, 210)]}", matches = Matches(actor, condition) };
+    }
+    public List<HistoricalMatch> Matches(Actor actor, string condition)
+    {
+        var terms = Tokens(condition);
+        return Visible(actor).Where(r => r.Status == "ESR Closed").Select(r => new HistoricalMatch(r.Id, r.Serial, r.Title, r.Resolution, r.Rationale, (int)Math.Round(100.0 * terms.Intersect(Tokens(r.Condition)).Count() / Math.Max(terms.Count, 1)))).OrderByDescending(r => r.Similarity).Take(3).ToList();
+    }
+    /// <summary>Chat is part of drafting, so it follows the draft editor rule and never mutates the record.</summary>
+    public string ChatPrompt(Actor actor, string id)
+    {
+        var r = Find(actor, id); Editor(actor, r);
+        return AssistantChat.SystemPrompt(r, Matches(actor, r.Condition));
     }
     static HashSet<string> Tokens(string text) => System.Text.RegularExpressions.Regex.Matches(text.ToLowerInvariant(), "[a-z]{4,}").Select(m => m.Value).ToHashSet();
     public static EsrRecord Public(EsrRecord record) { var copy = JsonConfig.Clone(record); foreach (var a in copy.Attachments) a.Base64 = ""; copy.Revisions = copy.Revisions.Select(Public).ToList(); return copy; }
