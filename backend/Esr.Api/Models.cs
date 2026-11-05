@@ -65,6 +65,7 @@ public sealed class EsrRecord
     public string Refit { get; set; } = "";
     public string Component { get; set; } = "";
     public string Location { get; set; } = "";
+    public string Swbs { get; set; } = "";
     public string Site { get; set; } = "Bangor";
     public string RequestorId { get; set; } = "";
     public string Status { get; set; } = "Unassigned";
@@ -112,6 +113,7 @@ public sealed class LdsData
     public string Refit { get; set; } = "";
     public string Component { get; set; } = "";
     public string Location { get; set; } = "";
+    public string Swbs { get; set; } = "";
 }
 public sealed class StoreData
 {
@@ -119,7 +121,7 @@ public sealed class StoreData
     public List<Actor> Users { get; set; } = [];
     public Dictionary<string, Permission> Permissions { get; set; } = [];
     public List<EngineeringTemplate> Templates { get; set; } = [];
-    public int Sequence { get; set; } = 42;
+    public int Sequence { get; set; }
     public int SequenceYear { get; set; } = 2026;
 }
 public sealed record HistoricalMatch(string Id, string? Serial, string Title, string Resolution, string Rationale, int Similarity);

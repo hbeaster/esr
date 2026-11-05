@@ -3,17 +3,18 @@ import { readFileSync } from "node:fs";
 import type { Bootstrap, LdsData } from "../../src/types";
 const fixture: Bootstrap = JSON.parse(
   readFileSync(
-    new URL("../../backend/Esr.Api/seed.json", import.meta.url),
+    new URL("../../backend/Esr.Tests/test-data.json", import.meta.url),
     "utf8",
   ),
 );
 /** What the backend returns from CRACN for the demo JCN (see mocks/cracn). */
 const lds: Record<string, LdsData> = {
-  "JCN-260184": {
+  "21036WX010184": {
     workStatement: "Inspect auxiliary seawater pump coupling",
     refit: "A014",
     component: "ASW-P-02 / TSN-10482",
     location: "Auxiliary machinery space",
+    swbs: "6286FCA00000",
   },
 };
 /** Rich Markdown mixed with the HTML an injected prompt might coax out of a model. */
@@ -85,10 +86,10 @@ test("isolated component loads, filters, navigates, and lays out at mobile width
   });
   await page.getByLabel("Search requests").fill("SUBSAFE");
   await expect(page.locator("tbody tr")).toHaveCount(1);
-  await page.getByRole("button", { name: "Template library" }).click();
-  await expect(page.locator(".template-card")).toHaveCount(3);
+  await page.getByRole("tab", { name: "My work", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "My work" })).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole("button", { name: "All requests" }).click();
+  await page.getByRole("tab", { name: "All requests" }).click();
   await page.screenshot({
     path: "artifacts/mobile-workspace.png",
     fullPage: true,
@@ -104,7 +105,7 @@ test("editor inserts approved template, answers sequential prompts, and saves", 
 }) => {
   await page.goto("/");
   await page
-    .getByRole("button", { name: "Open Auxiliary seawater pump" })
+    .getByRole("button", { name: "Open 260037A" })
     .click();
   await page.getByRole("tab", { name: "Resolution", exact: true }).click();
   await page.getByRole("button", { name: "Insert template" }).click();
@@ -113,8 +114,8 @@ test("editor inserts approved template, answers sequential prompts, and saves", 
     .getByRole("button", { name: "Insert template" })
     .first()
     .click();
-  await expect(page.getByLabel("Resolution", { exact: true })).toHaveValue(
-    /Isolate the affected component/,
+  await expect(page.getByLabel("Resolution", { exact: true })).toContainText(
+    "Isolate the affected component",
   );
   await page.getByLabel("1. DFS Required?").selectOption("no");
   await page.getByLabel("2. TVD Required?").selectOption("yes");
@@ -135,13 +136,13 @@ test("new request LDS import, modal keyboard and API errors", async ({
 }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "New request" }).click();
-  await page.getByLabel("Job Control Number").fill("JCN-260184");
+  await page.getByLabel("Job Control Number").fill("21036WX010184");
   await page.getByRole("button", { name: "Import LDS" }).click();
   await expect(page.locator(".lds-result")).toContainText("ASW-P-02");
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toBeHidden();
   await page
-    .getByRole("button", { name: "Open Auxiliary seawater pump" })
+    .getByRole("button", { name: "Open 260037A" })
     .click();
   await page
     .getByRole("button", { name: "Sign & submit for approval" })
@@ -166,6 +167,111 @@ test("built package bundle boots independently of Vue host source", async ({
     page.getByRole("heading", { name: "Service requests" }),
   ).toBeVisible();
   await expect(page.locator("tbody tr")).toHaveCount(6);
+  // Child SFC <style scoped> blocks land in the shadow root, never the host page.
+  const styles = await page.evaluate(() => {
+    const root = document.querySelector("esr-workspace")!.shadowRoot!;
+    const text = (nodes: Iterable<Element>) =>
+      [...nodes].map((n) => n.textContent ?? "").join("\n");
+    return {
+      shadow: text(root.querySelectorAll("style")),
+      document: text(document.querySelectorAll("style")),
+      statBorder: getComputedStyle(root.querySelector(".stat")!)
+        .borderTopWidth,
+    };
+  });
+  expect(styles.shadow).toMatch(/\.stat\[data-v-[0-9a-f]{8}\]/);
+  expect(styles.shadow).toMatch(/\.workspace-tabs\[data-v-[0-9a-f]{8}\]/);
+  expect(styles.document).not.toMatch(/data-v-/);
+  expect(styles.statBorder).toBe("3px");
+});
+
+test("top tabs expose permitted views and support keyboard navigation", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const tabs = page.getByRole("tablist", { name: "Workspace views" });
+  const all = tabs.getByRole("tab", { name: "All requests" });
+  const mine = tabs.getByRole("tab", { name: "My work" });
+  await expect(all).toHaveAttribute("aria-selected", "true");
+  await expect(tabs.getByRole("tab")).toHaveCount(2);
+  await expect(page.locator(".sidebar")).toHaveCount(0);
+  await expect(page.locator(".topbar")).not.toContainText("Engineering /");
+  await expect(
+    page.getByRole("button", { name: "Template library" }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("tab", { name: /Historical ESRs|Template library/ }),
+  ).toHaveCount(0);
+  await all.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(mine).toBeFocused();
+  await expect(all).toHaveAttribute("aria-selected", "true");
+  await page.keyboard.press("Enter");
+  await expect(mine).toHaveAttribute("aria-selected", "true");
+  await expect(page.locator("tbody tr")).toHaveCount(
+    fixture.records.filter(
+      (record) =>
+        record.engineerId === "engineer" || record.requestorId === "engineer",
+    ).length,
+  );
+  await page.getByRole("button", { name: "Open 260037A" }).click();
+  await expect(all).toHaveAttribute("aria-selected", "true");
+  await page.getByRole("button", { name: "Back to requests" }).click();
+  await all.focus();
+  await page.keyboard.press("End");
+  await expect(mine).toBeFocused();
+  await page.keyboard.press("Home");
+  await expect(all).toBeFocused();
+  await page.keyboard.press("ArrowLeft");
+  await expect(mine).toBeFocused();
+  await page.keyboard.press("Space");
+  await expect(mine).toHaveAttribute("aria-selected", "true");
+  await page.getByLabel("Demo identity").selectOption("admin");
+  const permissions = tabs.getByRole("tab", {
+    name: "Permissions",
+    exact: true,
+  });
+  await expect(permissions).toBeVisible();
+  await permissions.click();
+  await expect(
+    page.getByRole("heading", { name: "User permissions" }),
+  ).toBeVisible();
+  await page.getByLabel("Demo identity").selectOption("engineer");
+  await expect(permissions).toHaveCount(0);
+  await expect(all).toHaveAttribute("aria-selected", "true");
+});
+
+test("header fits a narrow container inside a desktop host", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/");
+  await page.getByLabel("Demo identity").selectOption("admin");
+  await expect(
+    page.getByRole("tab", { name: "Permissions", exact: true }),
+  ).toBeVisible();
+  await page.locator("esr-workspace").evaluate((element) => {
+    (element as HTMLElement).style.width = "360px";
+  });
+  const tabs = page.getByRole("tablist", { name: "Workspace views" });
+  const refresh = page.getByRole("button", { name: "Refresh workspace" });
+  const tabsBox = (await tabs.boundingBox())!;
+  const refreshBox = (await refresh.boundingBox())!;
+  expect(refreshBox.y).toBeGreaterThanOrEqual(tabsBox.y + tabsBox.height);
+  expect(
+    await page
+      .locator("esr-workspace .app")
+      .evaluate((element) => element.scrollWidth <= element.clientWidth),
+  ).toBe(true);
+  await page.screenshot({
+    path: "artifacts/narrow-embedded-workspace.png",
+    fullPage: true,
+  });
+  await refresh.click();
+  await expect(page.locator("esr-workspace .app")).toHaveAttribute(
+    "aria-busy",
+    "false",
+  );
 });
 
 test("assistant chat renders Markdown and strips unsafe HTML in a real browser", async ({
@@ -173,7 +279,7 @@ test("assistant chat renders Markdown and strips unsafe HTML in a real browser",
 }) => {
   await page.goto("/");
   await page
-    .getByRole("button", { name: "Open Auxiliary seawater pump" })
+    .getByRole("button", { name: "Open 260037A" })
     .click();
   await page.getByRole("tab", { name: "Resolution", exact: true }).click();
   await page.getByLabel("Message").fill("What should I inspect?");
@@ -192,7 +298,11 @@ test("assistant chat renders Markdown and strips unsafe HTML in a real browser",
     await page.evaluate(() => (window as { __pwned?: number }).__pwned),
   ).toBeUndefined();
   await page.getByRole("button", { name: "Add to rationale" }).click();
-  await expect(page.getByLabel("Engineering rationale")).toHaveValue(
-    /1\. Inspect the coupling face/,
-  );
+  // The rationale is rich text: lists and emphasis survive, headings become bold, tables become lines.
+  const rationale = page.getByLabel("Engineering rationale", { exact: true });
+  await expect(rationale.locator("ol > li")).toHaveCount(2);
+  await expect(rationale.locator("strong").first()).toHaveText("Steps");
+  await expect(rationale).toContainText("Insert | 0.5 mm");
+  const inserted = await rationale.innerHTML();
+  expect(inserted).not.toMatch(/<h3|<table|<code|<img|<script|<a /);
 });

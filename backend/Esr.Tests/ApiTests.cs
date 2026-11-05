@@ -2,8 +2,43 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json.Nodes;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
 namespace Esr.Tests;
+public sealed class DefaultDataTests
+{
+    static async Task SignIn(HttpClient client, string id)
+    {
+        var session = await (await client.PostAsJsonAsync("/api/demo/session", new { userId = id })).Content.ReadFromJsonAsync<JsonObject>();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", session!["token"]!.GetValue<string>());
+    }
+    [Fact] public async Task ApiStartsWithoutRecordsOrTemplates()
+    {
+        await using var factory = new WebApplicationFactory<Program>(); var client = factory.CreateClient();
+        await SignIn(client, "engineer");
+        var bootstrap = await client.GetFromJsonAsync<JsonObject>("/api/bootstrap");
+        Assert.Empty(bootstrap!["records"]!.AsArray()); Assert.Empty(bootstrap["templates"]!.AsArray()); Assert.NotEmpty(bootstrap["users"]!.AsArray());
+    }
+    [Fact] public async Task FirstAssignedEsrIsNumberOne()
+    {
+        await using var factory = new WebApplicationFactory<Program>(); var client = factory.CreateClient();
+        await SignIn(client, "requestor");
+        var created = await (await client.PostAsJsonAsync("/api/records", new { title = "First request", name = "Alex Morgan", shop = "31", phone = "555-0131", references = "DEMO-1", condition = "Coupling wear", jcn = "N/A" })).Content.ReadFromJsonAsync<JsonObject>();
+        await SignIn(client, "supervisor");
+        var assigned = await (await client.PostAsJsonAsync($"/api/records/{created!["id"]}/assign", new { engineerId = "engineer" })).Content.ReadFromJsonAsync<JsonObject>();
+        Assert.Equal($"{DateTime.UtcNow:yy}0001A", assigned!["serial"]!.GetValue<string>());
+    }
+    [Theory, InlineData("Production", 0), InlineData("Testing", 6)]
+    public async Task DataFileOverrideOnlyAppliesOutsideDeployedEnvironments(string environment, int expectedRecords)
+    {
+        await using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(b => b.UseEnvironment(environment).UseSetting("Demo:DataFile", "test-data.json"));
+        var client = factory.CreateClient();
+        await SignIn(client, "engineer");
+        var bootstrap = await client.GetFromJsonAsync<JsonObject>("/api/bootstrap");
+        Assert.Equal(expectedRecords, bootstrap!["records"]!.AsArray().Count);
+    }
+}
 public sealed class ApiTests : IClassFixture<CracnFactory>
 {
     readonly HttpClient client;
@@ -25,13 +60,14 @@ public sealed class ApiTests : IClassFixture<CracnFactory>
         Assert.Equal(HttpStatusCode.Conflict, (await client.GetAsync("/api/records/demo-1/pdf")).StatusCode);
         var pdf = await client.GetAsync("/api/records/demo-4/pdf"); Assert.Equal("application/pdf", pdf.Content.Headers.ContentType!.MediaType); Assert.True((await pdf.Content.ReadAsByteArrayAsync()).Length > 500);
     }
-    static object NewRequest(string jcn) => new { title = "CRACN request", name = "Alex Morgan", shop = "31", phone = "555-0131", references = "DEMO-1", condition = "Coupling wear", jcn };
+    static object NewRequest(string jcn) => new { name = "Alex Morgan", shop = "31", phone = "555-0131", references = "DEMO-1", condition = "Coupling wear", jcn };
     [Fact] public async Task LdsAndSearchReturnMockData()
     {
         await SignIn("engineer");
-        var lds = await client.GetFromJsonAsync<JsonObject>("/api/lds?jcn=JCN-260184"); Assert.Contains("TSN", lds!["component"]!.GetValue<string>());
-        Assert.Equal("VLV-214 / TSN-20871", (await client.GetFromJsonAsync<JsonObject>("/api/lds?jcn=JCN-260207"))!["component"]!.GetValue<string>());
-        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/api/lds?jcn=unknown")).StatusCode);
+        var lds = await client.GetFromJsonAsync<JsonObject>("/api/lds?jcn=21036WX010184"); Assert.Contains("TSN", lds!["component"]!.GetValue<string>());
+        Assert.Equal("VLV-214 / TSN-20871", (await client.GetFromJsonAsync<JsonObject>("/api/lds?jcn=21036WX020207"))!["component"]!.GetValue<string>());
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.GetAsync("/api/lds?jcn=unknown")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/api/lds?jcn=00000ZZZZ0001")).StatusCode);
         var search = await client.PostAsJsonAsync("/api/history/search", new { condition = "Uneven pump coupling wear" }); var result = await search.Content.ReadFromJsonAsync<JsonObject>(); Assert.NotEmpty(result!["matches"]!.AsArray());
     }
     [Fact] public async Task AttachmentRetainsOriginal()
@@ -44,14 +80,17 @@ public sealed class ApiTests : IClassFixture<CracnFactory>
     [Fact] public async Task CreatedRecordStoresCracnContext()
     {
         await SignIn("requestor");
-        // JCN-264668 exists only in the generated CRACN data, never in seed.json.
-        var generated = await (await client.PostAsJsonAsync("/api/records", NewRequest("JCN-264668"))).Content.ReadFromJsonAsync<JsonObject>();
-        Assert.Equal("JCN-264668", generated!["jcn"]!.GetValue<string>());
+        // 71204POAH7469 exists only in the generated CRACN data, never in seed.json.
+        var generated = await (await client.PostAsJsonAsync("/api/records", NewRequest("71204POAH7469"))).Content.ReadFromJsonAsync<JsonObject>();
+        Assert.Equal("71204POAH7469", generated!["jcn"]!.GetValue<string>());
         Assert.NotEqual("", generated["workStatement"]!.GetValue<string>());
-        var demo = await (await client.PostAsJsonAsync("/api/records", NewRequest("JCN-260184"))).Content.ReadFromJsonAsync<JsonObject>();
+        var demo = await (await client.PostAsJsonAsync("/api/records", NewRequest("21036WX010184"))).Content.ReadFromJsonAsync<JsonObject>();
         Assert.Equal("A014", demo!["refit"]!.GetValue<string>());
         Assert.Equal("ASW-P-02 / TSN-10482", demo["component"]!.GetValue<string>());
-        Assert.Equal(HttpStatusCode.NotFound, (await client.PostAsJsonAsync("/api/records", NewRequest("JCN-000000"))).StatusCode);
+        Assert.Equal("6286FCA00000", demo["swbs"]!.GetValue<string>());
+        Assert.Equal("", demo["title"]!.GetValue<string>());
+        Assert.Equal(HttpStatusCode.NotFound, (await client.PostAsJsonAsync("/api/records", NewRequest("00000ZZZZ0001"))).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/records", NewRequest("JCN-260184"))).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync("/api/records", NewRequest("N/A"))).StatusCode);
     }
     static object Chat(string recordId, params object[] messages) => new { recordId, messages };

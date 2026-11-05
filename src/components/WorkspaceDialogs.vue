@@ -70,3 +70,53 @@ const {
     </section>
   </div>
 </template>
+
+<style scoped>
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: #0f1a2a66;
+  backdrop-filter: blur(3px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-6);
+}
+.modal {
+  width: min(100%, 560px);
+  max-height: 90vh;
+  overflow: auto;
+  background: var(--surface);
+  border-radius: 12px;
+  padding: var(--sp-6) var(--sp-8);
+  box-shadow: 0 24px 64px #0f1a2a40;
+}
+.modal.wide {
+  width: min(100%, 760px);
+}
+.modal-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-5);
+}
+.modal-heading h2 {
+  font-size: var(--fs-xl);
+  margin: var(--sp-1) 0 0;
+}
+.modal-heading > .icon-button {
+  margin: -6px -10px 0 0;
+  font-size: 22px;
+}
+@media (max-width: 560px) {
+  .modal-backdrop {
+    padding: var(--sp-2);
+  }
+  .modal {
+    padding: var(--sp-5);
+    max-height: 94vh;
+  }
+}
+</style>

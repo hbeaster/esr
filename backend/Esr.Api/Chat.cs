@@ -109,7 +109,8 @@ public static class AssistantChat
         s.AppendLine("Give concise, technically careful suggestions. Say when information is missing. Never invent specification, drawing, DFS, or TVD numbers. The engineer verifies and signs everything; your output is a draft.");
         s.AppendLine("Format replies in Markdown: short paragraphs, numbered lists for steps, bullet lists for options, bold for key terms, and tables only for comparisons. Do not include images or HTML.");
         s.AppendLine().AppendLine("Active ESR:");
-        void Line(string label, string? value) { if (!string.IsNullOrWhiteSpace(value)) s.AppendLine($"- {label}: {value}"); }
+        // Condition, references, resolution, and rationale are stored as rich-text HTML; send the model plain text.
+        void Line(string label, string? value) { var text = Workflow.VisibleText(value ?? ""); if (!string.IsNullOrWhiteSpace(text)) s.AppendLine($"- {label}: {text}"); }
         Line("Title", r.Title); Line("Condition / finding", r.Condition); Line("References", r.References); Line("JCN", r.Jcn);
         Line("Work statement", r.WorkStatement); Line("Component", r.Component); Line("Location", r.Location);
         Line("Current draft resolution", r.Resolution); Line("Current draft rationale", r.Rationale);
@@ -117,7 +118,7 @@ public static class AssistantChat
         if (list.Count > 0)
         {
             s.AppendLine().AppendLine("Similar closed ESRs (term-overlap search):");
-            foreach (var m in list) s.AppendLine($"- {m.Serial} \"{m.Title}\" ({m.Similarity}% similar). Resolution: {m.Resolution} Rationale: {m.Rationale}");
+            foreach (var m in list) s.AppendLine($"- {m.Serial} \"{m.Title}\" ({m.Similarity}% similar). Resolution: {Workflow.VisibleText(m.Resolution)} Rationale: {Workflow.VisibleText(m.Rationale)}");
         }
         return s.ToString();
     }

@@ -2,7 +2,7 @@
 
 An embeddable **Vue 3 + TypeScript web component** backed by a thin **ASP.NET Core / .NET 10** demo API. The component uses Shadow DOM, a bundled Vue runtime, and a light theme. The host application is separate from the npm package.
 
-All records, LDS responses, historical matches, identities, signatures and approvals are **synthetic**. The backend keeps data in memory; restarting it resets the demo. The public role selector is a demonstration tool, not an authentication system.
+All records, LDS responses, historical matches, identities, signatures and approvals are **synthetic**. The backend keeps data in memory and starts with no records or templates; it only ships demo identities. JCN lookups go to the CRACN mock. Restarting it resets the demo. The public role selector is a demonstration tool, not an authentication system.
 
 ## Build and package only the component
 
@@ -20,7 +20,7 @@ npm run package:component
 - Type declarations: `dist/component/index.d.ts`
 - Installable npm tarball: `artifacts/trf-esr-workspace-0.1.0.tgz`
 
-The npm allowlist includes only `dist/component/`, this README, the API and host communication contracts, and the license. It excludes the demo host, C# backend, synthetic seed records, deployment files, tests, and source tree. `npm pack` also builds the component through `prepack`. No registry publishing is performed.
+The npm allowlist includes only `dist/component/`, this README, the API and host communication contracts, and the license. It excludes the demo host, C# backend, synthetic data, deployment files, tests, and source tree. `npm pack` also builds the component through `prepack`. No registry publishing is performed.
 
 ### Embed in another application
 
@@ -57,7 +57,7 @@ For Vue hosts, configure `compilerOptions.isCustomElement` for `esr-workspace`. 
 ```css
 esr-workspace {
   --esr-accent: #196b57;
-  --esr-bg: #f5f7f8;
+  --esr-bg: #f4f6f8;
 }
 ```
 
@@ -101,9 +101,15 @@ Chat__ApiKey=sk-proj-... npm run dev:api
 
 Another provider only needs a different base URL and model, for example `Chat__BaseUrl=https://api.anthropic.com/v1/` with an Anthropic key, or `Chat__BaseUrl=http://localhost:11434/v1` for a local Ollama. Keep keys in the environment or a secret store, never in committed files. Backend tests always use the mock, even when `Chat__ApiKey` is set. In Kubernetes, put the key in a Secret and reference it from the `esr` container's `env`.
 
-Use the identity selector above the workspace to follow each role. Start with **Requestor**, create a request, switch to **Supervisor** to assign it, then **Engineer**, **Supervisor**, **Shop**, and **Division Head** for the full workflow. Administrator can grant cross-TRF review and delegated signatures. Demo JCNs are `JCN-260184` and `JCN-260207`; every other job in the mock data (for example `JCN-264668`) also resolves, and `N/A` is supported.
+The workspace starts empty. Use the identity selector above the workspace to follow each role. Start with **Requestor**, create a request, switch to **Supervisor** to assign it, then **Engineer**, **Supervisor**, **Shop**, and **Division Head** for the full workflow. Administrator can grant cross-TRF review and delegated signatures. Demo JCNs are `21036WX010184` and `21036WX020207`; every other job in the mock data (for example `71204POAH7469`) also resolves, and `N/A` is supported.
 
 A host-only build is available with `npm run build:host`, producing `dist/host/`. The Docker build copies this into ASP.NET's `wwwroot` so one server serves both the host and API.
+
+### Simulated data (dev only)
+
+With `npm run dev`, the top-right **Use fake data** button is the only way to see pre-populated data. It switches the workspace to a generated dataset of 60 records and 3 templates, covering every workflow status, returned requests, deferrals, revisions, attachments and long text. An amber **SIMULATED DATA** badge shows while it is on, and the choice survives a reload. Select **Use API data** to switch back.
+
+The dataset comes from the Vite dev server, so the .NET API and CRACN mock do not need to be running. Fake mode is read-only: workflow actions and PDF export show an error explaining this, because those rules and the PDF generator live in the backend. The button, badge and dataset are not included in production host builds or the npm package.
 
 ## Docker
 
@@ -166,14 +172,14 @@ All frontend application code, browser tests, and Vite/Playwright configurations
 
 ESLint uses the unmodified recommended configurations from ESLint, typescript-eslint, and eslint-plugin-vue. `npm run lint` rejects warnings; `npm run lint:fix` applies available fixes. `npm run format` formats the frontend with Prettier and then applies ESLint’s Vue formatting defaults.
 
-UI sections share a typed, instance-local Vue injection context. No state is shared across custom-element instances. Small presentation components, such as the signature record, use typed props. Styles remain inside the outer custom element’s shadow root so ordinary child Vue components inherit the same theme.
+UI sections share a typed, instance-local Vue injection context. No state is shared across custom-element instances. Small presentation components, such as the signature record, use typed props. Each SFC carries its own `<style scoped>` block on top of a shared base sheet of tokens and primitives. Every SFC compiles in custom-element mode, so all of these styles land inside the element's shadow root and none reach the host page.
 
 ## Design and decisions
 
 - The reusable component is independent of the demo host and .NET server.
 - Workflow rules and permissions are enforced by the API, not only hidden buttons.
 - Signatures derive name and user ID from a server-verified demo JWT, ignoring submitted signature identities.
-- Supervisor-approved templates only, per the agreed policy. Templates are maintained in the synthetic catalog.
+- Supervisor-approved templates only, per the agreed policy. The API ships no templates; the catalog needs a production source, and the dev-only simulated data includes samples.
 - New revisions copy prior content, retain frozen prior versions, and require fresh signatures.
 - Rejected initiation requests stay `Unassigned` with a returned flag/comment, preserving the five-state primary workflow. The requestor can update and resubmit.
 - ESR numbers are a two-digit year, a sequence from `0001` to `9999`, and a revision from `A` to `ZZ`. Assignment issues revision `A`. `260001ZZ` is the last revision of the first number in 2026.
@@ -190,17 +196,18 @@ UI sections share a typed, instance-local Vue injection context. No state is sha
 | `src/components/` | Request workspace, record tabs, dialogs, forms, signatures, and permissions |
 | `src/composables/useWorkspace.ts` | Typed state, API actions, draft and workflow coordination |
 | `src/composables/useDialogFocus.ts` | Modal focus trapping and keyboard lifecycle |
-| `src/styles/workspace.css` | Shared theme, injected once into the custom element shadow root |
+| `src/styles/workspace.css` | Shared base (tokens, element defaults, primitives), loaded by `Workspace.ce.vue`; component rules live in each SFC's `<style scoped>` |
 | `src/api.ts` | Typed host-token API adapter |
 | `src/presentation.ts` | Search filtering, status tones, and display helpers |
 | `src/types.ts` | Shared domain DTOs and public component types |
 | `src/index.ts` | Custom element registration and package exports |
 | `host/main.ts` | Demo-only identity selector and host initialization |
+| `host/simulated/` | Dev-only fake dataset, read-only API, Vite plugin, and toggle |
 | `backend/Esr.Api/Workflow.cs` | Authorization, transitions, revisions, validation |
 | `backend/Esr.Api/DemoIdentity.cs` | Ephemeral signed demo JWTs |
 | `backend/Esr.Api/Chat.cs` | Assistant chat prompt, provider adapter, and mock |
 | `backend/Esr.Api/PdfExport.cs` | Paginated PDF and embedded attachments |
-| `backend/Esr.Tests/` | Domain and HTTP integration tests |
+| `backend/Esr.Tests/` | Domain and HTTP integration tests, with sample data in `test-data.json` |
 | `tests/unit/` | Vitest and Vue Test Utils unit tests |
 | `tests/component/` | Isolated component browser tests and bundle smoke test |
 | `tests/e2e/` | Full browser workflow against ASP.NET |

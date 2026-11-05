@@ -6,6 +6,13 @@ namespace Esr.Api;
 public static class PdfExport
 {
     static string Clean(string value) => new(value.Select(c => c is >= ' ' and <= '~' ? c : '-').ToArray());
+    static string Plain(string value)
+    {
+        var text = Regex.Replace(value ?? "", @"<br\s*/?>", "\n", RegexOptions.IgnoreCase);
+        text = Regex.Replace(text, @"</(p|div|li)>", "\n", RegexOptions.IgnoreCase);
+        text = Regex.Replace(text, "<[^>]+>", "");
+        return text.Replace("&nbsp;", " ", StringComparison.OrdinalIgnoreCase).Replace("&amp;", "&").Replace("&lt;", "<").Replace("&gt;", ">");
+    }
     static string Escape(string value) => Clean(value).Replace("\\", "\\\\").Replace("(", "\\(").Replace(")", "\\)");
     public static byte[] Generate(EsrRecord r)
     {
@@ -21,9 +28,9 @@ public static class PdfExport
             }
         }
         Add("Request", r.Title); Add("Requestor", $"{r.Name} | Shop {r.Shop} | {r.Phone}"); Add("Equipment", $"JCN {r.Jcn} | Refit {r.Refit}\n{r.Component} | {r.Location}\n{r.WorkStatement}");
-        Add("References", r.References); Add("DFS / TVD", $"DFS: {r.Dfs} {r.DfsReference}\nTVD: {r.Tvd} {r.TvdReference}"); Add("Condition / finding", r.Condition);
+        Add("References", Plain(r.References)); Add("DFS / TVD", $"DFS: {r.Dfs} {r.DfsReference}\nTVD: {r.Tvd} {r.TvdReference}"); Add("Condition / finding", Plain(r.Condition));
         if (r.Revision > 0) Add("Revision reason", r.RevisionReason);
-        Add("Resolution / continuation sheet", r.Resolution); Add("Engineering rationale", r.Rationale);
+        Add("Resolution / continuation sheet", Plain(r.Resolution)); Add("Engineering rationale", Plain(r.Rationale));
         Add("Block 25 / 26 - Shop completion", r.Completion is null ? "Awaiting shop sign-off" : $"{r.Completion.Status} | {r.Completion.Name} | {r.Completion.Shop} | {r.Completion.Date}\n{r.Completion.Explanation}");
         Add("Simulated digital signatures", string.Join('\n', r.Signatures.Select(s => $"{s.Block}: {s.Name} [{s.UserId}] | {s.Time}\n{s.Comment}")));
         Add("Original files embedded in this PDF", string.Join('\n', r.Attachments.Select(a => $"{a.Section}: {a.Name} ({a.Size} bytes) | {a.UploadedBy}")));

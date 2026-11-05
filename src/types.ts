@@ -92,6 +92,8 @@ export interface LdsData {
   refit: string;
   component: string;
   location: string;
+  /** Configuration-item hierarchical structure code. CRACN maps this from the LDS function group code. */
+  swbs: string;
 }
 export interface Draft {
   resolution: string;
@@ -141,7 +143,6 @@ export interface WorkspaceState extends Omit<Bootstrap, "user"> {
   user: Actor | null;
 }
 export interface RequestForm {
-  title: string;
   jcn: string;
   noJcn: boolean;
   name: string;

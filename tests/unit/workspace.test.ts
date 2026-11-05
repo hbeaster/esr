@@ -16,7 +16,9 @@ import WorkflowActions from "../../src/components/WorkflowActions.vue";
 import WorkflowActionForm from "../../src/components/WorkflowActionForm.vue";
 import RevisionHistory from "../../src/components/RevisionHistory.vue";
 import RecordFiles from "../../src/components/RecordFiles.vue";
+import RecordOverview from "../../src/components/RecordOverview.vue";
 import RequestForm from "../../src/components/RequestForm.vue";
+import RequestWorkspace from "../../src/components/RequestWorkspace.vue";
 import Workspace from "../../src/Workspace.ce.vue";
 import WorkspaceDialogs from "../../src/components/WorkspaceDialogs.vue";
 
@@ -75,6 +77,7 @@ describe("resolution components", () => {
       makeBootstrap({ records: [makeRecord({ status: "ESR Issued" })] }),
     );
     expect(wrapper.find("textarea").exists()).toBe(false);
+    expect(wrapper.find("[role=textbox]").exists()).toBe(false);
     expect(wrapper.text()).toContain("Inspect the coupling.");
     expect(wrapper.text()).not.toContain("Save draft");
   });
@@ -82,7 +85,7 @@ describe("resolution components", () => {
     const { wrapper, context } = mountSection(TemplatePicker);
     await wrapper.find("button").trigger("click");
     expect(context.draft.resolution).toBe(
-      "Inspect the coupling.\n\nUse the approved inspection steps.",
+      "Inspect the coupling.<br><br>Use the approved inspection steps.",
     );
     expect(context.draft.rationale).toContain("Document applicable criteria.");
     expect(context.current.value?.resolution).toBe("Inspect the coupling.");
@@ -121,7 +124,9 @@ describe("assistant chat", () => {
       .findAll("button")
       .find((b) => b.text() === "Add to rationale");
     await add!.trigger("click");
-    expect(context.draft.rationale).toContain("Check coupling alignment.");
+    expect(context.draft.rationale).toContain(
+      "Check <strong>coupling</strong> alignment.",
+    );
     expect(context.draft.rationale).not.toContain("**");
   });
   it("labels the mock and restores the message when the provider fails", async () => {
@@ -321,8 +326,8 @@ describe("typed workspace controller", () => {
       second = mountSection(RequestForm);
     first.context.newRequest();
     first.context.form.noJcn = true;
-    first.context.form.title = "Independent request";
-    expect(second.context.form.title).toBe("");
+    first.context.form.condition = "Independent request";
+    expect(second.context.form.condition).toBe("");
     expect(second.context.dialog.value).toBeNull();
     const data = makeBootstrap();
     const fetch = vi
@@ -331,10 +336,82 @@ describe("typed workspace controller", () => {
       .mockResolvedValueOnce(jsonResponse(data));
     vi.stubGlobal("fetch", fetch);
     await first.context.createRequest();
-    expect(JSON.parse(fetch.mock.calls[0][1].body)).toMatchObject({
+    const body = JSON.parse(fetch.mock.calls[0][1].body);
+    expect(body).toMatchObject({
       jcn: "N/A",
-      title: "Independent request",
+      condition: "Independent request",
     });
+    expect(body.title).toBeUndefined();
+  });
+  it("uploads supporting files chosen before the request is submitted", async () => {
+    class FakeReader {
+      result = "data:text/plain;base64,U3ludGhldGlj";
+      onload: (() => void) | null = null;
+      readAsDataURL() {
+        this.onload?.();
+      }
+    }
+    vi.stubGlobal("FileReader", FakeReader);
+    const created = makeRecord({ id: "created-1", version: 2 });
+    const attached = makeRecord({ id: "created-1", version: 3 });
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(created))
+      .mockResolvedValueOnce(jsonResponse(attached))
+      .mockResolvedValueOnce(jsonResponse(makeBootstrap()));
+    vi.stubGlobal("fetch", fetch);
+    const { wrapper, context, emit } = mountSection(RequestForm);
+    context.newRequest();
+    context.form.noJcn = true;
+    context.form.references = "DEMO-42";
+    context.form.condition = "Wear";
+    const input = document.createElement("input");
+    const file = new File(["Synthetic"], "inspection.txt", {
+      type: "text/plain",
+    });
+    Object.defineProperty(input, "files", { value: [file] });
+    const event = new Event("change");
+    Object.defineProperty(event, "target", { value: input });
+    await context.queueFiles(event);
+    expect(context.pendingFiles.value[0]?.section).toBe("Condition");
+    await context.createRequest();
+    const createdBody = JSON.parse(fetch.mock.calls[0][1].body);
+    expect(createdBody.base64).toBeUndefined();
+    expect(fetch.mock.calls[1][0]).toBe("/api/records/created-1/attach");
+    expect(JSON.parse(fetch.mock.calls[1][1].body)).toMatchObject({
+      name: "inspection.txt",
+      type: "text/plain",
+      section: "Condition",
+      base64: "U3ludGhldGlj",
+      version: 2,
+    });
+    expect(context.notice.value).toBe("Request submitted with supporting files.");
+    expect(emit).toHaveBeenCalledWith("record-change", {
+      id: "created-1",
+      action: "attach",
+      status: "In Process",
+    });
+    expect(wrapper.find('[aria-label="Upload supporting files"]').exists()).toBe(
+      true,
+    );
+  });
+  it("offers a browser upload on the open record", () => {
+    const { wrapper } = mountSection(RecordOverview);
+    expect(wrapper.find('[aria-label="Upload supporting file"]').exists()).toBe(
+      true,
+    );
+    expect(wrapper.text()).toContain("Supporting files");
+  });
+  it("stores formatted request text and drops scripts", async () => {
+    const { wrapper, context } = mountSection(RequestForm);
+    const boxes = wrapper.findAll("[role=textbox]");
+    expect(boxes).toHaveLength(2);
+    expect(wrapper.find('[aria-label="Bold"]').exists()).toBe(true);
+    boxes[1].element.innerHTML =
+      "<strong>Wear</strong><script>alert(1)</script>";
+    await boxes[1].trigger("input");
+    expect(context.form.condition).toBe("<strong>Wear</strong>");
+    expect(context.form.condition).not.toContain("script");
   });
   it("connects the dialog element to the shared keyboard focus trap", async () => {
     const { wrapper, context } = mountSection(WorkspaceDialogs);
@@ -381,7 +458,19 @@ describe("typed workspace controller", () => {
     resolveFirst(jsonResponse(makeBootstrap()));
     await flushPromises();
     expect(fetch).toHaveBeenCalledTimes(2);
-    expect(wrapper.get(".profile").text()).toContain("Alex Morgan");
+    await wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("New request"))!
+      .trigger("click");
+    await flushPromises();
+    expect(
+      (
+        wrapper
+          .findAll("label")
+          .find((label) => label.text() === "Name")!
+          .get("input").element as HTMLInputElement
+      ).value,
+    ).toBe("Alex Morgan");
     expect(fetch.mock.calls[1][1].headers.Authorization).toBe(
       "Bearer requestor-token",
     );
@@ -393,12 +482,76 @@ describe("typed workspace controller", () => {
     });
     wrappers.push(wrapper);
     await flushPromises();
-    expect(wrapper.find("h1").text()).toBe("Service requests.");
+    expect(wrapper.find("h1").text()).toBe("Service requests");
     expect(fetch).toHaveBeenCalledWith(
       "/api/bootstrap",
       expect.objectContaining({
         headers: { Authorization: "Bearer host-token" },
       }),
     );
+  });
+});
+describe("ESR table columns", () => {
+  it("shows the requested columns and hides one without removing the row", async () => {
+    const { wrapper } = mountSection(
+      RequestWorkspace,
+      makeBootstrap({
+        records: [
+          makeRecord({
+            serial: "260037A",
+            jcn: "21036WX010184",
+            refit: "A014",
+            name: "Alex Morgan",
+            shop: "31",
+            swbs: "6286FCA00000",
+            createdAt: "2026-11-04T15:00:00Z",
+          }),
+        ],
+      }),
+    );
+    const headers = () =>
+      wrapper.findAll("thead th").map((header) => header.text());
+    expect(headers()).toEqual([
+      "Serial",
+      "JCN",
+      "Refit",
+      "Requester",
+      "Shop Code",
+      "Condition",
+      "Resolution",
+      "SWBS",
+      "Status",
+      "Assigned Engineer",
+      "Date Initiated",
+      "Open",
+    ]);
+    expect(wrapper.text()).toContain("6286FCA00000");
+    expect(wrapper.text()).toContain("Alex Morgan");
+    await wrapper.get('[aria-label="Show SWBS"]').setValue(false);
+    expect(headers()).not.toContain("SWBS");
+    expect(wrapper.text()).not.toContain("6286FCA00000");
+    expect(wrapper.findAll("tbody tr")).toHaveLength(1);
+    await wrapper.get('[aria-label="Show SWBS"]').setValue(true);
+    expect(headers()).toContain("SWBS");
+  });
+  it("sorts the visible rows from a column header", async () => {
+    const { wrapper } = mountSection(
+      RequestWorkspace,
+      makeBootstrap({
+        records: [
+          makeRecord({ id: "later", serial: "260040A", name: "Casey Rivera" }),
+          makeRecord({ id: "earlier", serial: "260037A", name: "Alex Morgan" }),
+        ],
+      }),
+    );
+    const serials = () =>
+      wrapper.findAll("tbody .serial").map((cell) => cell.text());
+    expect(serials()[0]).toContain("260040A");
+    await wrapper.get('[aria-label="Sort by Serial"]').trigger("click");
+    expect(wrapper.get("th").attributes("aria-sort")).toBe("ascending");
+    expect(serials()[0]).toContain("260037A");
+    await wrapper.get('[aria-label="Sort by Serial"]').trigger("click");
+    expect(wrapper.get("th").attributes("aria-sort")).toBe("descending");
+    expect(serials()[0]).toContain("260040A");
   });
 });

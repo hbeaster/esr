@@ -147,3 +147,142 @@ function onKeydown(event: KeyboardEvent) {
     }}</small>
   </section>
 </template>
+
+<style scoped>
+.chat-log {
+  max-height: 360px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin: var(--sp-4) 0;
+  padding: var(--sp-3);
+  background: var(--esr-bg);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+}
+.chat-empty,
+.chat-pending {
+  font-size: var(--fs-xs);
+  margin: 0;
+}
+.chat-message {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  max-width: 85%;
+}
+.chat-message.user {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+.chat-role {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.chat-bubble {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+.chat-message.user .chat-bubble {
+  background: var(--esr-accent-soft);
+  border-color: transparent;
+  color: var(--esr-accent-text);
+}
+/* Assistant replies are v-html, so their elements need :deep() to receive scoped rules. */
+.chat-bubble.rich {
+  white-space: normal;
+}
+.chat-bubble.rich :deep(> :first-child) {
+  margin-top: 0;
+}
+.chat-bubble.rich :deep(> :last-child) {
+  margin-bottom: 0;
+}
+.chat-bubble.rich :deep(:is(p, ul, ol, pre, blockquote, table)) {
+  margin: 0 0 var(--sp-2);
+}
+.chat-bubble.rich :deep(:is(h1, h2, h3, h4, h5, h6)) {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  margin: var(--sp-3) 0 var(--sp-1);
+}
+.chat-bubble.rich :deep(:is(h1, h2)) {
+  font-size: var(--fs-base);
+}
+.chat-bubble.rich :deep(:is(ul, ol)) {
+  padding-left: var(--sp-5);
+}
+.chat-bubble.rich :deep(li + li) {
+  margin-top: 3px;
+}
+.chat-bubble.rich :deep(code) {
+  font-size: var(--fs-xs);
+  background: var(--gray-bg);
+  border-radius: var(--radius-sm);
+  padding: 1px var(--sp-1);
+}
+.chat-bubble.rich :deep(pre) {
+  background: var(--gray-bg);
+  border-radius: var(--radius-sm);
+  padding: var(--sp-2) var(--sp-3);
+  overflow-x: auto;
+}
+.chat-bubble.rich :deep(pre code) {
+  background: none;
+  padding: 0;
+  white-space: pre;
+}
+.chat-bubble.rich :deep(blockquote) {
+  border-left: 3px solid var(--line);
+  padding-left: var(--sp-3);
+  color: var(--ink-3);
+}
+.chat-bubble.rich :deep(hr) {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: var(--sp-3) 0;
+}
+.chat-bubble.rich :deep(a) {
+  color: var(--esr-accent-text);
+}
+.chat-bubble.rich :deep(table) {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: var(--fs-xs);
+}
+.chat-bubble.rich :deep(:is(th, td)) {
+  border: 1px solid var(--line);
+  padding: var(--sp-1) var(--sp-2);
+  text-align: left;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.chat-bubble.rich :deep(th) {
+  background: var(--surface-2);
+  color: inherit;
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: none;
+}
+.chat-compose {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: flex-end;
+}
+.chat-compose label {
+  flex: 1;
+  min-width: 0;
+}
+</style>

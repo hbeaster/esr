@@ -154,16 +154,20 @@ Record mutations include the record's current `version`. A 409 conflict is shown
 
 ## Appearance and layout
 
-The host supplies the mounting container and surrounding application layout. The component supplies its navigation, dialogs, and responsive workspace. Host CSS selectors do not reach its shadow-root content; internal selectors and Vue refs are not a supported integration surface.
+The host supplies the mounting container and surrounding application layout, including any application sidebar, branding, and user profile. ESR has no left navigation pane: its header contains All requests, My work, and administrator-only Permissions tabs, plus workspace status and refresh. At narrow component widths, the tabs scroll horizontally and status/refresh move below them. Historical ESRs and Template library navigation are hidden; resolution-editor template insertion and historical search remain available. The component supplies its navigation, dialogs, and responsive workspace. Host CSS selectors do not reach its shadow-root content; internal selectors and Vue refs are not a supported integration surface.
 
 The current theme defines these CSS custom properties:
 
 | Property | Default |
 | --- | --- |
-| `--esr-accent` | `#2563eb` |
-| `--esr-accent-hover` | `#1d4ed8` |
-| `--esr-accent-soft` | `#eff6ff` |
-| `--esr-bg` | `#f5f7f8` |
+| `--esr-accent` | `#1f5fd6` |
+| `--esr-accent-hover` | `#174bb0` |
+| `--esr-accent-soft` | `#eaf1fd` |
+| `--esr-accent-text` | `#163f8f` |
+| `--esr-bg` | `#f4f6f8` |
+| `--esr-font` | `"ESR JetBrains Mono", "JetBrains Mono", ui-monospace, …, monospace` |
+
+The component bundles JetBrains Mono (SIL Open Font License 1.1, Latin subset, variable weight, upright and italic). Browsers ignore `@font-face` rules inside a shadow root, so registering the element also adds the family `ESR JetBrains Mono` to `document.fonts`, once per document. The family name is specific to the component and does not replace host fonts. A host that sets `--esr-font` to another stack still loads the bundled faces but does not use them.
 
 Override them on the element, for example `esr-workspace { --esr-accent: #1d4ed8; }`. They affect selected surfaces and controls, not every color in the theme. There are no public slots or CSS parts. Component state is independent per instance; instances do not synchronize automatically.
 

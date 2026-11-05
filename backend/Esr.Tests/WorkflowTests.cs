@@ -5,23 +5,41 @@ using Xunit;
 namespace Esr.Tests;
 public sealed class WorkflowTests
 {
-    readonly Workflow w = new(JsonSerializer.Deserialize<StoreData>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "seed.json")), JsonConfig.Options)!);
+    readonly Workflow w = new(JsonSerializer.Deserialize<StoreData>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "test-data.json")), JsonConfig.Options)!);
     Actor User(string id) => w.Data.Users.First(u => u.Id == id);
     static JsonObject D(string json) => JsonNode.Parse(json)!.AsObject();
-    EsrRecord Create() => w.Create(User("requestor"), D("""{"title":"Test request","name":"Alex Morgan","shop":"31","phone":"555-0131","references":"DEMO-1","condition":"Coupling wear","jcn":"N/A"}"""));
-    static JsonObject Request(string jcn) => D($$"""{"title":"Test request","name":"Alex Morgan","shop":"31","phone":"555-0131","references":"DEMO-1","condition":"Coupling wear","jcn":"{{jcn}}"}""");
+    EsrRecord Create() => w.Create(User("requestor"), D("""{"name":"Alex Morgan","shop":"31","phone":"555-0131","references":"DEMO-1","condition":"Coupling wear","jcn":"N/A"}"""));
+    static JsonObject Request(string jcn) => D($$"""{"name":"Alex Morgan","shop":"31","phone":"555-0131","references":"DEMO-1","condition":"Coupling wear","jcn":"{{jcn}}"}""");
     [Fact] public void CreateCopiesCracnContextForJcn()
     {
-        var lds = new LdsData { WorkStatement = "Inspect coupling", Refit = "A014", Component = "ASW-P-02 / TSN-10482", Location = "Auxiliary machinery space" };
-        var r = w.Create(User("requestor"), Request("JCN-260184"), lds);
-        Assert.Equal(("Inspect coupling", "A014", "ASW-P-02 / TSN-10482", "Auxiliary machinery space"), (r.WorkStatement, r.Refit, r.Component, r.Location));
+        var lds = new LdsData { WorkStatement = "Inspect coupling", Refit = "A014", Component = "ASW-P-02 / TSN-10482", Location = "Auxiliary machinery space", Swbs = "6286FCA00000" };
+        var r = w.Create(User("requestor"), Request("21036WX010184"), lds);
+        Assert.Equal(("Inspect coupling", "A014", "ASW-P-02 / TSN-10482", "Auxiliary machinery space", "6286FCA00000"), (r.WorkStatement, r.Refit, r.Component, r.Location, r.Swbs));
+    }
+    [Theory]
+    [InlineData("12345WX019999")] [InlineData("1234512980001")] [InlineData(" 21036wx010184 ")]
+    public void JcnAcceptsFiveDigitsFourAlphanumericsAndSequence(string jcn) => Assert.Matches("^[0-9]{5}[A-Z0-9]{4}[0-9]{4}$", Workflow.Jcn(jcn));
+    [Theory]
+    [InlineData("JCN-260184")] [InlineData("1234WX019999")] [InlineData("12345WX0199999")] [InlineData("A2345WX019999")] [InlineData("12345WX01999A")] [InlineData("12345WX010000")] [InlineData("12345W-019999")]
+    public void JcnRejectsMalformedValues(string jcn) => Assert.Equal(400, Assert.Throws<RuleException>(() => Workflow.Jcn(jcn)).Status);
+    [Fact] public void CreateNormalizesAndValidatesJcn()
+    {
+        var lds = new LdsData { Refit = "A014" }; var count = w.Data.Records.Count;
+        Assert.Equal("21036WX010184", w.Create(User("requestor"), Request("21036wx010184"), lds).Jcn);
+        Assert.Equal(400, Assert.Throws<RuleException>(() => w.Create(User("requestor"), Request("JCN-260184"), lds)).Status);
+        Assert.Equal(count + 1, w.Data.Records.Count);
     }
     [Fact] public void CreateRejectsJcnWithoutCracnContext()
     {
         var count = w.Data.Records.Count;
-        Assert.Equal(400, Assert.Throws<RuleException>(() => w.Create(User("requestor"), Request("JCN-260184"))).Status);
+        Assert.Equal(400, Assert.Throws<RuleException>(() => w.Create(User("requestor"), Request("21036WX010184"))).Status);
         Assert.Equal(count, w.Data.Records.Count);
-        Assert.Equal("", w.Create(User("requestor"), Request("N/A"), new LdsData { Refit = "A014" }).Refit);
+        var created = w.Create(User("requestor"), Request("N/A"), new LdsData { Refit = "A014" });
+        Assert.Equal("", created.Refit);
+        Assert.Equal("", created.Title);
+        var formatted = w.Create(User("requestor"), D("""{"name":"Alex Morgan","shop":"31","phone":"555-0131","references":"<p>DEMO-1</p>","condition":"<strong>Coupling</strong> wear","jcn":"N/A"}"""));
+        Assert.Contains("<strong>", formatted.Condition);
+        Assert.Throws<RuleException>(() => w.Create(User("requestor"), D("""{"name":"Alex Morgan","shop":"31","phone":"555-0131","references":"<p><br></p>","condition":"Wear","jcn":"N/A"}""")));
     }
     EsrRecord Draft()
     {

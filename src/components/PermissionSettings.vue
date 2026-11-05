@@ -8,10 +8,7 @@ const { state, busy, permissionUser, permissionForm, savePermission } =
 <template>
   <div class="page-heading">
     <div>
-      <div class="eyebrow">
-        ADMINISTRATION
-      </div>
-      <h1>User permissions<span class="heading-dot">.</span></h1>
+      <h1>User permissions</h1>
       <p>Manage cross-facility visibility and signature delegation.</p>
     </div>
   </div>
@@ -56,3 +53,13 @@ const { state, busy, permissionUser, permissionForm, savePermission } =
     </div>
   </form>
 </template>
+
+<style scoped>
+.admin-form {
+  max-width: 640px;
+}
+.admin-form > .muted {
+  font-size: var(--fs-sm);
+  font-style: italic;
+}
+</style>

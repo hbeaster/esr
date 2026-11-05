@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import RecordFiles from "./RecordFiles.vue";
+import RichTextView from "./RichTextView.vue";
 import { date } from "../presentation";
 import { useWorkspaceContext } from "../composables/workspaceContext";
 const { state, current, record } = useWorkspaceContext();
@@ -7,13 +9,8 @@ const { state, current, record } = useWorkspaceContext();
 <template>
   <template v-if="record && current && state.user">
     <div class="card padded">
-      <div class="section-heading">
-        <h2>Condition & finding</h2>
-        <span class="small-tag">REQUEST DETAILS</span>
-      </div>
-      <p class="prose">
-        {{ record.condition }}
-      </p>
+      <h2>Condition & finding</h2>
+      <RichTextView :value="record.condition" />
       <div class="fields-grid read-fields">
         <div>
           <span>REQUESTOR</span><strong>{{ record.name }}</strong>
@@ -36,22 +33,41 @@ const { state, current, record } = useWorkspaceContext();
           <span>JOB CONTROL NUMBER</span><strong>{{ record.jcn }}</strong>
         </div>
         <div>
-          <span>REFIT</span><strong>{{ record.refit || "Not provided" }}</strong>
+          <span>REFIT</span><strong v-if="record.refit">{{ record.refit }}</strong><em
+            v-else
+            class="muted"
+          >Not provided</em>
         </div>
         <div>
-          <span>COMPONENT / TSN</span><strong>{{ record.component || "Not provided" }}</strong>
+          <span>COMPONENT / TSN</span><strong v-if="record.component">{{ record.component }}</strong><em
+            v-else
+            class="muted"
+          >Not provided</em>
         </div>
         <div>
-          <span>LOCATION</span><strong>{{ record.location || "Not provided" }}</strong>
+          <span>SWBS</span><strong v-if="record.swbs">{{ record.swbs }}</strong><em
+            v-else
+            class="muted"
+          >Not provided</em>
+        </div>
+        <div>
+          <span>LOCATION</span><strong v-if="record.location">{{ record.location }}</strong><em
+            v-else
+            class="muted"
+          >Not provided</em>
         </div>
       </div>
       <label class="read-label">WORK STATEMENT</label>
-      <p>{{ record.workStatement || "No LDS work statement linked." }}</p>
-      <label class="read-label">REFERENCES</label>
-      <p class="prose">
-        {{ record.references }}
+      <p v-if="record.workStatement">
+        {{ record.workStatement }}
       </p>
+      <p v-else>
+        <em class="muted">No LDS work statement linked.</em>
+      </p>
+      <label class="read-label">REFERENCES</label>
+      <RichTextView :value="record.references" />
     </div>
+    <RecordFiles />
     <div
       v-if="record.revisionReason"
       class="card padded"
@@ -77,3 +93,18 @@ const { state, current, record } = useWorkspaceContext();
     </div>
   </template>
 </template>
+
+<style scoped>
+.read-label {
+  display: block;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin: var(--sp-6) 0 var(--sp-1);
+}
+.read-label + p {
+  margin-bottom: 0;
+}
+</style>
