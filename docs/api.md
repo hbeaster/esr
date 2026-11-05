@@ -1,6 +1,6 @@
 # API contract
 
-Base URL defaults to `/api`. All endpoints except `/demo/*` and `/health/*` require `Authorization: Bearer <token>`. Requests and errors use JSON; errors are `{ "error": "Human readable reason" }` with HTTP 400 (validation), 401 (identity), 403 (permission), 404 (missing), 409 (workflow/stale version), or 502 (the CRACN API behind `GET /lds` and `POST /records` is unreachable or failing).
+Base URL defaults to `/api`. All endpoints except `/demo/*` and `/health/*` require `Authorization: Bearer <token>`. Requests and errors use JSON; errors are `{ "error": "Human readable reason" }` with HTTP 400 (validation), 401 (identity), 403 (permission), 404 (missing), 409 (workflow/stale version), or 502 (the CRACN API behind `GET /lds` and `POST /records`, or the chat provider behind `POST /assistant/chat`, is unreachable or failing).
 
 | Method / path | Request | Response |
 | --- | --- | --- |
@@ -9,6 +9,7 @@ Base URL defaults to `/api`. All endpoints except `/demo/*` and `/health/*` requ
 | `GET /bootstrap` | None | `{user,users,templates,permissions,records}` |
 | `GET /lds?jcn=21036WX010184` | None | `{workStatement,refit,component,location,swbs}` |
 | `POST /history/search` | `{condition}` | `{summary,matches:[{id,serial,title,resolution,rationale,similarity}]}` |
+| `POST /assistant/chat` | `{recordId,messages:[{role,content}]}` | `{reply,model,mock}` |
 | `POST /records` | `{name,shop,phone,references,condition,jcn}` | Created record |
 | `GET /records/:id` | None | Accessible record |
 | `POST /records/:id/:action` | See below, plus current `version` | Updated record or `{deleted:true}` |
@@ -41,6 +42,8 @@ Action bodies:
 An assigned ESR number is a two-digit UTC year, a sequence from `0001` to `9999`, and a revision suffix from `A` to `ZZ`. Assignment issues revision `A`. Each later `revise` advances the suffix, so the last revision of the first 2026 number is `260001ZZ`. The sequence resets every UTC year and the 9999th number of that year is the last. Unassigned requests have no number. The `serial` field is the full number. `serialBase` is the year and sequence without the suffix.
 
 `GET /lds` and `POST /records` resolve the JCN through the CRACN API (`cracn_openapi.json`, at the backend's `Cracn:BaseUrl`): `workStatement` comes from the job's `csmpSummary`, `refit` from its refit number, and `component`/`location` from its configuration item (`equipmentName / equipmentSerialNumber`). `swbs` is that item's hierarchical structure code, which CRACN maps from the LDS function group code. A JCN is 13 characters: five digits, four letters or digits, then a sequence from `0001` to `9999` (for example `12345WX019999`). The backend trims and upper-cases it, and a malformed JCN returns 400 before any CRACN call. An unknown JCN returns 404; an unreachable or failing CRACN returns 502. `jcn: "N/A"` skips the lookup.
+
+`POST /assistant/chat` is stateless. The client sends the whole transcript, oldest first, with roles `user` or `assistant` and the last turn from `user`. A conversation holds at most 20 messages of up to 4000 characters each. The server prepends its own system prompt built from the record and its closest closed matches, so clients cannot send a `system` turn. Access follows the draft editor rule: the assigned engineer or a supervisor, local facility, `In Process` only. The call never changes the record. `mock` is `true` when the backend has no provider key configured, and the reply is then a labeled placeholder. Provider errors return 502 without the provider's error body.
 
 Records carry a monotonically increasing `version`. The component submits it on actions; a stale version fails with 409. Mutations are validated on a deep copy and committed under a store lock. Record DTOs omit the binary attachment payload; downloads require authenticated access. Snapshots preserve attachment bytes and all signature evidence.
 

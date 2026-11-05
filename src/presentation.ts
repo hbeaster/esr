@@ -1,3 +1,5 @@
+import DOMPurify from "dompurify";
+import { marked } from "marked";
 import type { EsrRecord, Scope, WorkflowStatus } from "./types";
 export const steps: WorkflowStatus[] = [
   "Unassigned",
@@ -614,6 +616,56 @@ export function filterRecords<T extends SearchableRecord>(
       (!zone || hullZone(r.location) === zone),
   );
 }
+
+let purifier: ReturnType<typeof DOMPurify> | null = null;
+/** Assistant replies are model output grounded in user-written records, so treat them as untrusted HTML. */
+function sanitizer() {
+  if (!purifier) {
+    purifier = DOMPurify(window);
+    purifier.addHook("afterSanitizeAttributes", (node) => {
+      if (node.tagName === "A") {
+        node.setAttribute("target", "_blank");
+        node.setAttribute("rel", "noopener noreferrer");
+      }
+    });
+  }
+  return purifier;
+}
+/** Markdown to sanitized HTML. No images, styles, or scripts: an image URL could exfiltrate record text. */
+export function renderMarkdown(text: string): string {
+  const html = marked.parse(text, { async: false, gfm: true, breaks: true });
+  return sanitizer().sanitize(html, {
+    ALLOWED_TAGS: [
+      "p",
+      "br",
+      "strong",
+      "em",
+      "del",
+      "code",
+      "pre",
+      "blockquote",
+      "hr",
+      "ul",
+      "ol",
+      "li",
+      "h1",
+      "h2",
+      "h3",
+      "h4",
+      "h5",
+      "h6",
+      "table",
+      "thead",
+      "tbody",
+      "tr",
+      "th",
+      "td",
+      "a",
+    ],
+    ALLOWED_ATTR: ["href", "title", "align", "start", "target", "rel"],
+    ALLOWED_URI_REGEXP: /^(?:https?:|mailto:)/i,
+  });
+}
 const richTags = new Set([
   "P",
   "BR",
@@ -705,4 +757,18 @@ export function appendRichText(current: string, addition: string): string {
   if (!plainText(base)) return next;
   if (!plainText(next)) return base;
   return `${base}<br><br>${next}`;
+}
+/**
+ * Resolution and rationale are rich text, so keep the reply's paragraphs, emphasis, and lists.
+ * Headings become bold paragraphs, table rows become lines, and every other tag is unwrapped.
+ */
+export function markdownToRichText(text: string): string {
+  const html = renderMarkdown(text)
+    .replace(/<h[1-6]>/g, "<p><strong>")
+    .replace(/<\/h[1-6]>/g, "</strong></p>")
+    .replace(/<\/t[dh]>(?=\s*<t[dh])/g, " | ")
+    .replace(/<\/tr>/g, "<br>")
+    .replace(/<pre>/g, "<p>")
+    .replace(/<\/pre>/g, "</p>");
+  return sanitizeRichText(html);
 }

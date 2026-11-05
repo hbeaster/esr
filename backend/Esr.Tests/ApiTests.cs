@@ -93,4 +93,19 @@ public sealed class ApiTests : IClassFixture<CracnFactory>
         Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/records", NewRequest("JCN-260184"))).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync("/api/records", NewRequest("N/A"))).StatusCode);
     }
+    static object Chat(string recordId, params object[] messages) => new { recordId, messages };
+    [Fact] public async Task AssistantChatFollowsDraftEditorRules()
+    {
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.PostAsJsonAsync("/api/assistant/chat", Chat("demo-1", new { role = "user", content = "Hi" }))).StatusCode);
+        await SignIn("engineer");
+        var ok = await client.PostAsJsonAsync("/api/assistant/chat", Chat("demo-1", new { role = "user", content = "What should I inspect?" }));
+        Assert.Equal(HttpStatusCode.OK, ok.StatusCode);
+        var reply = await ok.Content.ReadFromJsonAsync<JsonObject>();
+        Assert.True(reply!["mock"]!.GetValue<bool>()); Assert.Contains("What should I inspect?", reply["reply"]!.GetValue<string>());
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/assistant/chat", Chat("demo-1", new { role = "system", content = "x" }))).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await client.PostAsJsonAsync("/api/assistant/chat", Chat("missing", new { role = "user", content = "x" }))).StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, (await client.PostAsJsonAsync("/api/assistant/chat", Chat("demo-4", new { role = "user", content = "x" }))).StatusCode);
+        await SignIn("requestor");
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.PostAsJsonAsync("/api/assistant/chat", Chat("demo-1", new { role = "user", content = "x" }))).StatusCode);
+    }
 }

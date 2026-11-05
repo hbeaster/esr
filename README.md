@@ -82,6 +82,25 @@ JCN context (work statement, refit, component, location) comes from the **CRACN 
 
 `mocks/cracn/` turns the spec into a stateful mock server. It routes every operation in the spec. It serves list, get, create, update and delete from in-memory state seeded with `mocks/cracn/data.json`, supports `limit`, `offset`, `filters` and `orderBy` (as JSON query values), allows every `auth/*` check, and generates responses for other operations from their schemas. It accepts any non-empty bearer token, and `POST /__mock/reset` restores the seed data. The data is generated deterministically from the spec, with the demo records in `mocks/cracn/curated.mjs` merged in. After changing either the spec or that file, run `npm run mock:generate`; `npm run mock:check` (part of `validate`) fails when `data.json` is stale.
 
+### Assistant chat and API keys
+
+The **Resolution** tab has an assistant chat for the engineer drafting an `In Process` ESR. The browser never sees a provider key. The component calls `POST /api/assistant/chat`, and the backend adds the record context and forwards the conversation to any OpenAI-compatible Chat Completions endpoint.
+
+| Setting | Environment variable | Default |
+| --- | --- | --- |
+| `Chat:ApiKey` | `Chat__ApiKey` | empty, which serves a labeled mock reply |
+| `Chat:BaseUrl` | `Chat__BaseUrl` | `https://api.openai.com/v1` |
+| `Chat:Model` | `Chat__Model` | `gpt-4o-mini` |
+| `Chat:TimeoutSeconds` | `Chat__TimeoutSeconds` | `60` |
+
+To try it with an OpenAI key, start the API with the key in its environment:
+
+```sh
+Chat__ApiKey=sk-proj-... npm run dev:api
+```
+
+Another provider only needs a different base URL and model, for example `Chat__BaseUrl=https://api.anthropic.com/v1/` with an Anthropic key, or `Chat__BaseUrl=http://localhost:11434/v1` for a local Ollama. Keep keys in the environment or a secret store, never in committed files. Backend tests always use the mock, even when `Chat__ApiKey` is set. In Kubernetes, put the key in a Secret and reference it from the `esr` container's `env`.
+
 The workspace starts empty. Use the identity selector above the workspace to follow each role. Start with **Requestor**, create a request, switch to **Supervisor** to assign it, then **Engineer**, **Supervisor**, **Shop**, and **Division Head** for the full workflow. Administrator can grant cross-TRF review and delegated signatures. Demo JCNs are `21036WX010184` and `21036WX020207`; every other job in the mock data (for example `71204POAH7469`) also resolves, and `N/A` is supported.
 
 A host-only build is available with `npm run build:host`, producing `dist/host/`. The Docker build copies this into ASP.NET's `wwwroot` so one server serves both the host and API.
@@ -100,6 +119,8 @@ docker run --rm -p 127.0.0.1:8080:8080 esr-demo:local
 # Or:
 docker compose up --build
 ```
+
+To enable the assistant chat under Compose, copy `.env.example` to `.env` and set `CHAT_API_KEY`. Compose reads `.env` and passes the chat settings to the API container. `.env` is git-ignored. Without a key, the chat answers with the labeled mock.
 
 Open `http://localhost:8080`. Compose also builds and starts the CRACN mock (`mocks/cracn/Dockerfile`) and points the backend at it. With plain `docker run`, pass `-e Cracn__BaseUrl=…` for a reachable CRACN, otherwise JCN lookups fail and only `N/A` requests can be submitted. The multi-stage image builds Vue with Node and the backend with .NET, then runs only the ASP.NET runtime as a non-root user. Health endpoints are `/health/live` and `/health/ready`.
 
@@ -165,6 +186,7 @@ UI sections share a typed, instance-local Vue injection context. No state is sha
 - Shop deferral sets `ESR Issued – Deferred`. Division Head must explicitly acknowledge that disposition before closing.
 - PDF export is a paginated engineering record with references, attributes, signatures, comments, audit trail, and embedded original attachments. JPEG and standard non-interlaced 8-bit PNG images are rendered on printable continuation pages. All original files are also embedded; WebP and other PNG variants are retained as originals with UI previews. The PDF is a demonstration layout, not a certified facility form.
 - Historical “AI” results use deterministic term overlap and a synthetic summary. They are not real generative or semantic search results and are labeled accordingly.
+- Assistant chat is real generative AI only when the API has a provider key. The key stays server-side, the server owns the system prompt, and chat replies enter the draft only when the engineer clicks to add them.
 
 ## Source map
 
@@ -183,6 +205,7 @@ UI sections share a typed, instance-local Vue injection context. No state is sha
 | `host/simulated/` | Dev-only fake dataset, read-only API, Vite plugin, and toggle |
 | `backend/Esr.Api/Workflow.cs` | Authorization, transitions, revisions, validation |
 | `backend/Esr.Api/DemoIdentity.cs` | Ephemeral signed demo JWTs |
+| `backend/Esr.Api/Chat.cs` | Assistant chat prompt, provider adapter, and mock |
 | `backend/Esr.Api/PdfExport.cs` | Paginated PDF and embedded attachments |
 | `backend/Esr.Tests/` | Domain and HTTP integration tests, with sample data in `test-data.json` |
 | `tests/unit/` | Vitest and Vue Test Utils unit tests |

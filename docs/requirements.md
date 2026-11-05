@@ -14,6 +14,7 @@ This is a synthetic, end-to-end demonstration. “Implemented” describes demo 
 | Reject/delete | Commented return with requestor resubmit; confirmed deletion of unassigned request | Domain resubmission test; role validation |
 | Manual resolution / rationale | Draft editor with saved technical text. Resolution and rationale use a rich text editor | Workflow tests; browser editor |
 | Assisted summary / matches / copying | Labeled deterministic mock summary, ranked historical matches, clipboard and insertion | HTTP search; browser search/insertion |
+| Assistant chat (PRD 4.2.1) | Record-grounded chat through any OpenAI-compatible provider, server-held key, labeled mock without a key, add reply to resolution or rationale | Provider adapter, prompt, validation and permission tests; Vitest chat component tests |
 | Approved templates | Library and insert flow; the API ships none, and the dev-only simulated data has three synthetic templates | Component browser insert test; browser library and insert test in simulated mode |
 | High-resolution attachments / preview | Original file bytes, authenticated previews, section classification | HTTP byte roundtrip; browser upload |
 | DFS / TVD sequential questions | Conditional prompts and references, server validation | Missing DFS reference unit test; browser entry |

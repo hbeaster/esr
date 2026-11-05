@@ -8,6 +8,10 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       # JCN lookups go to the CRACN API; here, the mock built from cracn_openapi.json.
       Cracn__BaseUrl: http://cracn-mock:4010
+      # Assistant chat, read from .env (see .env.example). An empty key serves the labeled mock.
+      Chat__ApiKey: ${CHAT_API_KEY:-}
+      Chat__BaseUrl: ${CHAT_BASE_URL:-https://api.openai.com/v1}
+      Chat__Model: ${CHAT_MODEL:-gpt-4o-mini}
     depends_on:
       - cracn-mock
     read_only: true
