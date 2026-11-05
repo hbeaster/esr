@@ -88,6 +88,25 @@ docker compose up --build
 
 Open `http://localhost:8080`. The multi-stage image builds Vue with Node and the backend with .NET, then runs only the ASP.NET runtime as a non-root user. Health endpoints are `/health/live` and `/health/ready`.
 
+## Esra AI
+
+Esra stays off until the deployment sets an OpenAI-compatible chat endpoint. The browser never receives the API key. The same settings work for a commercial provider or a local agent such as Ollama.
+
+| Setting | Purpose | Example |
+| --- | --- | --- |
+| `EsrAi__BaseUrl` | API root, with no trailing path | `https://api.openai.com/v1` or `http://127.0.0.1:11434/v1` |
+| `EsrAi__Model` | Model or local agent name | `gpt-4o-mini` |
+| `EsrAi__ApiKey` | Credential. Omit it when the local agent does not require one | |
+| `EsrAi__CompletionsPath` | Path appended to the base URL | `chat/completions` |
+| `EsrAi__AuthHeader` | Header that carries the credential | `Authorization` |
+| `EsrAi__AuthScheme` | Scheme before the key. Empty sends the key as the whole header value | `Bearer` |
+
+```sh
+EsrAi__BaseUrl=http://127.0.0.1:11434/v1 EsrAi__Model=llama3.1 docker compose up --build
+```
+
+In Kubernetes, create a secret named `esr-ai` with `baseUrl`, `apiKey`, and `model`. The deployment reads those keys only when the secret exists. See [the API contract](docs/api.md) for the review response.
+
 ## Kubernetes
 
 Build and load `esr-demo:local` into your local cluster, or push it to your own registry and update the image:
@@ -149,6 +168,7 @@ UI sections share a typed, instance-local Vue injection context. No state is sha
 - Shop deferral sets `ESR Issued – Deferred`. Division Head must explicitly acknowledge that disposition before closing.
 - PDF export is a paginated engineering record with references, attributes, signatures, comments, audit trail, and embedded original attachments. JPEG and standard non-interlaced 8-bit PNG images are rendered on printable continuation pages. All original files are also embedded; WebP and other PNG variants are retained as originals with UI previews. The PDF is a demonstration layout, not a certified facility form.
 - Historical “AI” results use deterministic term overlap and a synthetic summary. They are not real generative or semantic search results and are labeled accordingly.
+- Esra AI is separate. A reviewer opens it from an **Esra AI** button on a request row. The API summarizes that ESR and returns similarity scores for other visible ESRs. The provider is whatever OpenAI-compatible endpoint the deployment configures.
 
 ## Source map
 

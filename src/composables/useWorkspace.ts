@@ -11,6 +11,7 @@ import type {
   Draft,
   EngineeringTemplate,
   EsrRecord,
+  EsraReview,
   FilePreview,
   HistoricalMatch,
   HistorySearch,
@@ -82,6 +83,9 @@ export function useWorkspace(
     draft = reactive<Draft>(emptyDraft()),
     form = reactive<RequestForm>(emptyRequest());
   const searchResult = ref<HistorySearch | null>(null),
+    esraId = ref<string | null>(null),
+    esraReview = ref<EsraReview | null>(null),
+    esraError = ref(""),
     preview = ref<FilePreview | null>(null),
     historySnapshot = ref<EsrRecord | null>(null);
   const comment = ref(""),
@@ -298,6 +302,25 @@ export function useWorkspace(
       if (name === "delete") navigate("workspace");
     });
   }
+  async function openEsra(target: EsrRecord) {
+    esraId.value = target.id;
+    esraReview.value = null;
+    esraError.value = "";
+    await run(async () => {
+      try {
+        esraReview.value = await api()<EsraReview>(`/records/${target.id}/esra`, {});
+      } catch (e) {
+        esraError.value =
+          e instanceof Error ? e.message : "Esra AI is unavailable.";
+        throw e;
+      }
+    });
+  }
+  function closeEsra() {
+    esraId.value = null;
+    esraReview.value = null;
+    esraError.value = "";
+  }
   async function findHistory() {
     await run(async () => {
       searchResult.value = await api()<HistorySearch>("/history/search", {
@@ -454,6 +477,9 @@ export function useWorkspace(
     draft,
     form,
     searchResult,
+    esraId,
+    esraReview,
+    esraError,
     preview,
     historySnapshot,
     comment,
@@ -482,6 +508,8 @@ export function useWorkspace(
     saveDraft,
     action,
     confirmAction,
+    openEsra,
+    closeEsra,
     findHistory,
     copyMatch,
     useMatch,

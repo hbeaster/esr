@@ -6,6 +6,12 @@ services:
       - "127.0.0.1:8080:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
+      EsrAi__BaseUrl: ${ESR_AI_BASE_URL:-}
+      EsrAi__Model: ${ESR_AI_MODEL:-}
+      EsrAi__ApiKey: ${ESR_AI_API_KEY:-}
+      EsrAi__CompletionsPath: ${ESR_AI_COMPLETIONS_PATH:-chat/completions}
+      EsrAi__AuthHeader: ${ESR_AI_AUTH_HEADER:-Authorization}
+      EsrAi__AuthScheme: ${ESR_AI_AUTH_SCHEME:-Bearer}
     read_only: true
     tmpfs:
       - /tmp

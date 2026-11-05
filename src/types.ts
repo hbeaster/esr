@@ -172,6 +172,18 @@ export interface HistorySearch {
   summary: string;
   matches: HistoricalMatch[];
 }
+export interface EsraMatch {
+  id: string;
+  serial: string | null;
+  title: string;
+  status: string;
+  similarity: number;
+  reason: string;
+}
+export interface EsraReview {
+  summary: string;
+  matches: EsraMatch[];
+}
 export interface FilePreview {
   name: string;
   type: string;

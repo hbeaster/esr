@@ -6,6 +6,8 @@ builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 
 var seed = JsonSerializer.Deserialize<StoreData>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "seed.json")), JsonConfig.Options)!;
 var workflow = new Workflow(seed); var identity = new DemoIdentity();
 builder.Services.AddSingleton(workflow); builder.Services.AddSingleton(identity);
+builder.Services.Configure<EsrAiOptions>(builder.Configuration.GetSection(EsrAiOptions.Section));
+builder.Services.AddHttpClient<EsraClient>(client => client.Timeout = TimeSpan.FromSeconds(45));
 var app = builder.Build();
 app.Use(async (context, next) =>
 {
@@ -28,6 +30,18 @@ Actor User(HttpContext c) => identity.Validate(c.Request.Headers.Authorization.T
 app.MapGet("/api/bootstrap", (HttpContext c) => { var a = User(c); lock (workflow.Sync) return Results.Ok(new { user = a, users = seed.Users, templates = seed.Templates, permissions = seed.Permissions, records = workflow.Visible(a).Select(Workflow.Public).ToArray() }); });
 app.MapGet("/api/lds", (HttpContext c, string jcn) => { User(c); return seed.Lds.TryGetValue(jcn, out var found) ? Results.Ok(found) : throw new RuleException("JCN not found. Try JCN-260184 or JCN-260207, or select N/A.", 404); });
 app.MapPost("/api/history/search", (HttpContext c, JsonObject d) => { var a = User(c); lock (workflow.Sync) return Results.Ok(workflow.Search(a, d)); });
+app.MapPost("/api/records/{id}/esra", async (HttpContext c, string id, EsraClient esra, CancellationToken ct) =>
+{
+    var a = User(c);
+    if (!esra.Enabled) throw new RuleException("Esra AI is not configured. Set EsrAi:BaseUrl and EsrAi:Model for this deployment.", 503);
+    EsrRecord current; List<EsrRecord> others;
+    lock (workflow.Sync)
+    {
+        current = workflow.Find(a, id);
+        others = workflow.Visible(a).Where(r => r.Id != id).OrderByDescending(r => r.Status == "ESR Closed").ThenByDescending(r => r.UpdatedAt).Take(12).ToList();
+    }
+    return Results.Ok(await esra.Review(current, others, ct));
+});
 app.MapPost("/api/permissions", (HttpContext c, JsonObject d) => { var a = User(c); lock (workflow.Sync) { workflow.SetPermission(a, d); return Results.Ok(seed.Permissions); } });
 app.MapPost("/api/records", (HttpContext c, JsonObject d) => { var a = User(c); lock (workflow.Sync) return Results.Ok(Workflow.Public(workflow.Create(a, d))); });
 app.MapGet("/api/records/{id}", (HttpContext c, string id) => { var a = User(c); lock (workflow.Sync) return Results.Ok(Workflow.Public(workflow.Find(a, id))); });

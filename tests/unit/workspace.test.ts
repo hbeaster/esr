@@ -16,6 +16,7 @@ import WorkflowActionForm from "../../src/components/WorkflowActionForm.vue";
 import RevisionHistory from "../../src/components/RevisionHistory.vue";
 import RecordFiles from "../../src/components/RecordFiles.vue";
 import RequestForm from "../../src/components/RequestForm.vue";
+import RequestWorkspace from "../../src/components/RequestWorkspace.vue";
 import Workspace from "../../src/Workspace.ce.vue";
 import WorkspaceDialogs from "../../src/components/WorkspaceDialogs.vue";
 
@@ -275,6 +276,34 @@ describe("typed workspace controller", () => {
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
     await flushPromises();
     expect(context.dialog.value).toBeNull();
+  });
+  it("opens Esra AI from a request row without sending provider credentials", async () => {
+    const review = {
+      summary: "Possible duplicate of a closed coupling ESR.",
+      matches: [
+        {
+          id: "other",
+          serial: "260041",
+          title: "Prior coupling repair",
+          status: "ESR Closed",
+          similarity: 88,
+          reason: "Same wear pattern",
+        },
+      ],
+    };
+    const fetch = vi.fn().mockResolvedValue(jsonResponse(review));
+    vi.stubGlobal("fetch", fetch);
+    const { wrapper, context } = mountSection(RequestWorkspace);
+    expect(wrapper.get("button.esra-button").text()).toBe("Esra AI");
+    await context.openEsra(context.state.records[0]);
+    expect(fetch).toHaveBeenCalledWith(
+      `/api/records/${context.state.records[0].id}/esra`,
+      expect.objectContaining({ method: "POST", body: "{}" }),
+    );
+    expect(String(fetch.mock.calls[0][1].body)).not.toContain("apiKey");
+    expect(context.esraReview.value?.matches[0].similarity).toBe(88);
+    await flushPromises();
+    expect(wrapper.get(".esra-pane").text()).toContain("88% similarity");
   });
   it("loads a new identity even when its provider changes during bootstrap", async () => {
     let resolveFirst: (response: Response) => void = () => {};

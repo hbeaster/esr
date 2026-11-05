@@ -11,7 +11,17 @@ const {
   owner,
   openRecord,
   newRequest,
+  busy,
+  esraId,
+  esraReview,
+  esraError,
+  openEsra,
+  closeEsra,
 } = useWorkspaceContext();
+function openMatch(id: string) {
+  const found = state.records.find((record) => record.id === id);
+  if (found) openRecord(found);
+}
 </script>
 
 <template>
@@ -99,150 +109,228 @@ const {
         View approval queue <span>→</span>
       </button>
     </section>
-    <section class="card workspace-card">
-      <div class="table-title">
-        <div>
-          <h2>
-            {{
-              scope === "history"
-                ? "Resolved engineering records"
-                : scope === "mine"
-                  ? "Assigned to you & your requests"
-                  : "Request workspace"
-            }}
-          </h2>
-          <span>{{ filtered.length }} records
-            <span class="muted">· Live demo data</span></span>
+    <div :class="['workspace-split', { reviewing: !!esraId }]">
+      <section class="card workspace-card">
+        <div class="table-title">
+          <div>
+            <h2>
+              {{
+                scope === "history"
+                  ? "Resolved engineering records"
+                  : scope === "mine"
+                    ? "Assigned to you & your requests"
+                    : "Request workspace"
+              }}
+            </h2>
+            <span>{{ filtered.length }} records
+              <span class="muted">· Live demo data</span></span>
+          </div>
+          <span class="small-tag">{{ state.user.site.toUpperCase() }}</span>
         </div>
-        <span class="small-tag">{{ state.user.site.toUpperCase() }}</span>
-      </div>
-      <div class="filters">
-        <label class="search"><span>⌕</span><input
-          v-model="query"
-          aria-label="Search requests"
-          placeholder="Search serial, title, JCN, or attribute…"
-        ><kbd>⌕</kbd></label><select
-          v-model="status"
-          aria-label="Filter by status"
-        >
-          <option value="">
-            All statuses
-          </option>
-          <option
-            v-for="step in [
-              ...steps.slice(0, 4),
-              'ESR Issued – Deferred',
-              'ESR Closed',
-            ]"
-            :key="step"
+        <div class="filters">
+          <label class="search"><span>⌕</span><input
+            v-model="query"
+            aria-label="Search requests"
+            placeholder="Search serial, title, JCN, or attribute…"
+          ><kbd>⌕</kbd></label><select
+            v-model="status"
+            aria-label="Filter by status"
           >
-            {{ step }}
-          </option>
-        </select><button
-          v-if="status || query"
-          class="text-button"
-          @click="
-            status = '';
-            query = '';
-          "
-        >
-          Clear
-        </button>
-      </div>
-      <div class="table-scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>REQUEST / SERIAL</th>
-              <th>STATUS</th>
-              <th>ENGINEER</th>
-              <th>ATTRIBUTES</th>
-              <th>UPDATED</th>
-              <th><span class="sr-only">Open</span></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="r in filtered"
-              :key="r.id"
+            <option value="">
+              All statuses
+            </option>
+            <option
+              v-for="step in [
+                ...steps.slice(0, 4),
+                'ESR Issued – Deferred',
+                'ESR Closed',
+              ]"
+              :key="step"
             >
-              <td>
-                <button
-                  class="record-link"
-                  @click="openRecord(r)"
-                >
-                  <span class="serial">{{ r.serial || "PENDING ASSIGNMENT" }}
-                    <span v-if="r.revision">· REV {{ r.serial?.slice(6) }}</span></span><strong>{{ r.title }}</strong><span class="muted">{{ r.jcn }}
-                    <span v-if="r.rejected">· Returned to requestor</span></span>
-                </button>
-              </td>
-              <td>
-                <span :class="['badge', statusTone(r.status)]"><span class="status-dot" />{{ r.status }}</span>
-              </td>
-              <td>
-                <div
-                  v-if="r.engineerId"
-                  class="person"
-                >
-                  <span class="avatar mini">{{
-                    initials(owner(r.engineerId))
-                  }}</span><span>{{ owner(r.engineerId) }}</span>
-                </div>
-                <span
-                  v-else
-                  class="muted"
-                >— Unassigned</span>
-              </td>
-              <td>
-                <div class="tags">
+              {{ step }}
+            </option>
+          </select><button
+            v-if="status || query"
+            class="text-button"
+            @click="
+              status = '';
+              query = '';
+            "
+          >
+            Clear
+          </button>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>REQUEST / SERIAL</th>
+                <th>STATUS</th>
+                <th>ENGINEER</th>
+                <th>ATTRIBUTES</th>
+                <th>UPDATED</th>
+                <th><span class="sr-only">Open</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="r in filtered"
+                :key="r.id"
+                :class="{ 'esra-selected': esraId === r.id }"
+              >
+                <td>
+                  <button
+                    class="record-link"
+                    @click="openRecord(r)"
+                  >
+                    <span class="serial">{{ r.serial || "PENDING ASSIGNMENT" }}
+                      <span v-if="r.revision">· REV {{ r.serial?.slice(6) }}</span></span><strong>{{ r.title }}</strong><span class="muted">{{ r.jcn }}
+                      <span v-if="r.rejected">· Returned to requestor</span></span>
+                  </button>
+                </td>
+                <td>
+                  <span :class="['badge', statusTone(r.status)]"><span class="status-dot" />{{ r.status }}</span>
+                </td>
+                <td>
+                  <div
+                    v-if="r.engineerId"
+                    class="person"
+                  >
+                    <span class="avatar mini">{{
+                      initials(owner(r.engineerId))
+                    }}</span><span>{{ owner(r.engineerId) }}</span>
+                  </div>
                   <span
-                    v-if="r.dfs === 'yes'"
-                    class="tag special"
-                  >DFS</span><span
-                    v-if="r.tvd === 'yes'"
-                    class="tag special"
-                  >TVD</span><span
-                    v-for="a in r.attributes"
-                    :key="a"
-                    class="tag"
-                  >{{
-                    a
-                  }}</span><span
-                    v-if="
-                      !r.attributes.length && r.dfs !== 'yes' && r.tvd !== 'yes'
-                    "
+                    v-else
                     class="muted"
-                  >—</span>
-                </div>
-              </td>
-              <td class="nowrap muted">
-                {{ date(r.updatedAt) }}
-              </td>
-              <td>
-                <button
-                  class="icon-button"
-                  :aria-label="`Open ${r.title}`"
-                  @click="openRecord(r)"
-                >
-                  →
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div
-        v-if="!filtered.length"
-        class="empty"
+                  >— Unassigned</span>
+                </td>
+                <td>
+                  <div class="tags">
+                    <span
+                      v-if="r.dfs === 'yes'"
+                      class="tag special"
+                    >DFS</span><span
+                      v-if="r.tvd === 'yes'"
+                      class="tag special"
+                    >TVD</span><span
+                      v-for="a in r.attributes"
+                      :key="a"
+                      class="tag"
+                    >{{
+                      a
+                    }}</span><span
+                      v-if="
+                        !r.attributes.length && r.dfs !== 'yes' && r.tvd !== 'yes'
+                      "
+                      class="muted"
+                    >—</span>
+                  </div>
+                </td>
+                <td class="nowrap muted">
+                  {{ date(r.updatedAt) }}
+                </td>
+                <td>
+                  <div class="row-actions">
+                    <button
+                      type="button"
+                      class="esra-button"
+                      :disabled="busy && esraId === r.id"
+                      @click="openEsra(r)"
+                    >
+                      Esra AI
+                    </button>
+                    <button
+                      type="button"
+                      class="icon-button"
+                      :aria-label="`Open ${r.title}`"
+                      @click="openRecord(r)"
+                    >
+                      →
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div
+          v-if="!filtered.length"
+          class="empty"
+        >
+          <h3>No requests found</h3>
+          <p>Adjust your filters or create a new request.</p>
+        </div>
+        <footer class="table-footer">
+          <span>Showing {{ filtered.length }} of
+            {{ state.records.length }} accessible requests</span><span><span class="live-dot" /> All changes are recorded</span>
+        </footer>
+      </section>
+      <aside
+        v-if="esraId"
+        class="esra-pane"
+        aria-label="Esra AI"
       >
-        <h3>No requests found</h3>
-        <p>Adjust your filters or create a new request.</p>
-      </div>
-      <footer class="table-footer">
-        <span>Showing {{ filtered.length }} of
-          {{ state.records.length }} accessible requests</span><span><span class="live-dot" /> All changes are recorded</span>
-      </footer>
-    </section>
+        <header>
+          <div>
+            <span class="eyebrow">ESRA AI</span>
+            <h2>{{ state.records.find((record) => record.id === esraId)?.serial || "Unassigned request" }}</h2>
+          </div>
+          <button
+            type="button"
+            class="icon-button"
+            aria-label="Close Esra AI"
+            @click="closeEsra"
+          >
+            ×
+          </button>
+        </header>
+        <p>{{ state.records.find((record) => record.id === esraId)?.title }}</p>
+        <p
+          v-if="busy && !esraReview"
+          role="status"
+        >
+          Reviewing this ESR…
+        </p>
+        <p
+          v-if="esraError"
+          class="alert error"
+          role="alert"
+        >
+          {{ esraError }}
+        </p>
+        <template v-if="esraReview">
+          <h3>Summary</h3>
+          <p>{{ esraReview.summary }}</p>
+          <h3>Similar ESRs</h3>
+          <article
+            v-for="match in esraReview.matches"
+            :key="match.id"
+            class="match"
+          >
+            <div>
+              <span class="serial">{{ match.serial || "Pending assignment" }}</span>
+              <h3>{{ match.title }}</h3>
+              <span class="badge green">{{ match.similarity }}% similarity</span>
+              <p>{{ match.reason }}</p>
+            </div>
+            <button
+              type="button"
+              class="text-button"
+              @click="openMatch(match.id)"
+            >
+              Open ESR
+            </button>
+          </article>
+          <p v-if="!esraReview.matches.length">
+            No similar ESRs were returned.
+          </p>
+          <p class="muted">
+            Similarity is a review aid. It does not decide that an ESR is a duplicate.
+          </p>
+        </template>
+      </aside>
+    </div>
     <div class="workspace-footer">
       <span>TRIDENT REFIT FACILITY <span> / </span> ENGINEERING SERVICES</span><span>Synthetic demonstration · v0.1</span>
     </div>

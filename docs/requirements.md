@@ -26,6 +26,7 @@ This is a synthetic, end-to-end demonstration. “Implemented” describes demo 
 | Division closeout / deferred | Final signature; explicit deferred acknowledgement | Domain tests; full browser flow |
 | Revisions A–ZZ / history | Copy prior content, frozen snapshots, fresh signatures | Boundary/immutability tests; browser historical view |
 | Historical records | Filterable closed records and revision snapshots | Frontend filter tests; browser history |
+| Esra AI review | Row action opens a summary and similarity scores from a deployment-configured OpenAI-compatible provider | Unconfigured HTTP test; provider client test |
 | Cross-TRF permissions | Admin assigns none/read/review; no cross-facility editing | Domain permission tests; browser cross-facility review |
 | Printable PDF | Paginated metadata, resolution, rationale, audit, signatures, embedded originals | PDF structure/content unit test; HTTP download; browser download |
 | Light responsive UI | Scoped styles, mobile navigation, keyboard-visible focus, modal focus management | Browser mobile overflow assertion; visual review |

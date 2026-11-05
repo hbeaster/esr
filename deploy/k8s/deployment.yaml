@@ -36,6 +36,25 @@ spec:
               value: "8080"
             - name: DOTNET_EnableDiagnostics
               value: "0"
+            # Optional Esra provider. Omit the secret and the feature reports that it is not configured.
+            - name: EsrAi__BaseUrl
+              valueFrom:
+                secretKeyRef:
+                  name: esr-ai
+                  key: baseUrl
+                  optional: true
+            - name: EsrAi__Model
+              valueFrom:
+                secretKeyRef:
+                  name: esr-ai
+                  key: model
+                  optional: true
+            - name: EsrAi__ApiKey
+              valueFrom:
+                secretKeyRef:
+                  name: esr-ai
+                  key: apiKey
+                  optional: true
           resources:
             requests:
               cpu: 100m

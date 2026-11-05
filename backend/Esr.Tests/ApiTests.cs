@@ -33,6 +33,14 @@ public sealed class ApiTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/api/lds?jcn=unknown")).StatusCode);
         var search = await client.PostAsJsonAsync("/api/history/search", new { condition = "Uneven pump coupling wear" }); var result = await search.Content.ReadFromJsonAsync<JsonObject>(); Assert.NotEmpty(result!["matches"]!.AsArray());
     }
+    [Fact] public async Task EsraReportsWhenTheDeploymentHasNoProvider()
+    {
+        await SignIn("engineer");
+        var response = await client.PostAsJsonAsync("/api/records/demo-1/esra", new { });
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<JsonObject>();
+        Assert.Contains("not configured", body!["error"]!.GetValue<string>());
+    }
     [Fact] public async Task AttachmentRetainsOriginal()
     {
         await SignIn("engineer");
