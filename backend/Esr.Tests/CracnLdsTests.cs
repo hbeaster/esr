@@ -54,7 +54,7 @@ public sealed class CracnLdsTests
         Assert.Equal("Inspect auxiliary seawater pump coupling", lds.WorkStatement);
         Assert.Equal("A014", lds.Refit);
         Assert.Equal("ASW-P-02 / TSN-10482", lds.Component);
-        Assert.Equal("Auxiliary machinery space", lds.Location);
+        Assert.Equal("FWD Compartment, lower level, frame 38, starboard, outboard", lds.Location);
         Assert.Equal("6286FCA00000", lds.Swbs);
         Assert.Equal(["/api/v1/jobs/21036WX010184", "/api/v1/boats/21036/configurationItems/6286FCA00000"], handler.Requests.Select(r => r.RequestUri!.AbsolutePath));
         Assert.All(handler.Requests, r => Assert.Equal("esr-demo-service-token", r.Headers.Authorization?.Parameter));
@@ -79,5 +79,9 @@ public sealed class CracnFactory : WebApplicationFactory<Program>
     // The shipped seed.json has no records, so API tests load the sample data.
     protected override void ConfigureWebHost(IWebHostBuilder builder) =>
         builder.UseSetting("Demo:DataFile", Path.Combine(AppContext.BaseDirectory, "test-data.json")).UseSetting("Cracn:BaseUrl", "http://cracn.test").ConfigureTestServices(s =>
-            s.AddHttpClient<ILdsSource, CracnLdsSource>().ConfigurePrimaryHttpMessageHandler(() => new CracnDataHandler()));
+        {
+            s.AddHttpClient<ILdsSource, CracnLdsSource>().ConfigurePrimaryHttpMessageHandler(() => new CracnDataHandler());
+            // Never spend a developer's real Chat__ApiKey from the test run.
+            s.AddSingleton<IChatModel, MockChatModel>();
+        });
 }

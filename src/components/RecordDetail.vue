@@ -6,7 +6,14 @@ import RevisionHistory from "./RevisionHistory.vue";
 import RecordActivity from "./RecordActivity.vue";
 import WorkflowActions from "./WorkflowActions.vue";
 import SignatureRecord from "./SignatureRecord.vue";
-import { esrRevision, plainText, steps, statusTone } from "../presentation";
+import EquipmentVisual from "./EquipmentVisual.vue";
+import WorkflowTimeline from "./WorkflowTimeline.vue";
+import SplitFlap from "./SplitFlap.vue";
+import RecordStamp from "./RecordStamp.vue";
+import PresenceStack from "./PresenceStack.vue";
+import { computed, ref, watch } from "vue";
+import { date, esrRevision, plainText, statusTone } from "../presentation";
+import type { WorkflowStatus } from "../types";
 import { useWorkspaceContext } from "../composables/workspaceContext";
 const {
   state,
@@ -20,7 +27,68 @@ const {
   navigate,
   action,
   downloadPdf,
+  viewers,
 } = useWorkspaceContext();
+/** Other people on this record right now (from the optional live stream). */
+const onThisRecord = computed(() =>
+  viewers.value.filter(
+    (v) => v.recordId === record.value?.id && v.view === "record",
+  ),
+);
+const viewingText = computed(() => {
+  const names = [...new Set(onThisRecord.value.map((v) => v.name))];
+  if (!names.length) return "";
+  if (names.length === 1) return `${names[0]} is viewing`;
+  if (names.length === 2) return `${names[0]} and ${names[1]} are viewing`;
+  return `${names[0]} and ${names.length - 1} others are viewing`;
+});
+
+// Ceremony for milestones reached while this record is on screen: a stamp
+// when it is issued or closed, and a flip when its ESR number changes.
+interface Stamp {
+  key: number;
+  label: string;
+  tone: "issued" | "deferred" | "closed";
+  serial: string | null;
+  stampedAt: string;
+}
+const stamp = ref<Stamp | null>(null);
+const shaking = ref(false);
+const flipSerial = ref(false);
+let stampKey = 0;
+const milestone = (
+  status: WorkflowStatus,
+  before: WorkflowStatus,
+): Pick<Stamp, "label" | "tone"> | null => {
+  if (status === "ESR Closed" && before !== "ESR Closed")
+    return { label: "ESR Closed", tone: "closed" };
+  if (status === "ESR Issued – Deferred" && before !== status)
+    return { label: "Deferred", tone: "deferred" };
+  if (status === "ESR Issued" && before === "Awaiting Approval")
+    return { label: "ESR Issued", tone: "issued" };
+  return null;
+};
+watch(
+  () =>
+    record.value && !historySnapshot.value
+      ? ([record.value.id, record.value.status, record.value.serial] as const)
+      : null,
+  (now, before) => {
+    flipSerial.value = false;
+    if (!now || !before || now[0] !== before[0]) return;
+    flipSerial.value = !!now[2] && now[2] !== before[2];
+    const reached = milestone(now[1], before[1]);
+    if (!reached) return;
+    stamp.value = {
+      key: ++stampKey,
+      ...reached,
+      serial: now[2],
+      stampedAt: date(new Date().toISOString()),
+    };
+    shaking.value = false;
+    requestAnimationFrame(() => (shaking.value = true));
+  },
+);
 </script>
 
 <template>
@@ -31,31 +99,65 @@ const {
     >
       ← Back to requests
     </button>
-    <div class="page-heading detail-heading">
-      <div>
-        <div :class="['detail-serial', { pending: !record.serial }]">
-          {{ record.serial || "Awaiting ESR number" }}
-          <span
-            v-if="esrRevision(record.serial) && esrRevision(record.serial) !== 'A'"
-            class="rev"
-          >Revision {{ esrRevision(record.serial) }}</span>
-        </div>
-        <h1>{{ record.title || plainText(record.condition) }}</h1>
-        <div class="detail-meta">
-          <span :class="['badge', statusTone(record.status)]">{{
-            record.status
-          }}</span><span>{{ record.site }} · Shop {{ record.shop }}</span><span
-            v-for="a in [
-              ...record.attributes,
-              ...(record.dfs === 'yes' ? ['DFS'] : []),
-              ...(record.tvd === 'yes' ? ['TVD'] : []),
-            ]"
-            :key="a"
-            :class="[
-              'tag',
-              { critical: a === 'SUBSAFE', special: a === 'DFS' || a === 'TVD' },
-            ]"
-          >{{ a }}</span>
+    <div :class="['page-heading', 'detail-heading', { shaking }]">
+      <RecordStamp
+        v-if="stamp"
+        :key="stamp.key"
+        :label="stamp.label"
+        :tone="stamp.tone"
+        :serial="stamp.serial"
+        :stamped-at="stamp.stampedAt"
+        @done="stamp = null"
+      />
+      <div
+        v-if="stamp"
+        class="sr-only"
+        aria-live="polite"
+      >
+        {{ stamp.label }}: {{ stamp.serial }}
+      </div>
+      <div class="detail-identity">
+        <EquipmentVisual :record="record" />
+        <div class="detail-text">
+          <div :class="['detail-serial', { pending: !record.serial }]">
+            <SplitFlap
+              :value="record.serial || 'Awaiting ESR number'"
+              :animate="flipSerial"
+            />
+            <span
+              v-if="
+                esrRevision(record.serial) && esrRevision(record.serial) !== 'A'
+              "
+              class="rev"
+            >Revision {{ esrRevision(record.serial) }}</span>
+          </div>
+          <h1>{{ record.title || plainText(record.condition) }}</h1>
+          <div class="detail-meta">
+            <span :class="['badge', statusTone(record.status)]">{{
+              record.status
+            }}</span><span>{{ record.site }} · Shop {{ record.shop }}</span><span
+              v-for="a in [
+                ...record.attributes,
+                ...(record.dfs === 'yes' ? ['DFS'] : []),
+                ...(record.tvd === 'yes' ? ['TVD'] : []),
+              ]"
+              :key="a"
+              :class="[
+                'tag',
+                {
+                  critical: a === 'SUBSAFE',
+                  special: a === 'DFS' || a === 'TVD',
+                },
+              ]"
+            >{{ a }}</span><span
+              v-if="viewingText"
+              class="viewing"
+            ><PresenceStack
+              :viewers="onThisRecord"
+              :max="3"
+              label="Viewing this record"
+            /><span>{{ viewingText }}</span></span>
+          </div>
         </div>
       </div>
       <div class="action-row">
@@ -112,31 +214,7 @@ const {
       <span><strong>Returned to the requestor.</strong> See the review comments
         before resubmitting.</span>
     </div>
-    <div
-      class="stepper"
-      aria-label="Workflow progress"
-    >
-      <div
-        v-for="(step, i) in steps"
-        :key="step"
-        :class="{
-          done:
-            i <
-            steps.indexOf(
-              record.status.startsWith('ESR Issued')
-                ? 'ESR Issued'
-                : record.status,
-            ),
-          current:
-            step ===
-            (record.status.startsWith('ESR Issued')
-              ? 'ESR Issued'
-              : record.status),
-        }"
-      >
-        <span>{{ i + 1 }}</span><strong>{{ step }}</strong>
-      </div>
-    </div>
+    <WorkflowTimeline />
     <div
       class="tabs"
       role="tablist"
@@ -198,8 +276,48 @@ const {
   text-underline-offset: 3px;
 }
 .detail-heading {
+  position: relative;
   align-items: flex-start;
   margin-bottom: var(--sp-5);
+}
+.detail-heading.shaking {
+  animation: shake 0.32s ease-out 0.24s;
+}
+@keyframes shake {
+  20% {
+    transform: translate(-3px, 2px);
+  }
+  45% {
+    transform: translate(3px, -2px);
+  }
+  70% {
+    transform: translate(-2px, 1px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .detail-heading.shaking {
+    animation: none;
+  }
+}
+.viewing {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 2px 10px 2px 4px;
+  border: 1px solid var(--esr-accent-soft);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--esr-accent-text);
+  font-weight: 600;
+}
+.detail-identity {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+.detail-text {
+  min-width: 0;
 }
 .detail-serial {
   display: flex;
@@ -239,70 +357,6 @@ const {
   font-size: var(--fs-sm);
   color: var(--ink-3);
   flex-wrap: wrap;
-}
-.stepper {
-  display: flex;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--surface);
-  padding: var(--sp-4) var(--sp-5);
-  margin-bottom: var(--sp-6);
-  gap: var(--sp-3);
-}
-.stepper > div {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  color: var(--ink-4);
-  font-size: var(--fs-sm);
-  min-width: 0;
-}
-.stepper > div:not(:last-child)::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: var(--line);
-  min-width: var(--sp-3);
-}
-.stepper > div > span {
-  width: 24px;
-  height: 24px;
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--fs-xs);
-  font-weight: 700;
-  flex-shrink: 0;
-}
-.stepper strong {
-  font-weight: 500;
-  white-space: nowrap;
-}
-.stepper .done {
-  color: var(--ink-2);
-}
-.stepper .done > span {
-  background: var(--green-bg);
-  border-color: var(--green-line);
-  color: var(--green-text);
-}
-.stepper .done:not(:last-child)::after {
-  background: var(--green-line);
-}
-.stepper .current {
-  color: var(--esr-accent-text);
-}
-.stepper .current strong {
-  font-weight: 800;
-}
-.stepper .current > span {
-  background: var(--esr-accent);
-  color: #fff;
-  border-color: var(--esr-accent);
-  box-shadow: 0 0 0 3px var(--esr-accent-soft);
 }
 .tabs {
   display: flex;
@@ -363,9 +417,6 @@ const {
   .detail-grid {
     grid-template-columns: minmax(0, 1fr) 260px;
   }
-  .stepper > div:not(:last-child)::after {
-    display: none;
-  }
 }
 @container (max-width: 850px) {
   .detail-grid {
@@ -378,14 +429,6 @@ const {
   .detail-heading {
     flex-wrap: wrap;
   }
-  .stepper {
-    overflow: auto;
-    padding: var(--sp-3);
-  }
-  .stepper > div {
-    min-width: max-content;
-    font-size: var(--fs-xs);
-  }
 }
 @container (max-width: 560px) {
   .record-aside {
@@ -396,6 +439,9 @@ const {
   }
   .detail-heading h1 {
     font-size: 20px;
+  }
+  .detail-identity {
+    gap: var(--sp-3);
   }
   .tabs {
     gap: var(--sp-5);

@@ -82,15 +82,48 @@ JCN context (work statement, refit, component, location) comes from the **CRACN 
 
 `mocks/cracn/` turns the spec into a stateful mock server. It routes every operation in the spec. It serves list, get, create, update and delete from in-memory state seeded with `mocks/cracn/data.json`, supports `limit`, `offset`, `filters` and `orderBy` (as JSON query values), allows every `auth/*` check, and generates responses for other operations from their schemas. It accepts any non-empty bearer token, and `POST /__mock/reset` restores the seed data. The data is generated deterministically from the spec, with the demo records in `mocks/cracn/curated.mjs` merged in. After changing either the spec or that file, run `npm run mock:generate`; `npm run mock:check` (part of `validate`) fails when `data.json` is stale.
 
+### Assistant chat and API keys
+
+The **Resolution** tab has an assistant chat for the engineer drafting an `In Process` ESR. The browser never sees a provider key. The component calls `POST /api/assistant/chat`, and the backend adds the record context and forwards the conversation to any OpenAI-compatible Chat Completions endpoint.
+
+| Setting | Environment variable | Default |
+| --- | --- | --- |
+| `Chat:ApiKey` | `Chat__ApiKey` | empty, which serves a labeled mock reply |
+| `Chat:BaseUrl` | `Chat__BaseUrl` | `https://api.openai.com/v1` |
+| `Chat:Model` | `Chat__Model` | `gpt-4o-mini` |
+| `Chat:TimeoutSeconds` | `Chat__TimeoutSeconds` | `60` |
+
+To try it with an OpenAI key, put it in `.env` (copy `.env.example`, set `CHAT_API_KEY`). `npm run dev:api` loads `.env` through `scripts/dev-api.mjs`, the same file Docker Compose reads, and logs whether the chat uses a real model or the mock without printing the key. A key in the shell still wins:
+
+```sh
+Chat__ApiKey=sk-proj-... npm run dev:api
+```
+
+`npm run dev` reads the same `.env`, so with **Use fake data** on, the chat also uses the real model. Simulated records live only in the dev server, so the dev server grounds the chat in the simulated record and calls the provider itself (`host/simulated/chat.ts`, mirroring `backend/Esr.Api/Chat.cs`). The key stays in the dev server process, and builds never include it. Without a key, the fake-data chat gives a labeled simulated reply. Both servers log which mode they use at startup, without printing the key.
+
+The end-to-end tests force an empty key on the API and dev server they start, so they always use the mock. Outside CI, Playwright reuses servers already listening on ports 5080 and 5173, and those keep whatever key they started with. Stop a keyed `dev:api` or `dev` before `npm run test:e2e` to avoid real model calls.
+
+Another provider only needs a different base URL and model, for example `Chat__BaseUrl=https://api.anthropic.com/v1/` with an Anthropic key, or `Chat__BaseUrl=http://localhost:11434/v1` for a local Ollama. Keep keys in the environment or a secret store, never in committed files. Backend tests always use the mock, even when `Chat__ApiKey` is set. In Kubernetes, put the key in a Secret and reference it from the `esr` container's `env`.
+
 The workspace starts empty. Use the identity selector above the workspace to follow each role. Start with **Requestor**, create a request, switch to **Supervisor** to assign it, then **Engineer**, **Supervisor**, **Shop**, and **Division Head** for the full workflow. Administrator can grant cross-TRF review and delegated signatures. Demo JCNs are `21036WX010184` and `21036WX020207`; every other job in the mock data (for example `71204POAH7469`) also resolves, and `N/A` is supported.
 
 A host-only build is available with `npm run build:host`, producing `dist/host/`. The Docker build copies this into ASP.NET's `wwwroot` so one server serves both the host and API.
 
 ### Simulated data (dev only)
 
-With `npm run dev`, the top-right **Use fake data** button is the only way to see pre-populated data. It switches the workspace to a generated dataset of 60 records and 3 templates, covering every workflow status, returned requests, deferrals, revisions, attachments and long text. An amber **SIMULATED DATA** badge shows while it is on, and the choice survives a reload. Select **Use API data** to switch back.
+With `npm run dev`, the top-right **Use fake data** button is the only way to see pre-populated data. It switches the workspace to a generated dataset of 60 records and 3 templates, covering every workflow status, returned requests, deferrals, revisions, attachments and long text. Each simulated job has a location in the standard nautical format (compartment, level, frame, port or starboard, inboard or outboard; see `docs/api.md`), and together they cover every level of the FWD Compartment, Missile Compartment, and Engine Room. About four months of history ends yesterday: most Bangor ESRs are closed out, and 14 stay open with a mix of on-track, aging, and stale work (`openBangorStages` in `host/simulated/data.ts`). Dates are relative to the current day, so that mix stays the same whenever you look. An amber **SIMULATED DATA** badge shows while it is on, and the choice survives a reload. Select **Use API data** to switch back.
 
-The dataset comes from the Vite dev server, so the .NET API and CRACN mock do not need to be running. Fake mode is read-only: workflow actions and PDF export show an error explaining this, because those rules and the PDF generator live in the backend. The button, badge and dataset are not included in production host builds or the npm package.
+The dataset comes from the Vite dev server. What fake mode can do depends on whether `npm run dev:api` is running:
+
+| | `npm run dev` only | With `npm run dev:api` |
+| --- | --- | --- |
+| Browse, filter, replay, dive, watch floor | Yes | Yes |
+| Sign, submit, approve, close, revise, new requests | No: actions show a read-only error | Yes, through the real workflow |
+| PDF export, live push and presence | No | Yes |
+
+`npm run dev:api` also starts a sandbox copy of the API on port 5081 (Development, with `Demo:AcceptSimulatedData`). The first fake-data request loads the 60 simulated records into it, and the dev server then forwards every fake-data request there. Every rule runs in `Workflow.cs`, so nothing is duplicated in the browser or dev server. New ESR numbers continue after the highest simulated one. The sandbox keeps data in memory: changes survive a dev-server restart but reset when `npm run dev:api` restarts. Set `ESR_SIMULATED_API=off` to skip the sandbox, or point it elsewhere with `ESR_SIMULATED_API=<url>`. New requests on fake data can use the CRACN mock's JCNs or N/A; the simulated-only JCNs are not in the mock.
+
+The button, badge, dataset, and sandbox are not included in production host builds or the npm package. The sandbox endpoint only exists in Development or Testing with the flag set, so Compose and Kubernetes never expose it. The end-to-end tests keep fake mode read-only (`ESR_SIMULATED_API=off`).
 
 ## Docker
 
@@ -100,6 +133,8 @@ docker run --rm -p 127.0.0.1:8080:8080 esr-demo:local
 # Or:
 docker compose up --build
 ```
+
+To enable the assistant chat under Compose, copy `.env.example` to `.env` and set `CHAT_API_KEY`. Compose reads `.env` and passes the chat settings to the API container. `.env` is git-ignored. Without a key, the chat answers with the labeled mock.
 
 Open `http://localhost:8080`. Compose also builds and starts the CRACN mock (`mocks/cracn/Dockerfile`) and points the backend at it. With plain `docker run`, pass `-e Cracn__BaseUrl=…` for a reachable CRACN, otherwise JCN lookups fail and only `N/A` requests can be submitted. The multi-stage image builds Vue with Node and the backend with .NET, then runs only the ASP.NET runtime as a non-root user. Health endpoints are `/health/live` and `/health/ready`.
 
@@ -165,6 +200,7 @@ UI sections share a typed, instance-local Vue injection context. No state is sha
 - Shop deferral sets `ESR Issued – Deferred`. Division Head must explicitly acknowledge that disposition before closing.
 - PDF export is a paginated engineering record with references, attributes, signatures, comments, audit trail, and embedded original attachments. JPEG and standard non-interlaced 8-bit PNG images are rendered on printable continuation pages. All original files are also embedded; WebP and other PNG variants are retained as originals with UI previews. The PDF is a demonstration layout, not a certified facility form.
 - Historical “AI” results use deterministic term overlap and a synthetic summary. They are not real generative or semantic search results and are labeled accordingly.
+- Assistant chat is real generative AI only when the API has a provider key. The key stays server-side, the server owns the system prompt, and chat replies enter the draft only when the engineer clicks to add them.
 
 ## Source map
 
@@ -180,9 +216,10 @@ UI sections share a typed, instance-local Vue injection context. No state is sha
 | `src/types.ts` | Shared domain DTOs and public component types |
 | `src/index.ts` | Custom element registration and package exports |
 | `host/main.ts` | Demo-only identity selector and host initialization |
-| `host/simulated/` | Dev-only fake dataset, read-only API, Vite plugin, and toggle |
+| `host/simulated/` | Dev-only fake dataset, read-only stand-in API, writable sandbox proxy, Vite plugin, and toggle |
 | `backend/Esr.Api/Workflow.cs` | Authorization, transitions, revisions, validation |
 | `backend/Esr.Api/DemoIdentity.cs` | Ephemeral signed demo JWTs |
+| `backend/Esr.Api/Chat.cs` | Assistant chat prompt, provider adapter, and mock |
 | `backend/Esr.Api/PdfExport.cs` | Paginated PDF and embedded attachments |
 | `backend/Esr.Tests/` | Domain and HTTP integration tests, with sample data in `test-data.json` |
 | `tests/unit/` | Vitest and Vue Test Utils unit tests |

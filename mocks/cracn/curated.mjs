@@ -38,14 +38,14 @@ export const curated = {
       equipmentName: "ASW-P-02",
       equipmentSerialNumber: "TSN-10482",
       eic: "AF5A000",
-      location: "Auxiliary machinery space",
+      location: "FWD Compartment, lower level, frame 38, starboard, outboard",
     },
     {
       hsc: "4521VLV21400",
       equipmentName: "VLV-214",
       equipmentSerialNumber: "TSN-20871",
       eic: "VA21400",
-      location: "Forward equipment space",
+      location: "Missile Compartment, third level, frame 72, port, inboard",
     },
   ],
   "/api/v1/jobs": [

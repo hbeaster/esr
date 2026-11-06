@@ -1,8 +1,13 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import {
+  agingDescription,
   esrRevision,
+  formatDuration,
+  statusAge,
+  stepOf,
   esrTableColumns,
+  placeLabel,
   initials,
   date,
   plainText,
@@ -12,17 +17,43 @@ import {
 } from "../presentation";
 import type { EsrTableColumnId, SortDirection } from "../presentation";
 import { useWorkspaceContext } from "../composables/workspaceContext";
+import HullHeatmap from "./HullHeatmap.vue";
+import FlowChart from "./FlowChart.vue";
+import { useNow } from "../composables/useNow";
 const {
   state,
   scope,
   query,
   status,
+  place,
+  watchFloor,
+  fleet,
+  fleetNow,
   filtered,
   counts,
   owner,
   openRecord,
   newRequest,
 } = useWorkspaceContext();
+const now = useNow();
+const ages = computed(
+  () =>
+    new Map(state.records.map((r) => [r.id, statusAge(r, now.value)])),
+);
+/** Stale records per stepper step, for the stat card triage line. Follows the fleet replay. */
+const staleCounts = computed(() => {
+  const result: Record<string, number> = {};
+  for (const r of fleet.value)
+    if (statusAge(r, fleetNow.value)?.tone === "stale")
+      result[stepOf(r.status)] = (result[stepOf(r.status)] || 0) + 1;
+  return result;
+});
+const tableCard = ref<HTMLElement | null>(null);
+/** From a capped compartment dive: bring the place-filtered table into view. */
+function showAllInTable() {
+  tableCard.value?.scrollIntoView({ behavior: "smooth", block: "start" });
+  tableCard.value?.focus({ preventScroll: true });
+}
 const hiddenColumns = ref<EsrTableColumnId[]>([]);
 function visible(id: EsrTableColumnId) {
   return !hiddenColumns.value.includes(id);
@@ -86,17 +117,25 @@ const stepHint: Record<string, string> = {
           }}
         </p>
       </div>
-      <button
-        v-if="
-          ['Requestor', 'Shop', 'Engineer', 'Supervisor'].includes(
-            state.user.role,
-          )
-        "
-        class="primary new-request"
-        @click="newRequest"
-      >
-        <span class="plus">＋</span> New request
-      </button>
+      <div class="heading-actions">
+        <button
+          class="watch-floor-open"
+          @click="watchFloor = true"
+        >
+          <span aria-hidden="true">⛶</span> Watch floor
+        </button>
+        <button
+          v-if="
+            ['Requestor', 'Shop', 'Engineer', 'Supervisor'].includes(
+              state.user.role,
+            )
+          "
+          class="primary new-request"
+          @click="newRequest"
+        >
+          <span class="plus">＋</span> New request
+        </button>
+      </div>
     </div>
     <section
       class="stats"
@@ -109,15 +148,27 @@ const stepHint: Record<string, string> = {
         :aria-pressed="status === step"
         @click="status = status === step ? '' : step"
       >
-        <span class="stat-label"><span :class="['status-dot', statusTone(step)]" />{{ step }}</span><strong>{{ counts[step] }}</strong><span class="stat-foot">{{ stepHint[step] }}</span>
+        <span class="stat-label"><span :class="['status-dot', statusTone(step)]" />{{ step }}</span><strong>{{ counts[step] }}</strong><span
+          v-if="staleCounts[step]"
+          class="stat-foot stale"
+        >{{ staleCounts[step] }} stale</span><span
+          v-else
+          class="stat-foot"
+        >{{ stepHint[step] }}</span>
       </button>
     </section>
-    <section class="card workspace-card">
+    <HullHeatmap @show-all="showAllInTable" />
+    <FlowChart />
+    <section
+      ref="tableCard"
+      class="card workspace-card"
+      tabindex="-1"
+    >
       <div class="filters">
         <label class="search"><span aria-hidden="true">⌕</span><input
           v-model="query"
           aria-label="Search requests"
-          placeholder="Search serial, JCN, requester, shop, or condition…"
+          placeholder="Search all columns: names, serial, JCN, status, location…"
         ></label><select
           v-model="status"
           aria-label="Filter by status"
@@ -136,11 +187,19 @@ const stepHint: Record<string, string> = {
             {{ step }}
           </option>
         </select><button
-          v-if="status || query"
+          v-if="place"
+          class="zone-filter"
+          :aria-label="`Remove place filter ${placeLabel(place)}`"
+          @click="place = ''"
+        >
+          {{ placeLabel(place) }} <span aria-hidden="true">×</span>
+        </button><button
+          v-if="status || query || place"
           class="text-button"
           @click="
             status = '';
             query = '';
+            place = '';
           "
         >
           Clear filters
@@ -253,6 +312,24 @@ const stepHint: Record<string, string> = {
               </td>
               <td v-if="visible('status')">
                 <span :class="['badge', statusTone(r.status)]"><span class="status-dot" />{{ r.status }}</span>
+              </td>
+              <td
+                v-if="visible('age')"
+                class="nowrap"
+              >
+                <span
+                  v-if="ages.get(r.id)"
+                  :class="['age', ages.get(r.id)!.tone]"
+                  :title="agingDescription(r, now)"
+                ><span
+                  v-if="ages.get(r.id)!.tone === 'stale'"
+                  aria-hidden="true"
+                >!</span>{{ formatDuration(ages.get(r.id)!.ms)
+                }}<span class="sr-only">, {{ agingDescription(r, now) }}</span></span>
+                <span
+                  v-else
+                  class="muted"
+                >—</span>
               </td>
               <td v-if="visible('engineer')">
                 <div
@@ -372,9 +449,56 @@ const stepHint: Record<string, string> = {
   color: var(--ink-3);
   font-style: italic;
 }
+.stat-foot.stale {
+  color: var(--red-text);
+  font-style: normal;
+  font-weight: 700;
+}
+.age {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--gray-line);
+  background: var(--gray-bg);
+  color: var(--gray-text);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.age.warn {
+  border-color: var(--amber-line);
+  background: var(--amber-bg);
+  color: var(--amber-text);
+}
+.age.stale {
+  border-color: var(--red-line);
+  background: var(--red-bg);
+  color: var(--red-text);
+}
+.age.stale > span[aria-hidden] {
+  font-weight: 800;
+}
 .workspace-card {
   min-width: 0;
+  outline: none;
   max-width: 100%;
+}
+.heading-actions {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: center;
+  flex-wrap: wrap;
+}
+.zone-filter {
+  padding: 3px 10px;
+  border-radius: 999px;
+  border-color: var(--esr-accent);
+  background: var(--esr-accent-soft);
+  color: var(--esr-accent-text);
+  font-size: var(--fs-sm);
+  font-weight: 700;
 }
 .filters {
   display: flex;

@@ -9,6 +9,7 @@ import type { WorkspaceContext } from "../../src/composables/workspaceContext";
 import type { Bootstrap } from "../../src/types";
 import { makeBootstrap, makeRecord, engineer } from "../fixtures";
 import ResolutionEditor from "../../src/components/ResolutionEditor.vue";
+import AssistantChat from "../../src/components/AssistantChat.vue";
 import TemplatePicker from "../../src/components/TemplatePicker.vue";
 import SignatureRecord from "../../src/components/SignatureRecord.vue";
 import WorkflowActions from "../../src/components/WorkflowActions.vue";
@@ -18,6 +19,9 @@ import RecordFiles from "../../src/components/RecordFiles.vue";
 import RecordOverview from "../../src/components/RecordOverview.vue";
 import RequestForm from "../../src/components/RequestForm.vue";
 import RequestWorkspace from "../../src/components/RequestWorkspace.vue";
+import RecordDetail from "../../src/components/RecordDetail.vue";
+import WatchFloor from "../../src/components/WatchFloor.vue";
+import HullLocationMap from "../../src/components/HullLocationMap.vue";
 import Workspace from "../../src/Workspace.ce.vue";
 import WorkspaceDialogs from "../../src/components/WorkspaceDialogs.vue";
 
@@ -88,6 +92,86 @@ describe("resolution components", () => {
     );
     expect(context.draft.rationale).toContain("Document applicable criteria.");
     expect(context.current.value?.resolution).toBe("Inspect the coupling.");
+  });
+});
+
+describe("assistant chat", () => {
+  it("sends the transcript for the open record and inserts a reply into the draft", async () => {
+    const { wrapper, context } = mountSection(AssistantChat);
+    const fetch = vi.fn().mockResolvedValue(
+      jsonResponse({
+        reply: "Check **coupling** alignment.",
+        model: "gpt-test",
+        mock: false,
+      }),
+    );
+    vi.stubGlobal("fetch", fetch);
+    await wrapper.get("textarea").setValue("What should I inspect?");
+    await wrapper.get("form").trigger("submit");
+    await flushPromises();
+    const [url, init] = fetch.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("/api/assistant/chat");
+    expect(JSON.parse(String(init.body))).toEqual({
+      recordId: context.selectedId.value,
+      messages: [{ role: "user", content: "What should I inspect?" }],
+    });
+    expect(wrapper.findAll(".chat-bubble").map((b) => b.text())).toEqual([
+      "What should I inspect?",
+      "Check coupling alignment.",
+    ]);
+    expect(wrapper.get(".chat-message.assistant strong").text()).toBe(
+      "coupling",
+    );
+    expect(wrapper.text()).toContain("Model: gpt-test");
+    const add = wrapper
+      .findAll("button")
+      .find((b) => b.text() === "Add to rationale");
+    await add!.trigger("click");
+    expect(context.draft.rationale).toContain(
+      "Check <strong>coupling</strong> alignment.",
+    );
+    expect(context.draft.rationale).not.toContain("**");
+  });
+  it("labels the mock and restores the message when the provider fails", async () => {
+    const { wrapper, context, emit } = mountSection(AssistantChat);
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({
+              error: "The chat provider rejected the configured API key.",
+            }),
+            { status: 502 },
+          ),
+        )
+        .mockResolvedValueOnce(
+          jsonResponse({ reply: "Mock reply", model: "mock", mock: true }),
+        ),
+    );
+    await wrapper.get("textarea").setValue("Hello");
+    await wrapper.get("form").trigger("submit");
+    await flushPromises();
+    expect(context.chat.messages).toEqual([]);
+    expect(context.chat.input).toBe("Hello");
+    expect(emit).toHaveBeenCalledWith("workspace-error", {
+      message: "The chat provider rejected the configured API key.",
+    });
+    await wrapper.get("form").trigger("submit");
+    await flushPromises();
+    expect(wrapper.text()).toContain(
+      "Mock assistant: no API key is configured",
+    );
+  });
+  it("is only offered while the draft is editable", () => {
+    const editable = mountSection(ResolutionEditor);
+    expect(editable.wrapper.find(".chat").exists()).toBe(true);
+    const issued = mountSection(
+      ResolutionEditor,
+      makeBootstrap({ records: [makeRecord({ status: "ESR Issued" })] }),
+    );
+    expect(issued.wrapper.find(".chat").exists()).toBe(false);
   });
 });
 
@@ -304,15 +388,17 @@ describe("typed workspace controller", () => {
       base64: "U3ludGhldGlj",
       version: 2,
     });
-    expect(context.notice.value).toBe("Request submitted with supporting files.");
+    expect(context.notice.value).toBe(
+      "Request submitted with supporting files.",
+    );
     expect(emit).toHaveBeenCalledWith("record-change", {
       id: "created-1",
       action: "attach",
       status: "In Process",
     });
-    expect(wrapper.find('[aria-label="Upload supporting files"]').exists()).toBe(
-      true,
-    );
+    expect(
+      wrapper.find('[aria-label="Upload supporting files"]').exists(),
+    ).toBe(true);
   });
   it("offers a browser upload on the open record", () => {
     const { wrapper } = mountSection(RecordOverview);
@@ -359,15 +445,19 @@ describe("typed workspace controller", () => {
       name: "Alex Morgan",
       role: "Requestor" as const,
     };
-    const fetch = vi
-      .fn()
-      .mockImplementationOnce(
-        () =>
-          new Promise((resolve) => {
-            resolveFirst = resolve;
-          }),
-      )
-      .mockResolvedValueOnce(jsonResponse(makeBootstrap({ user: requestor })));
+    const bootstraps: (() => Promise<Response>)[] = [
+      () =>
+        new Promise((resolve) => {
+          resolveFirst = resolve;
+        }),
+      () => Promise.resolve(jsonResponse(makeBootstrap({ user: requestor }))),
+    ];
+    // Route by URL: the optional live stream answers 404, like a host without it.
+    const fetch = vi.fn((url: string) =>
+      url.endsWith("/events")
+        ? Promise.resolve(new Response("", { status: 404 }))
+        : bootstraps.shift()!(),
+    );
     vi.stubGlobal("fetch", fetch);
     const wrapper = mount(Workspace, {
       props: { tokenProvider: () => "engineer-token" },
@@ -376,7 +466,10 @@ describe("typed workspace controller", () => {
     await wrapper.setProps({ tokenProvider: () => "requestor-token" });
     resolveFirst(jsonResponse(makeBootstrap()));
     await flushPromises();
-    expect(fetch).toHaveBeenCalledTimes(2);
+    // Two bootstraps; the optional live stream may add its own call.
+    expect(
+      fetch.mock.calls.filter(([url]) => String(url).endsWith("/bootstrap")),
+    ).toHaveLength(2);
     await wrapper
       .findAll("button")
       .find((button) => button.text().includes("New request"))!
@@ -390,9 +483,12 @@ describe("typed workspace controller", () => {
           .get("input").element as HTMLInputElement
       ).value,
     ).toBe("Alex Morgan");
-    expect(fetch.mock.calls[1][1].headers.Authorization).toBe(
-      "Bearer requestor-token",
-    );
+    const bootstrapCalls = fetch.mock.calls.filter(([url]) =>
+      String(url).endsWith("/bootstrap"),
+    ) as unknown as [string, RequestInit][];
+    expect(
+      (bootstrapCalls[1][1].headers as Record<string, string>).Authorization,
+    ).toBe("Bearer requestor-token");
   });
   it("loads the root workspace through the embedding host token provider", async () => {
     const fetch = bootstrapFetch(makeBootstrap());
@@ -440,6 +536,7 @@ describe("ESR table columns", () => {
       "Resolution",
       "SWBS",
       "Status",
+      "Time in Status",
       "Assigned Engineer",
       "Date Initiated",
       "Open",
@@ -472,5 +569,546 @@ describe("ESR table columns", () => {
     await wrapper.get('[aria-label="Sort by Serial"]').trigger("click");
     expect(wrapper.get("th").attributes("aria-sort")).toBe("descending");
     expect(serials()[0]).toContain("260040A");
+  });
+});
+
+const MC2 = "Missile Compartment, second level, frame 64, port, outboard";
+const MC4 = "Missile Compartment, lower level, frame 95, starboard, outboard";
+const FWD4 = "FWD Compartment, lower level, frame 38, starboard, outboard";
+describe("hull place filter", () => {
+  const located = () =>
+    makeBootstrap({
+      records: [
+        makeRecord({ id: "mc-1", location: MC2 }),
+        makeRecord({ id: "mc-2", location: MC4, status: "ESR Closed" }),
+        makeRecord({ id: "fwd", location: FWD4 }),
+        makeRecord({ id: "none" }),
+      ],
+    });
+  it("counts compartments and levels under every filter except the place itself", () => {
+    const { context } = mountSection(RequestWorkspace, located());
+    expect(context.placeCounts.value).toMatchObject({
+      missile: 2,
+      "missile/second": 1,
+      "missile/lower": 1,
+      forward: 1,
+      "forward/lower": 1,
+      unlocated: 1,
+    });
+    expect(context.placeCounts.value.engine).toBeUndefined();
+    context.place.value = "missile";
+    expect(context.filtered.value.map((r) => r.id)).toEqual(["mc-1", "mc-2"]);
+    context.place.value = "missile/second";
+    expect(context.filtered.value.map((r) => r.id)).toEqual(["mc-1"]);
+    expect(context.placeCounts.value.forward).toBe(1);
+    context.status.value = "ESR Closed";
+    expect(context.placeCounts.value).toMatchObject({ missile: 1 });
+    expect(context.placeCounts.value.forward).toBeUndefined();
+    context.navigate("workspace");
+    expect(context.place.value).toBe("");
+  });
+  it("filters by compartment chip, then by level chip, and clears", async () => {
+    const { wrapper, context } = mountSection(RequestWorkspace, located());
+    await wrapper
+      .get('[aria-label="Filter by compartment"] button')
+      .trigger("click");
+    expect(context.place.value).toBe("forward");
+    expect(wrapper.findAll("tbody tr")).toHaveLength(1);
+    await wrapper
+      .get('[aria-label="Remove place filter FWD Compartment"]')
+      .trigger("click");
+    expect(wrapper.findAll("tbody tr")).toHaveLength(4);
+    context.place.value = "missile";
+    await wrapper.vm.$nextTick();
+    const levels = wrapper.get(
+      '[aria-label="Filter Missile Compartment by level"]',
+    );
+    expect(
+      levels.findAll("button").map((b) => b.text().replace(/\s+/g, " ")),
+    ).toEqual(["Upper 0", "Second 1", "Third 0", "Lower 1"]);
+    await levels.findAll("button")[1].trigger("click");
+    expect(context.place.value).toBe("missile/second");
+    expect(wrapper.findAll("tbody tr")).toHaveLength(1);
+    await levels.findAll("button")[1].trigger("click");
+    expect(context.place.value).toBe("missile");
+    const clear = wrapper
+      .findAll("button")
+      .find((b) => b.text() === "Clear filters")!;
+    await clear.trigger("click");
+    expect(context.place.value).toBe("");
+  });
+});
+
+describe("status aging in the table", () => {
+  afterEach(() => vi.useRealTimers());
+  it("marks a stale record and describes it", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-20T12:00:00Z"));
+    const { wrapper } = mountSection(
+      RequestWorkspace,
+      makeBootstrap({
+        records: [
+          makeRecord({
+            status: "Unassigned",
+            serial: null,
+            engineerId: null,
+            createdAt: "2026-11-10T12:00:00Z",
+          }),
+        ],
+      }),
+    );
+    const chip = wrapper.get(".age");
+    expect(chip.classes()).toContain("stale");
+    expect(chip.text()).toContain("10d");
+    expect(chip.attributes("title")).toBe(
+      "Unassigned for 10 days, past the 7-day stale limit",
+    );
+    expect(wrapper.get(".stat-foot.stale").text()).toBe("1 stale");
+  });
+});
+
+describe("milestone ceremony", () => {
+  it("stamps a record issued on screen, not one opened already issued", async () => {
+    const { wrapper, context } = mountSection(
+      RecordDetail,
+      makeBootstrap({
+        records: [makeRecord({ status: "Awaiting Approval" })],
+      }),
+    );
+    await flushPromises();
+    expect(wrapper.find(".record-stamp").exists()).toBe(false);
+    context.state.records[0] = {
+      ...context.state.records[0],
+      status: "ESR Issued",
+    };
+    await flushPromises();
+    expect(wrapper.get(".record-stamp").text()).toContain("ESR Issued");
+    expect(wrapper.get("[aria-live]").text()).toContain("ESR Issued: 260043A");
+  });
+});
+
+describe("fleet replay", () => {
+  it("rewinds the stat counts and returns to live", async () => {
+    const { wrapper, context } = mountSection(
+      RequestWorkspace,
+      makeBootstrap({
+        records: [
+          makeRecord({
+            id: "early",
+            status: "In Process",
+            createdAt: "2026-10-01T00:00:00Z",
+          }),
+          makeRecord({
+            id: "late",
+            status: "In Process",
+            createdAt: "2026-10-20T00:00:00Z",
+          }),
+        ],
+      }),
+    );
+    expect(context.counts.value["In Process"]).toBe(2);
+    context.replayAt.value = Date.parse("2026-10-10T00:00:00Z");
+    await flushPromises();
+    // Neither has an assignment on record, so as of Oct 10 only one exists, unassigned.
+    expect(context.fleet.value.map((r) => r.id)).toEqual(["early"]);
+    expect(context.counts.value).toMatchObject({
+      Unassigned: 1,
+      "In Process": 0,
+    });
+    expect(wrapper.find('[aria-label="Replay date"]').exists()).toBe(true);
+    await wrapper
+      .findAll("button")
+      .find((b) => b.text() === "Back to live")!
+      .trigger("click");
+    expect(context.replayAt.value).toBeNull();
+  });
+});
+
+describe("compartment dive", () => {
+  const reduceMotion = () =>
+    vi.spyOn(window, "matchMedia").mockReturnValue({
+      matches: true,
+    } as MediaQueryList);
+  const located = () =>
+    makeBootstrap({
+      records: [
+        makeRecord({
+          id: "aux-1",
+          serial: "260061A",
+          location: FWD4,
+          component: "ASW-P-02 / TSN-10482",
+        }),
+        makeRecord({
+          id: "aux-2",
+          serial: "260062A",
+          location: FWD4,
+        }),
+        makeRecord({ id: "mc", location: MC2 }),
+      ],
+    });
+  const band = (wrapper: VueWrapper, index: number) =>
+    wrapper.findAll(".heat")[index];
+  it("dives into a compartment, opens a contact, and surfaces", async () => {
+    reduceMotion();
+    const { wrapper, context } = mountSection(RequestWorkspace, located());
+    // Cells run bow to stern, top to bottom: index 3 is the FWD lower level.
+    await band(wrapper, 3).trigger("click");
+    expect(context.place.value).toBe("forward/lower");
+    const contacts = wrapper.findAll(".contact");
+    const where =
+      "FWD Compartment · Lower level · Frame 38 · Starboard, outboard";
+    expect(contacts.map((c) => c.attributes("aria-label"))).toEqual([
+      `Contact 260061A: Pump, In Process, ${where}`,
+      `Contact 260062A: Pump, In Process, ${where}`,
+    ]);
+    expect(wrapper.text()).toContain("2 contacts");
+    await wrapper.get(".hull-heatmap").trigger("keydown", { key: "Escape" });
+    expect(context.place.value).toBe("");
+    expect(wrapper.findAll(".contact")).toHaveLength(0);
+    await band(wrapper, 3).trigger("click");
+    await wrapper.findAll(".contact")[1].trigger("keydown", { key: "Enter" });
+    expect(context.view.value).toBe("record");
+    expect(context.selectedId.value).toBe("aux-2");
+  });
+  it("switches levels inside a dive and dims the others", async () => {
+    reduceMotion();
+    const { wrapper, context } = mountSection(RequestWorkspace, located());
+    await band(wrapper, 3).trigger("click");
+    expect(wrapper.findAll(".contact.dim")).toHaveLength(0);
+    // The FWD upper level, inside the same dive: the filter switches level.
+    await band(wrapper, 0).trigger("click");
+    expect(context.place.value).toBe("forward/upper");
+    expect(wrapper.findAll(".contact.dim")).toHaveLength(2);
+    await band(wrapper, 0).trigger("click");
+    expect(context.place.value).toBe("forward");
+    expect(wrapper.find(".surface").exists()).toBe(true);
+  });
+  it("surfaces when the place filter is cleared elsewhere", async () => {
+    reduceMotion();
+    const { wrapper } = mountSection(RequestWorkspace, located());
+    // Index 5 is the Missile Compartment's second level.
+    await band(wrapper, 5).trigger("click");
+    expect(wrapper.findAll(".contact")).toHaveLength(1);
+    const clear = wrapper
+      .findAll("button")
+      .find((b) => b.text() === "Clear filters")!;
+    await clear.trigger("click");
+    expect(wrapper.findAll(".contact")).toHaveLength(0);
+    expect(wrapper.find(".surface").exists()).toBe(false);
+  });
+});
+
+describe("capped compartment dive", () => {
+  const crowded = (n: number) =>
+    makeBootstrap({
+      records: Array.from({ length: n }, (_, i) =>
+        makeRecord({
+          id: `aux-${i}`,
+          serial: `26${String(1000 + i).padStart(4, "0")}A`,
+          location: FWD4,
+          component: "ASW-P-02 / TSN-10482",
+          status: "Unassigned",
+          // Older records first, so the oldest are the most critical.
+          createdAt: new Date(Date.UTC(2026, 8, 1 + (i % 28))).toISOString(),
+        }),
+      ),
+    });
+  it("shows the most critical contacts and folds the rest into one marker", async () => {
+    vi.spyOn(window, "matchMedia").mockReturnValue({
+      matches: true,
+    } as MediaQueryList);
+    const { wrapper } = mountSection(RequestWorkspace, crowded(30));
+    await wrapper.findAll(".heat")[3].trigger("click");
+    expect(wrapper.findAll(".contact:not(.overflow)")).toHaveLength(24);
+    const overflow = wrapper.get(".contact.overflow");
+    expect(overflow.text()).toBe("+6");
+    expect(overflow.attributes("aria-label")).toBe(
+      "Show all 30 FWD Compartment records in the table",
+    );
+    expect(wrapper.text()).toContain("24 most critical of 30");
+    expect(wrapper.text()).toContain("6 more in the table");
+    const scroll = vi.fn();
+    (wrapper.get(".workspace-card").element as HTMLElement).scrollIntoView =
+      scroll;
+    await overflow.trigger("click");
+    expect(scroll).toHaveBeenCalled();
+  });
+  it("describes a contact on hover and focus without opening it", async () => {
+    vi.spyOn(window, "matchMedia").mockReturnValue({
+      matches: true,
+    } as MediaQueryList);
+    const { wrapper, context } = mountSection(RequestWorkspace, crowded(2));
+    await wrapper.findAll(".heat")[3].trigger("click");
+    const before = context.selectedId.value;
+    const contact = wrapper.findAll(".contact")[0];
+    await contact.trigger("mouseenter");
+    const tip = wrapper.get(".contact-tip");
+    expect(tip.text()).toContain("Pump");
+    expect(tip.text()).toContain("Unassigned");
+    expect(tip.text()).toContain("Click to open");
+    expect(context.selectedId.value).toBe(before);
+    await contact.trigger("mouseleave");
+    expect(wrapper.find(".contact-tip").exists()).toBe(false);
+    await contact.trigger("focus");
+    expect(wrapper.find(".contact-tip").exists()).toBe(true);
+  });
+});
+
+describe("watch floor", () => {
+  it("opens from the list page", async () => {
+    const { wrapper, context } = mountSection(RequestWorkspace);
+    const open = wrapper
+      .findAll("button")
+      .find((b) => b.text().includes("Watch floor"))!;
+    await open.trigger("click");
+    expect(context.watchFloor.value).toBe(true);
+  });
+  it("spotlights the most critical ESR and exits on Escape", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-20T12:00:00Z"));
+    const { wrapper, context } = mountSection(
+      WatchFloor,
+      makeBootstrap({
+        records: [
+          makeRecord({
+            id: "fresh",
+            serial: "260071A",
+            status: "Unassigned",
+            createdAt: "2026-11-19T12:00:00Z",
+          }),
+          makeRecord({
+            id: "old",
+            serial: "260072A",
+            status: "Unassigned",
+            attributes: ["SUBSAFE"],
+            createdAt: "2026-10-01T12:00:00Z",
+          }),
+        ],
+      }),
+    );
+    context.watchFloor.value = true;
+    await flushPromises();
+    const dialog = wrapper.get('[role="dialog"]');
+    expect(dialog.attributes("aria-label")).toBe("ESR watch floor");
+    const card = wrapper.get(".wf-card");
+    expect(card.text()).toContain("260072A");
+    expect(card.text()).toContain("SUBSAFE");
+    expect(card.text()).toContain("Stale");
+    expect(wrapper.get(".wf-spotlight header").text()).toContain("1 of 2");
+    expect(wrapper.findAll(".wf-stat")).toHaveLength(5);
+    await dialog.trigger("keydown", { key: "Escape" });
+    expect(context.watchFloor.value).toBe(false);
+    vi.useRealTimers();
+  });
+});
+
+describe("opened vs closed chart", () => {
+  const dayAgo = (n: number) =>
+    new Date(Date.now() - n * 86_400_000).toISOString();
+  const data = () =>
+    makeBootstrap({
+      records: [
+        makeRecord({
+          id: "open-1",
+          serial: "260091A",
+          createdAt: dayAgo(10),
+          location: FWD4,
+        }),
+        makeRecord({
+          id: "closed-1",
+          serial: "260092A",
+          status: "ESR Closed",
+          createdAt: dayAgo(9),
+          signatures: [
+            {
+              id: "s1",
+              userId: "division",
+              name: "Sam Chen",
+              block: "Division Head",
+              time: dayAgo(2),
+              comment: "",
+            },
+          ],
+        }),
+      ],
+    });
+  const stats = (wrapper: VueWrapper) =>
+    wrapper.get(".flow-stats").text().replace(/\s+/g, " ");
+  it("shows totals, reads points by keyboard, and links to the replay", async () => {
+    const { wrapper, context } = mountSection(RequestWorkspace, data());
+    expect(stats(wrapper)).toContain("1 open now");
+    expect(stats(wrapper)).toContain("2 opened");
+    expect(stats(wrapper)).toContain("1 closed");
+    const frame = wrapper.get(".flow-frame");
+    await frame.trigger("keydown", { key: "End" });
+    expect(wrapper.get(".flow-frame [aria-live]").text()).toMatch(
+      /^Now, .*: 2 opened, 1 closed, 1 open$/,
+    );
+    await frame.trigger("keydown", { key: "Home" });
+    await frame.trigger("keydown", { key: "Enter" });
+    expect(context.replayAt.value).not.toBeNull();
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find(".replay-cursor").exists()).toBe(true);
+  });
+  it("offers every value as a table once opened", async () => {
+    const { wrapper } = mountSection(RequestWorkspace, data());
+    const details = wrapper.get(".flow-table");
+    expect(details.find("table").exists()).toBe(false);
+    (details.element as HTMLDetailsElement).open = true;
+    await details.trigger("toggle");
+    const rows = details.findAll("tbody tr");
+    expect(rows.length).toBeGreaterThan(5);
+    expect(rows[0].text()).toMatch(/^Now, .*2\s*1\s*1$/);
+  });
+  it("follows search and place, but not the status filter", async () => {
+    const { wrapper, context } = mountSection(RequestWorkspace, data());
+    context.status.value = "ESR Closed";
+    await wrapper.vm.$nextTick();
+    expect(stats(wrapper)).toContain("2 opened");
+    context.status.value = "";
+    context.place.value = "forward";
+    await wrapper.vm.$nextTick();
+    expect(stats(wrapper)).toContain("1 opened");
+    expect(stats(wrapper)).toContain("0 closed");
+    context.place.value = "";
+    context.query.value = "260092A";
+    await wrapper.vm.$nextTick();
+    expect(stats(wrapper)).toContain("0 open now");
+  });
+});
+
+describe("record location map", () => {
+  const titles = (wrapper: VueWrapper) =>
+    wrapper.findAll("svg > title").map((t) => t.text());
+  it("pins the compartment, level, frame, and side in nautical terms", () => {
+    const wrapper = mount(HullLocationMap, { props: { location: MC2 } });
+    wrappers.push(wrapper);
+    expect(titles(wrapper)).toEqual([
+      "Mock hull map: Missile Compartment · Second level · Frame 64 · Port, outboard",
+      "Cross-section looking forward: second level, port, outboard",
+    ]);
+    // Looking forward, port is on the left of the centerline (x 60).
+    const pin = wrapper.get(".section-pin").attributes("transform")!;
+    expect(Number(/translate\(([\d.]+)/.exec(pin)![1])).toBeLessThan(30);
+    expect(wrapper.get("figcaption").text()).toContain(
+      "Missile Compartment · Second level · Frame 64 · Port, outboard",
+    );
+  });
+  it("keeps text it cannot place, without a pin or cross-section", () => {
+    const wrapper = mount(HullLocationMap, {
+      props: { location: "Auxiliary machinery space" },
+    });
+    wrappers.push(wrapper);
+    expect(titles(wrapper)).toEqual([
+      "Mock hull map: Auxiliary machinery space (compartment not recognized)",
+    ]);
+    expect(wrapper.find(".section").exists()).toBe(false);
+    expect(wrapper.find(".pin").exists()).toBe(false);
+  });
+});
+
+describe("replay speed", () => {
+  afterEach(() => localStorage.removeItem("esr.replaySpeed"));
+  it("defaults to the fastest, slows mid-replay, and remembers the choice", async () => {
+    const frames: FrameRequestCallback[] = [];
+    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
+      frames.push(cb);
+      return frames.length;
+    });
+    vi.stubGlobal("cancelAnimationFrame", () => {});
+    const step = (stamp: number) => frames.splice(0).forEach((cb) => cb(stamp));
+    const { wrapper, context } = mountSection(
+      RequestWorkspace,
+      makeBootstrap({
+        records: [makeRecord({ createdAt: "2026-06-01T00:00:00Z" })],
+      }),
+    );
+    const speed = wrapper.get('select[aria-label="Replay speed"]');
+    expect(speed.findAll("option").map((o) => o.text())).toEqual([
+      "Fast · 15 s",
+      "Normal · 30 s",
+      "Slow · 1 min",
+      "Slowest · 2 min",
+    ]);
+    expect(context.replaySpeed.value).toBe("fast");
+    await wrapper
+      .findAll("button")
+      .find((b) => b.text().includes("Replay history"))!
+      .trigger("click");
+    step(1000); // first frame only records the time
+    const start = context.replayAt.value!;
+    step(2000);
+    const fast = context.replayAt.value! - start;
+    expect(fast).toBeGreaterThan(0);
+    await speed.setValue("slowest");
+    expect(localStorage.getItem("esr.replaySpeed")).toBe("slowest");
+    const before = context.replayAt.value!;
+    step(3000);
+    // The same second of wall time covers an eighth as much history (15 s vs 2 min).
+    expect((context.replayAt.value! - before) / fast).toBeCloseTo(1 / 8);
+  });
+  it("starts from a speed saved earlier", () => {
+    localStorage.setItem("esr.replaySpeed", "slow");
+    const { context } = mountSection(RequestWorkspace);
+    expect(context.replaySpeed.value).toBe("slow");
+  });
+});
+
+describe("stale badges by level", () => {
+  const daysAgo = (n: number) =>
+    new Date(Date.now() - n * 86_400_000).toISOString();
+  const data = () =>
+    makeBootstrap({
+      records: [
+        // Unassigned 20 days: past the 7-day limit, on the Missile second level.
+        makeRecord({
+          id: "stale",
+          serial: null,
+          status: "Unassigned",
+          engineerId: null,
+          createdAt: daysAgo(20),
+          location: MC2,
+        }),
+        // Fresh, on the Missile lower level.
+        makeRecord({
+          id: "fresh",
+          serial: null,
+          status: "Unassigned",
+          engineerId: null,
+          createdAt: daysAgo(1),
+          location: MC4,
+        }),
+      ],
+    });
+  it("puts the badge on the stale record's level and counts it on the level chip", async () => {
+    vi.spyOn(window, "matchMedia").mockReturnValue({
+      matches: true,
+    } as MediaQueryList);
+    const { wrapper, context } = mountSection(RequestWorkspace, data());
+    const markers = wrapper.findAll(".stale-marker");
+    expect(markers).toHaveLength(1);
+    expect(markers[0].get("title").text()).toMatch(
+      /^Missile Compartment · Second level: 1 stale/,
+    );
+    // The badge sits on the second level's row (y 65–80), not above the hull.
+    const y = Number(
+      /translate\([\d.]+ ([\d.]+)\)/.exec(
+        markers[0].attributes("transform")!,
+      )![1],
+    );
+    expect(y).toBeCloseTo(72.5);
+    context.place.value = "missile";
+    await wrapper.vm.$nextTick();
+    const chips = wrapper
+      .get('[aria-label="Filter Missile Compartment by level"]')
+      .findAll("button");
+    expect(chips[1].find(".chip-stale").text()).toBe("1");
+    expect(chips[3].find(".chip-stale").exists()).toBe(false);
+    // In the dive, the stale contact is marked whatever the motion setting.
+    await wrapper.findAll(".heat")[5].trigger("click");
+    const contacts = wrapper.findAll(".contact");
+    const stale = contacts.find((c) => c.classes("stale"))!;
+    expect(stale.attributes("aria-label")).toContain("stale");
+    expect(contacts.filter((c) => c.classes("stale"))).toHaveLength(1);
   });
 });

@@ -18,22 +18,112 @@ export interface SimulatedSeed {
 
 export const SIMULATED_RECORD_COUNT = 60;
 
-/** Same JCN as the CRACN mock's demo job, so the New Request form behaves alike. */
+/**
+ * The first two JCNs match the CRACN mock's demo jobs, so the New Request form
+ * behaves alike. The rest exist only in simulated data. Together they cover
+ * every compartment level. Locations use the standard nautical format that
+ * parseLocation reads: compartment, level, frame, side, inboard/outboard.
+ */
 export const simulatedLds: Record<string, LdsData> = {
   "21036WX010184": {
     workStatement: "Inspect auxiliary seawater pump coupling",
     refit: "A014",
     component: "ASW-P-02 / TSN-10482",
-    location: "Auxiliary machinery space",
+    location: "FWD Compartment, lower level, frame 38, starboard, outboard",
     swbs: "6286FCA00000",
   },
   "21036WX020207": {
     workStatement: "Restore valve actuator mounting hardware",
     refit: "A018",
     component: "VLV-214 / TSN-20871",
-    location: "Forward equipment space",
+    location: "Missile Compartment, third level, frame 72, port, inboard",
     swbs: "4521VLV21400",
   },
+  "21036WX030311": {
+    workStatement: "Inspect propulsion motor mounting and cooling",
+    refit: "A021",
+    component: "MTR-01 / TSN-30115",
+    location: "Engine Room, lower level, frame 148, centerline",
+    swbs: "2351MTR01000",
+  },
+  "21036WX040422": {
+    workStatement: "Recalibrate depth gauge transmitter",
+    refit: "A021",
+    component: "PT-118 / TSN-40233",
+    location: "FWD Compartment, upper level, frame 22, port, inboard",
+    swbs: "4365PT118000",
+  },
+  "21036WX050533": {
+    workStatement: "Repair galley exhaust damper linkage",
+    refit: "A018",
+    component: "DMP-07 / TSN-50344",
+    location: "FWD Compartment, second level, frame 30, starboard, inboard",
+    swbs: "5121DMP07000",
+  },
+  "21036WX060644": {
+    workStatement: "Inspect shaft seal cooling line",
+    refit: "A014",
+    component: "SS-02 / TSN-60455",
+    location: "Engine Room, lower level, frame 157, port, outboard",
+    swbs: "2441SS020000",
+  },
+  "21036WX070755": {
+    workStatement: "Clean chilled water cooler tube bundle",
+    refit: "A021",
+    component: "HX-12 / TSN-70566",
+    location: "Missile Compartment, lower level, frame 95, starboard, outboard",
+    swbs: "5141HX120000",
+  },
+  "21036WX080866": {
+    workStatement: "Inspect hydraulic accumulator precharge",
+    refit: "A018",
+    component: "ACC-31 / TSN-80677",
+    location: "Missile Compartment, second level, frame 64, port, outboard",
+    swbs: "5561ACC31000",
+  },
+  "21036WX090977": {
+    workStatement: "Test shore power breaker trip settings",
+    refit: "A014",
+    component: "BKR-4A / TSN-90788",
+    location: "Engine Room, middle level, frame 126, starboard, inboard",
+    swbs: "3241BKR4A000",
+  },
+  "21036WX101088": {
+    workStatement: "Rebalance ventilation supply fan",
+    refit: "A021",
+    component: "FAN-03 / TSN-10899",
+    location: "Missile Compartment, upper level, frame 81, starboard, inboard",
+    swbs: "5121FAN03000",
+  },
+  "21036WX111199": {
+    workStatement: "Replace trim tank level sensor",
+    refit: "A018",
+    component: "LT-05 / TSN-11910",
+    location: "FWD Compartment, third level, frame 41, port, outboard",
+    swbs: "5291LT050000",
+  },
+  "21036WX121210": {
+    workStatement: "Inspect motor generator brush rigging",
+    refit: "A014",
+    component: "MG-2 / TSN-12021",
+    location: "Engine Room, upper level, frame 118, port, outboard",
+    swbs: "3111MG020000",
+  },
+};
+/** The system each simulated job concerns, used in its record titles so the equipment icon matches. */
+const simulatedSystems: Record<string, string> = {
+  "21036WX010184": "Auxiliary seawater pump",
+  "21036WX020207": "Hydraulic valve actuator",
+  "21036WX030311": "Propulsion motor",
+  "21036WX040422": "Depth gauge transmitter",
+  "21036WX050533": "Galley exhaust damper",
+  "21036WX060644": "Shaft seal cooling line",
+  "21036WX070755": "Chilled water cooler",
+  "21036WX080866": "Hydraulic accumulator",
+  "21036WX090977": "Shore power breaker",
+  "21036WX101088": "Ventilation supply fan",
+  "21036WX111199": "Trim tank level sensor",
+  "21036WX121210": "Motor generator",
 };
 
 export const simulatedTemplates: EngineeringTemplate[] = [
@@ -76,16 +166,28 @@ type Stage =
   | "deferred"
   | "closed";
 
-const bangorStages: Stage[] = [
-  "unassigned",
-  "inProcess",
-  "awaiting",
-  "issued",
-  "closed",
-  "returned",
-  "shopSigned",
-  "deferred",
-];
+/**
+ * Most Bangor records are closed out. These 14 stay open (two of them are
+ * closed records reopened by revision), chosen so the backlog mixes fresh,
+ * aging, and stale work: see the age notes. Ages are days in the current
+ * status, against the limits in agingThresholdsDays.
+ */
+const openBangorStages: Partial<Record<number, Stage>> = {
+  0: "unassigned", // ~1 day: on track
+  26: "unassigned", // ~53 days: stale
+  2: "returned", // ~5 days: aging
+  1: "inProcess", // ~2 days: on track
+  31: "inProcess", // ~59 days: stale
+  3: "awaiting", // ~5 days: aging
+  28: "awaiting", // ~55 days: stale
+  9: "issued", // ~13 days: on track
+  40: "issued", // ~78 days: stale
+  12: "shopSigned", // ~22 days: on track
+  16: "deferred", // deferred work does not age
+  36: "deferred",
+};
+/** Closed records reopened as revision B: one fresh (~3 days), one stale (~83 days). */
+const revisedBangorIndexes = new Set([4, 44]);
 /** The other TRF only has an engineer identity, so its records stop before approval. */
 const kingsBayStages: Stage[] = ["unassigned", "inProcess", "awaiting"];
 
@@ -130,7 +232,19 @@ const longTitle =
 const longCondition = `${conditions[0]} `.repeat(14).trim();
 
 const DAY_MS = 86_400_000;
-const LATEST_RECORD_MS = Date.UTC(2026, 9, 31, 15);
+/**
+ * The newest record is anchored to yesterday 15:00 UTC, so the mix of fresh,
+ * aging, and stale work looks the same whenever the data is generated.
+ * Deterministic within a UTC day.
+ */
+function latestRecordMs(): number {
+  const now = new Date();
+  return (
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) -
+    DAY_MS +
+    15 * 3_600_000
+  );
+}
 
 function textBytes(name: string): number {
   return new TextEncoder().encode(simulatedTextFile(name)).length;
@@ -155,21 +269,60 @@ export function createSimulatedRecords(seed: SimulatedSeed): EsrRecord[] {
     if (!found) throw new Error(`Simulated data needs the "${id}" identity.`);
     return found;
   };
-  const jcns = [...Object.keys(simulatedLds), "N/A"];
+  // Weighted so the mock hull heatmap shows hot spots: the FWD lower level
+  // (auxiliary machinery), Missile second level, and Engine Room carry the most
+  // work. Nineteen slots never line up with the every-sixth Kings Bay record.
+  const jcns = [
+    "21036WX010184", // FWD lower: seawater pump
+    "21036WX080866", // Missile second: accumulator
+    "21036WX030311", // ER lower: propulsion motor
+    "21036WX040422", // FWD upper: depth gauge
+    "21036WX010184",
+    "21036WX090977", // ER middle: shore power breaker
+    "21036WX070755", // Missile lower: chilled water cooler
+    "N/A",
+    "21036WX050533", // FWD second: galley damper
+    "21036WX080866",
+    "21036WX020207", // Missile third: valve actuator
+    "21036WX121210", // ER upper: motor generator
+    "21036WX010184",
+    "21036WX101088", // Missile upper: ventilation fan
+    "21036WX030311",
+    "21036WX111199", // FWD third: trim tank sensor
+    "21036WX090977",
+    "N/A",
+    "21036WX060644", // ER lower: shaft seal line
+  ];
 
+  const latest = latestRecordMs();
   return Array.from({ length: SIMULATED_RECORD_COUNT }, (_, index) => {
     const kingsBay = index % 6 === 5;
-    const stage = kingsBay
+    const stage: Stage = kingsBay
       ? kingsBayStages[index % kingsBayStages.length]
-      : bangorStages[index % bangorStages.length];
+      : (openBangorStages[index] ?? "closed");
     const id = `sim-${index + 1}`;
-    const time = (offsetDays: number) =>
+    // Created every two days, newest first: about four months of history.
+    const createdDaysAgo = 1 + 2 * index;
+    // Workflow steps are `pace` days apart (1 to 4), but always finish before
+    // now: six steps fit between creation and the newest record.
+    const pace = Math.max(
+      1,
+      Math.min(1 + (index % 4), Math.floor((createdDaysAgo - 1) / 6)),
+    );
+    const time = (step: number) =>
       new Date(
-        LATEST_RECORD_MS - (index + 10) * DAY_MS + offsetDays * DAY_MS,
+        latest - createdDaysAgo * DAY_MS + step * pace * DAY_MS,
       ).toISOString();
 
-    const requestor = actor(kingsBay ? "remote" : "requestor");
-    const engineer = actor(kingsBay ? "remote" : "engineer");
+    // Bangor work is shared: Jordan files some requests himself, and Priya
+    // takes about a third of the assignments, so "My work" is a real subset.
+    const requestor = actor(
+      kingsBay ? "remote" : index % 7 === 3 ? "engineer" : "requestor",
+    );
+    const engineer = actor(
+      // index % 3 === 0 never lands on a Kings Bay record (index % 6 === 5).
+      kingsBay ? "remote" : index % 3 === 0 ? "engineer2" : "engineer",
+    );
     const supervisor = actor("supervisor");
     const shop = actor("shop");
     const division = actor("division");
@@ -298,7 +451,7 @@ export function createSimulatedRecords(seed: SimulatedSeed): EsrRecord[] {
       title:
         index === 3
           ? longTitle
-          : `${systems[index % systems.length]} — ${findings[index % findings.length]}`,
+          : `${simulatedSystems[jcn] ?? systems[index % systems.length]} — ${findings[index % findings.length]}`,
       name: requestor.name,
       shop: requestor.shop,
       phone: requestor.phone,
@@ -348,8 +501,8 @@ export function createSimulatedRecords(seed: SimulatedSeed): EsrRecord[] {
       rejected: stage === "returned",
     };
 
-    // Every fifth closed record reopens as revision B, keeping a frozen snapshot.
-    return stage === "closed" && index % 5 === 0
+    // A couple of closed records reopen as revision B, keeping a frozen snapshot.
+    return stage === "closed" && revisedBangorIndexes.has(index)
       ? reviseRecord(record, time(6))
       : record;
   });

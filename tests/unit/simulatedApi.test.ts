@@ -10,6 +10,13 @@ import {
 } from "../../host/simulated/handler";
 import type { SimulatedRequest } from "../../host/simulated/handler";
 import type { Bootstrap, EsrRecord } from "../../src/types";
+import {
+  compartments,
+  filterRecords,
+  parseLocation,
+  placeKey,
+} from "../../src/presentation";
+import { simulatedLds } from "../../host/simulated/data";
 import seedJson from "../../backend/Esr.Api/seed.json";
 
 const seed = seedJson as unknown as SimulatedSeed;
@@ -33,6 +40,52 @@ const json = <T>(response: ReturnType<typeof handle>) => {
 const blocks = (record: EsrRecord) => record.signatures.map((s) => s.block);
 
 describe("simulated records", () => {
+  it("place records on every level of every compartment", () => {
+    const cells = new Set(
+      records.map((r) => {
+        const loc = parseLocation(r.location);
+        return loc ? placeKey(loc.compartment, loc.level) : "unlocated";
+      }),
+    );
+    for (const c of compartments)
+      for (const level of c.levels)
+        expect(cells).toContain(placeKey(c.id, level));
+    expect(cells).toContain("unlocated");
+  });
+  it("describe each simulated job's location fully, in nautical terms", () => {
+    for (const lds of Object.values(simulatedLds)) {
+      const loc = parseLocation(lds.location);
+      expect(loc, lds.location).not.toBeNull();
+      expect(loc!.level, lds.location).not.toBeNull();
+      expect(loc!.frame, lds.location).not.toBeNull();
+      expect(loc!.side, lds.location).not.toBeNull();
+      // Frames fall inside their compartment's range.
+      const [first, last] = compartments.find(
+        (c) => c.id === loc!.compartment,
+      )!.frames;
+      expect(loc!.frame!).toBeGreaterThanOrEqual(first);
+      expect(loc!.frame!).toBeLessThanOrEqual(last);
+      if (loc!.side !== "centerline")
+        expect(loc!.board, lds.location).not.toBeNull();
+    }
+  });
+  it("share Bangor work, so each person's My work is a real subset", () => {
+    const local = records.filter((r) => r.site === "Bangor");
+    const mine = (id: string) =>
+      filterRecords(local, "", "", "mine", id).length;
+    // Jordan is assigned some and files some; Priya takes the rest of the assignments.
+    expect(local.some((r) => r.requestorId === "engineer")).toBe(true);
+    expect(local.some((r) => r.engineerId === "engineer2")).toBe(true);
+    for (const id of ["requestor", "engineer", "engineer2"]) {
+      expect(mine(id)).toBeGreaterThan(0);
+      expect(mine(id)).toBeLessThan(local.length);
+    }
+  });
+  it("keep 14 open records at Bangor", () => {
+    const local = records.filter((r) => r.site === "Bangor");
+    expect(local.filter((r) => r.status !== "ESR Closed")).toHaveLength(14);
+  });
+
   it("are deterministic and use unique, recognisable IDs", () => {
     expect(createSimulatedRecords(seed)).toEqual(records);
     expect(records).toHaveLength(SIMULATED_RECORD_COUNT);
@@ -89,6 +142,35 @@ describe("simulated records", () => {
 });
 
 describe("simulated API", () => {
+  it("answers the assistant chat with a labeled simulated reply", () => {
+    const record = records.find(
+      (r) => r.status === "In Process" && r.site === "Bangor",
+    )!;
+    const reply = json<{ reply: string; model: string; mock: boolean }>(
+      call("/assistant/chat", {
+        method: "POST",
+        body: {
+          recordId: record.id,
+          messages: [{ role: "user", content: "What should I check first?" }],
+        },
+      }),
+    );
+    expect(reply.mock).toBe(true);
+    expect(reply.model).toBe("simulated");
+    expect(reply.reply).toContain("Simulated assistant");
+    expect(reply.reply).toContain(record.serial!);
+    expect(reply.reply).toContain("What should I check first?");
+    const missing = call("/assistant/chat", {
+      method: "POST",
+      body: { recordId: "nope", messages: [{ role: "user", content: "Hi" }] },
+    });
+    expect(missing.status).toBe(404);
+    const noQuestion = call("/assistant/chat", {
+      method: "POST",
+      body: { recordId: record.id, messages: [] },
+    });
+    expect(noQuestion.status).toBe(400);
+  });
   it("signs in known identities without requiring a token", () => {
     const session = call("/demo/session", {
       method: "POST",

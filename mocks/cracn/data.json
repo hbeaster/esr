@@ -286,7 +286,7 @@
     "equipmentName": "ASW-P-02",
     "equipmentSerialNumber": "TSN-10482",
     "hsc": "6286FCA00000",
-    "location": "Auxiliary machinery space",
+    "location": "FWD Compartment, lower level, frame 38, starboard, outboard",
     "metadata": {
      "name": "boats/21036/configurationItems/6286FCA00000",
      "resourceType": "cracn.projectblue.mil/ConfigurationItem"
@@ -309,7 +309,7 @@
      "resourceType": "cracn.projectblue.mil/ConfigurationItem"
     },
     "partIdentifier": "Seawater auxiliary",
-    "location": "Forward equipment space"
+    "location": "Missile Compartment, third level, frame 72, port, inboard"
    }
   ],
   "/api/v1/boats/21036/refits": [

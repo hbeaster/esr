@@ -9,6 +9,8 @@ import RecordDetail from "./components/RecordDetail.vue";
 import TemplateLibrary from "./components/TemplateLibrary.vue";
 import PermissionSettings from "./components/PermissionSettings.vue";
 import WorkspaceDialogs from "./components/WorkspaceDialogs.vue";
+import WatchFloor from "./components/WatchFloor.vue";
+import PresenceStack from "./components/PresenceStack.vue";
 defineOptions({ name: "EsrWorkspace" });
 const props = withDefaults(defineProps<WorkspaceProps>(), {
   apiBase: "/api",
@@ -28,7 +30,19 @@ const {
   record,
   run,
   reload,
+  watchFloor,
+  liveStatus,
+  viewers,
 } = workspace;
+const liveTitle = computed(
+  () =>
+    ({
+      live: "Live: changes by others appear as they happen",
+      connecting: "Connecting to live updates…",
+      unavailable: "Live updates are not available from this API",
+      off: "Live updates off",
+    })[liveStatus.value],
+);
 const navigationId = useId();
 const panelId = `${navigationId}-panel`;
 const activeTab = computed(() =>
@@ -56,7 +70,7 @@ const pageKey = computed(() =>
   >
     <div
       class="main-shell"
-      :inert="!!dialog"
+      :inert="!!dialog || watchFloor"
     >
       <header class="topbar">
         <WorkspaceNavigation
@@ -65,7 +79,16 @@ const pageKey = computed(() =>
           :id-prefix="navigationId"
         />
         <div class="topbar-right">
-          <span class="live-dot" />
+          <PresenceStack
+            :viewers="viewers"
+            label="Also online"
+          />
+          <span
+            :class="['live-dot', liveStatus]"
+            role="img"
+            :aria-label="liveTitle"
+            :title="liveTitle"
+          />
           <span>TRF <strong>{{ state.user?.site || "—" }}</strong></span>
           <button
             class="icon-button"
@@ -145,6 +168,7 @@ const pageKey = computed(() =>
       </main>
     </div>
     <WorkspaceDialogs />
+    <WatchFloor v-if="watchFloor && state.user" />
   </div>
 </template>
 
@@ -186,9 +210,35 @@ const pageKey = computed(() =>
   width: 7px;
   height: 7px;
   border-radius: 50%;
+  background: var(--gray-dot);
+  box-shadow: 0 0 0 3px var(--gray-bg);
+  flex-shrink: 0;
+}
+.live-dot.live {
   background: var(--green-dot);
   box-shadow: 0 0 0 3px var(--green-bg);
-  flex-shrink: 0;
+  animation: live-pulse 2.4s ease-out infinite;
+}
+.live-dot.connecting {
+  background: var(--amber-dot);
+  box-shadow: 0 0 0 3px var(--amber-bg);
+}
+@keyframes live-pulse {
+  0% {
+    box-shadow:
+      0 0 0 3px var(--green-bg),
+      0 0 0 3px var(--green-dot);
+  }
+  100% {
+    box-shadow:
+      0 0 0 3px var(--green-bg),
+      0 0 0 9px transparent;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-dot.live {
+    animation: none;
+  }
 }
 main {
   max-width: 1600px;

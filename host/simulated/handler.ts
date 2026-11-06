@@ -1,4 +1,6 @@
 import type { Actor, EsrRecord } from "../../src/types";
+import { ChatFailure, closestMatches, parseTurns, systemPrompt } from "./chat";
+import type { ChatTurn } from "./chat";
 import {
   createSimulatedRecords,
   SIMULATED_PNG_BYTES,
@@ -21,7 +23,7 @@ export type SimulatedResponse =
   | { status: number; bytes: Uint8Array; type: string };
 
 export const READ_ONLY_MESSAGE =
-  "Simulated data is read-only. Switch to API data to run workflow actions.";
+  "Simulated data is read-only without the dev API. Run npm run dev:api to sign and submit on simulated data, or switch to API data.";
 const TOKEN_PREFIX = "simulated.";
 const CANNED_SIMILARITY = [90, 75, 60];
 
@@ -71,7 +73,42 @@ export function createSimulatedApi(seed: SimulatedSeed) {
     };
   }
 
-  return function handle(request: SimulatedRequest): SimulatedResponse {
+  const actorFor = (authorization: string | undefined) => {
+    const token = authorization?.replace(/^Bearer /, "") ?? "";
+    return token.startsWith(TOKEN_PREFIX)
+      ? seed.users.find((u) => u.id === token.slice(TOKEN_PREFIX.length))
+      : undefined;
+  };
+
+  /**
+   * Checks a chat request and grounds it in the simulated record, for the
+   * dev server to forward to a real model. The system turn comes first.
+   */
+  function prepareChat(
+    request: Pick<SimulatedRequest, "authorization" | "body">,
+  ): { turns: ChatTurn[] } | { failure: SimulatedResponse } {
+    const actor = actorFor(request.authorization);
+    if (!actor)
+      return { failure: failure(401, "A valid demo identity is required.") };
+    const visible = visibleTo(actor);
+    const record = visible.find(
+      (r) => r.id === field(request.body, "recordId"),
+    );
+    if (!record) return { failure: failure(404, "ESR not found.") };
+    try {
+      const turns = parseTurns(
+        (request.body as { messages?: unknown } | null)?.messages,
+      );
+      const prompt = systemPrompt(record, closestMatches(record, visible));
+      return { turns: [{ role: "system", content: prompt }, ...turns] };
+    } catch (cause) {
+      if (cause instanceof ChatFailure)
+        return { failure: failure(cause.status, cause.message) };
+      throw cause;
+    }
+  }
+
+  const handle = function handle(request: SimulatedRequest): SimulatedResponse {
     const { method, path, query, body } = request;
     if (method === "GET" && path === "/demo/users") return ok(seed.users);
     if (method === "POST" && path === "/demo/session") {
@@ -81,10 +118,7 @@ export function createSimulatedApi(seed: SimulatedSeed) {
         : failure(400, "Unknown demo identity.");
     }
 
-    const token = request.authorization?.replace(/^Bearer /, "") ?? "";
-    const actor = token.startsWith(TOKEN_PREFIX)
-      ? seed.users.find((u) => u.id === token.slice(TOKEN_PREFIX.length))
-      : undefined;
+    const actor = actorFor(request.authorization);
     if (!actor) return failure(401, "A valid demo identity is required.");
 
     if (method === "GET" && path === "/bootstrap")
@@ -124,6 +158,34 @@ export function createSimulatedApi(seed: SimulatedSeed) {
         matches,
       });
     }
+    if (method === "POST" && path === "/assistant/chat") {
+      const record = visibleTo(actor).find(
+        (r) => r.id === field(body, "recordId"),
+      );
+      if (!record) return failure(404, "ESR not found.");
+      const messages = (body as { messages?: unknown } | null)?.messages;
+      const last = Array.isArray(messages) ? messages.at(-1) : null;
+      const question = field(last, "content").trim();
+      if (field(last, "role") !== "user" || !question)
+        return failure(400, "The last message must be a user question.");
+      // A labeled stand-in: the real prompt and provider live in backend/Esr.Api/Chat.cs.
+      const related = visibleTo(actor)
+        .filter((r) => r.status === "ESR Closed" && r.id !== record.id)
+        .slice(0, 2)
+        .map((r) => `- **${r.serial}** · ${r.title}`);
+      return ok({
+        reply: [
+          `**Simulated assistant.** You asked about **${record.serial ?? "this request"}**: "${question.slice(0, 160)}"`,
+          "",
+          "Closed ESRs worth comparing:",
+          ...(related.length ? related : ["- None in the simulated data."]),
+          "",
+          "Switch to API data for the real assistant. Verify any suggestion against the referenced specifications before using it.",
+        ].join("\n"),
+        model: "simulated",
+        mock: true,
+      });
+    }
     if (
       method === "POST" &&
       (path === "/records" ||
@@ -148,4 +210,5 @@ export function createSimulatedApi(seed: SimulatedSeed) {
       ? fileResponse(record, match[3], query.get("revision"))
       : ok(record);
   };
+  return Object.assign(handle, { prepareChat });
 }

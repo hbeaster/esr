@@ -1,13 +1,24 @@
 import { computed, onBeforeUnmount, reactive, ref, watch } from "vue";
 import { createApi } from "../api";
 import {
+  activityFeed,
   appendRichText,
   filterRecords,
+  parseLocation,
+  placeKey,
+  liveVerb,
+  recordAsOf,
+  replaySpeeds,
+  warmSearchIndex,
   normalizeJcn,
   plainText,
+  markdownToRichText,
   steps,
 } from "../presentation";
+import type { PlaceKey, ReplaySpeed } from "../presentation";
 import { useDialogFocus } from "./useDialogFocus";
+import { useNow } from "./useNow";
+import { useLive } from "./useLive";
 import type {
   ActionForm,
   Attachment,
@@ -20,7 +31,10 @@ import type {
   FilePreview,
   HistoricalMatch,
   HistorySearch,
+  ChatMessage,
+  ChatReply,
   LdsData,
+  LiveRecordChange,
   Permission,
   RecordTab,
   RequestForm,
@@ -87,7 +101,51 @@ export function useWorkspace(
   const view = ref<View>("workspace"),
     scope = ref<Scope>("all"),
     query = ref(""),
-    status = ref("");
+    status = ref(""),
+    /** Compartment ("missile") or compartment and level ("missile/second") filter. */
+    place = ref<PlaceKey>("");
+  /** Full-screen watch-floor wallboard. */
+  const watchFloor = ref(false);
+  /**
+   * Fleet replay speed, shared by this workspace's players (list page and
+   * watch floor). Remembered per browser; storage can be blocked, so it falls
+   * back to the fastest.
+   */
+  const REPLAY_SPEED_KEY = "esr.replaySpeed";
+  const replaySpeed = ref<ReplaySpeed>(
+    (() => {
+      try {
+        const saved = localStorage.getItem(REPLAY_SPEED_KEY);
+        return replaySpeeds.some((s) => s.id === saved)
+          ? (saved as ReplaySpeed)
+          : "fast";
+      } catch {
+        return "fast";
+      }
+    })(),
+  );
+  watch(replaySpeed, (speed) => {
+    try {
+      localStorage.setItem(REPLAY_SPEED_KEY, speed);
+    } catch {
+      // Storage blocked: the choice lasts until the page reloads.
+    }
+  });
+  /** Fleet replay position (epoch ms). Null shows live data. */
+  const replayAt = ref<number | null>(null);
+  const clock = useNow();
+  /** The time the fleet views describe: the replay position, or now. */
+  const fleetNow = computed(() => replayAt.value ?? clock.value);
+  /** Workflow events across all records, oldest first, for the replay ticker. */
+  const activity = computed(() => activityFeed(state.records));
+  /** Records as they stood at the replay position, or live records. */
+  const fleet = computed(() => {
+    const t = replayAt.value;
+    if (t === null) return state.records;
+    return state.records
+      .map((r) => recordAsOf(r, t))
+      .filter((r): r is EsrRecord => r !== null);
+  });
   const selectedId = ref<string | null>(null),
     tab = ref<RecordTab>("overview"),
     dialog = ref<Dialog | null>(null);
@@ -97,6 +155,13 @@ export function useWorkspace(
   const searchResult = ref<HistorySearch | null>(null),
     preview = ref<FilePreview | null>(null),
     historySnapshot = ref<EsrRecord | null>(null);
+  const chat = reactive({
+    messages: [] as ChatMessage[],
+    input: "",
+    sending: false,
+    model: "",
+    mock: false,
+  });
   const comment = ref(""),
     attachmentSection = ref<AttachmentSection>("Continuation"),
     requestSection = ref<AttachmentSection>("Condition"),
@@ -167,6 +232,21 @@ export function useWorkspace(
       (local.value ||
         state.permissions[state.user?.id || ""]?.crossSite === "review"),
   );
+  /** A person's name for search, or "" when unknown. */
+  const personName = (id: string) =>
+    state.users.find((u) => u.id === id)?.name ?? "";
+  // Index records for search in the background whenever a new set loads,
+  // so the first keystroke does not pay for it. Single live updates are
+  // indexed lazily by the search itself.
+  let stopWarming = () => {};
+  watch(
+    () => state.records,
+    (records) => {
+      stopWarming();
+      stopWarming = warmSearchIndex(records, personName);
+    },
+  );
+  onBeforeUnmount(() => stopWarming());
   const filtered = computed(() =>
     filterRecords(
       state.records,
@@ -174,13 +254,43 @@ export function useWorkspace(
       status.value,
       scope.value,
       state.user?.id,
+      place.value,
+      personName,
     ),
   );
+  /**
+   * Records per compartment and per compartment level, under every filter
+   * except the place itself. Keys are place keys plus "unlocated".
+   */
+  const placeCounts = computed(() => {
+    const result: Partial<Record<PlaceKey | "unlocated", number>> = {
+      unlocated: 0,
+    };
+    const bump = (key: PlaceKey | "unlocated") =>
+      (result[key] = (result[key] ?? 0) + 1);
+    for (const r of filterRecords(
+      fleet.value,
+      query.value,
+      status.value,
+      scope.value,
+      state.user?.id,
+      "",
+      personName,
+    )) {
+      const loc = parseLocation(r.location);
+      if (!loc) bump("unlocated");
+      else {
+        bump(loc.compartment);
+        if (loc.level) bump(placeKey(loc.compartment, loc.level));
+      }
+    }
+    return result;
+  });
   const counts = computed(() =>
     Object.fromEntries(
       steps.map((s) => [
         s,
-        state.records.filter(
+        fleet.value.filter(
           (r) =>
             r.status === s ||
             (s === "ESR Issued" && r.status.startsWith("ESR Issued")),
@@ -239,8 +349,24 @@ export function useWorkspace(
     { immediate: true },
   );
 
+  /** The record version the draft was loaded from. Saves send it, so edits made on an older version get a 409. */
+  const draftVersion = ref<number | null>(null);
+  const draftFields = (d: Draft) =>
+    JSON.stringify([
+      d.resolution,
+      d.rationale,
+      d.dfs,
+      d.dfsReference,
+      d.tvd,
+      d.tvdReference,
+      [...d.attributes],
+    ]);
+  /** True when the draft has edits the open record does not have yet. */
+  const draftDirty = () =>
+    !!current.value && draftFields(draft) !== draftFields(current.value);
   function resetDraft() {
     const r = current.value;
+    draftVersion.value = r?.version ?? null;
     if (r)
       Object.assign(draft, {
         resolution: r.resolution,
@@ -258,6 +384,7 @@ export function useWorkspace(
     tab.value = "overview";
     historySnapshot.value = null;
     searchResult.value = null;
+    clearChat();
     error.value = "";
     notice.value = "";
     resetDraft();
@@ -266,8 +393,10 @@ export function useWorkspace(
     view.value = target;
     scope.value = nextScope;
     selectedId.value = null;
+    replayAt.value = null;
     status.value = "";
     query.value = "";
+    place.value = "";
     historySnapshot.value = null;
     error.value = "";
     notice.value = "";
@@ -371,7 +500,7 @@ export function useWorkspace(
     const r = selectedRecord();
     const result = await api()<EsrRecord | { deleted: true }>(
       `/records/${r.id}/${action}`,
-      { ...data, version: r.version },
+      { ...data, version: draftVersion.value ?? r.version },
     );
     emit("record-change", {
       id: r.id,
@@ -408,6 +537,45 @@ export function useWorkspace(
         condition: plainText(selectedRecord().condition),
       });
     });
+  }
+  function clearChat() {
+    chat.messages = [];
+    chat.input = "";
+    chat.model = "";
+    chat.mock = false;
+  }
+  /** Chat has its own pending flag so a slow model reply does not lock the rest of the workspace. */
+  async function sendChat() {
+    const content = chat.input.trim();
+    const recordId = selectedId.value;
+    if (!content || chat.sending || !recordId) return;
+    chat.messages.push({ role: "user", content });
+    chat.input = "";
+    chat.sending = true;
+    error.value = "";
+    try {
+      const result = await api()<ChatReply>("/assistant/chat", {
+        recordId,
+        messages: chat.messages,
+      });
+      if (selectedId.value !== recordId) return;
+      chat.messages.push({ role: "assistant", content: result.reply });
+      chat.model = result.model;
+      chat.mock = result.mock;
+    } catch (e) {
+      if (selectedId.value !== recordId) return;
+      chat.messages.pop();
+      chat.input = content;
+      error.value =
+        e instanceof Error ? e.message : "An unexpected error occurred.";
+      emit("workspace-error", { message: error.value });
+    } finally {
+      chat.sending = false;
+    }
+  }
+  function insertChat(content: string, field: "resolution" | "rationale") {
+    draft[field] = appendRichText(draft[field], markdownToRichText(content));
+    notice.value = `Assistant text added to the ${field}. Review and save the draft before signing.`;
   }
   async function copyMatch(match: HistoricalMatch) {
     await run(async () => {
@@ -503,6 +671,63 @@ export function useWorkspace(
     error.value = "";
   }
   onBeforeUnmount(closePreview);
+
+  // ---- Optional live updates and presence (GET /events, POST /presence) ----
+  async function applyRemoteChange(change: LiveRecordChange) {
+    const local = state.records.find((r) => r.id === change.id);
+    const others = change.actorId !== state.user?.id;
+    const onScreen = current.value?.id === change.id && view.value === "record";
+    if (change.deleted) {
+      state.records = state.records.filter((r) => r.id !== change.id);
+      if (onScreen) {
+        navigate("workspace");
+        if (others) notice.value = `${change.actor} deleted that request.`;
+      }
+      return;
+    }
+    if (local && local.version >= change.version) return;
+    const wasDirty = onScreen && draftDirty();
+    let fresh: EsrRecord;
+    try {
+      fresh = await api()<EsrRecord>(`/records/${change.id}`);
+    } catch {
+      return;
+    }
+    // A slower fetch must not replace a newer copy that already arrived.
+    const index = state.records.findIndex((r) => r.id === fresh.id);
+    if (index === -1) state.records.unshift(fresh);
+    else if (state.records[index].version < fresh.version)
+      state.records[index] = fresh;
+    else return;
+    if (!onScreen || !others) return;
+    if (wasDirty)
+      notice.value = `${change.actor} ${liveVerb(change.action)} this record. Your unsaved draft is based on the earlier version.`;
+    else {
+      resetDraft();
+      notice.value = `${change.actor} ${liveVerb(change.action)} this record.`;
+    }
+  }
+  const live = useLive({
+    identity: () => [state.user?.id, props.tokenProvider, props.apiBase],
+    enabled: () => !!state.user && !!props.tokenProvider,
+    base: () => props.apiBase || "/api",
+    tokenProvider: () => props.tokenProvider,
+    presence: () =>
+      watchFloor.value
+        ? { view: "watch-floor", recordId: null }
+        : view.value === "record"
+          ? { view: "record", recordId: selectedId.value }
+          : view.value === "workspace"
+            ? { view: "workspace", recordId: null }
+            : { view: "other", recordId: null },
+    onChange: (change) => void applyRemoteChange(change),
+  });
+  /** Everyone else with a workspace open, one entry per open window. */
+  const viewers = computed(() =>
+    live.viewers.value.filter(
+      (v) => v.connectionId !== live.connectionId.value,
+    ),
+  );
   const { modalElement, trapFocus } = useDialogFocus(dialog, closeDialog);
   watch(permissionUser, (id) =>
     Object.assign(
@@ -546,6 +771,16 @@ export function useWorkspace(
     scope,
     query,
     status,
+    place,
+    replayAt,
+    replaySpeed,
+    watchFloor,
+    fleet,
+    fleetNow,
+    activity,
+    liveStatus: live.status,
+    lastChange: live.lastChange,
+    viewers,
     selectedId,
     tab,
     dialog,
@@ -553,6 +788,7 @@ export function useWorkspace(
     draft,
     form,
     searchResult,
+    chat,
     preview,
     historySnapshot,
     comment,
@@ -571,7 +807,9 @@ export function useWorkspace(
     canComment,
     filtered,
     counts,
+    placeCounts,
     owner,
+    personName,
     run,
     reload,
     resetDraft,
@@ -586,6 +824,9 @@ export function useWorkspace(
     action,
     confirmAction,
     findHistory,
+    sendChat,
+    clearChat,
+    insertChat,
     copyMatch,
     useMatch,
     applyTemplate,
