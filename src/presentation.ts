@@ -588,6 +588,19 @@ export function activityFeed(records: EsrRecord[]): ActivityEvent[] {
   }
   return events.sort((a, b) => at(a.time) - at(b.time));
 }
+/** Fleet replay speeds, fastest first: the wall-clock length of a full replay. */
+export const replaySpeeds = [
+  { id: "fast", label: "Fast", durationMs: 15_000 },
+  { id: "normal", label: "Normal", durationMs: 30_000 },
+  { id: "slow", label: "Slow", durationMs: 60_000 },
+  { id: "slowest", label: "Slowest", durationMs: 120_000 },
+] as const;
+export type ReplaySpeed = (typeof replaySpeeds)[number]["id"];
+export const replayDuration = (speed: ReplaySpeed): number =>
+  (replaySpeeds.find((s) => s.id === speed) ?? replaySpeeds[0]).durationMs;
+/** "15 s", "1 min". */
+export const replaySpeedLength = (ms: number): string =>
+  ms < 60_000 ? `${ms / 1000} s` : `${ms / 60_000} min`;
 export interface FlowPoint {
   /** End of this bucket (epoch ms); the last point is "now". */
   time: number;

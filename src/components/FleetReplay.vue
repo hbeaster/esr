@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from "vue";
-import { date } from "../presentation";
+import {
+  date,
+  replayDuration,
+  replaySpeedLength,
+  replaySpeeds,
+} from "../presentation";
 import { useWorkspaceContext } from "../composables/workspaceContext";
-const { state, replayAt } = useWorkspaceContext();
-/** Wall-clock length of a full replay. */
-const DURATION_MS = 15_000;
+const { state, replayAt, replaySpeed } = useWorkspaceContext();
 const HOUR_MS = 3_600_000;
 const playing = ref(false);
 const end = ref(Date.now());
@@ -24,7 +27,9 @@ function stopLoop() {
 function tick(stamp: number) {
   const dt = last ? stamp - last : 0;
   last = stamp;
-  const step = ((end.value - start.value) / DURATION_MS) * dt;
+  // Read the speed every frame, so a change mid-replay applies at once.
+  const step =
+    ((end.value - start.value) / replayDuration(replaySpeed.value)) * dt;
   const next = Math.min(end.value, (replayAt.value ?? start.value) + step);
   replayAt.value = next;
   if (next >= end.value) {
@@ -106,6 +111,20 @@ defineExpose({ play, playing });
         Back to live
       </button>
     </template>
+    <select
+      v-model="replaySpeed"
+      class="replay-speed"
+      aria-label="Replay speed"
+      title="How long a full replay takes"
+    >
+      <option
+        v-for="s in replaySpeeds"
+        :key="s.id"
+        :value="s.id"
+      >
+        {{ s.label }} · {{ replaySpeedLength(s.durationMs) }}
+      </option>
+    </select>
   </div>
 </template>
 
@@ -142,6 +161,16 @@ defineExpose({ play, playing });
 .replay input[type="range"] {
   width: 180px;
   accent-color: var(--esr-accent);
+}
+.replay-speed {
+  /* The shared form styles make selects fill their row; this one sits inline. */
+  width: auto;
+  min-width: 0;
+  flex: none;
+  height: 28px;
+  padding: 0 var(--sp-2);
+  border-radius: 999px;
+  font-size: var(--fs-xs);
 }
 .replay-date {
   min-width: 96px;

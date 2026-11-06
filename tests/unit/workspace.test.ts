@@ -1006,3 +1006,50 @@ describe("record location map", () => {
     expect(wrapper.find(".pin").exists()).toBe(false);
   });
 });
+
+describe("replay speed", () => {
+  afterEach(() => localStorage.removeItem("esr.replaySpeed"));
+  it("defaults to the fastest, slows mid-replay, and remembers the choice", async () => {
+    const frames: FrameRequestCallback[] = [];
+    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
+      frames.push(cb);
+      return frames.length;
+    });
+    vi.stubGlobal("cancelAnimationFrame", () => {});
+    const step = (stamp: number) => frames.splice(0).forEach((cb) => cb(stamp));
+    const { wrapper, context } = mountSection(
+      RequestWorkspace,
+      makeBootstrap({
+        records: [makeRecord({ createdAt: "2026-06-01T00:00:00Z" })],
+      }),
+    );
+    const speed = wrapper.get('select[aria-label="Replay speed"]');
+    expect(speed.findAll("option").map((o) => o.text())).toEqual([
+      "Fast · 15 s",
+      "Normal · 30 s",
+      "Slow · 1 min",
+      "Slowest · 2 min",
+    ]);
+    expect(context.replaySpeed.value).toBe("fast");
+    await wrapper
+      .findAll("button")
+      .find((b) => b.text().includes("Replay history"))!
+      .trigger("click");
+    step(1000); // first frame only records the time
+    const start = context.replayAt.value!;
+    step(2000);
+    const fast = context.replayAt.value! - start;
+    expect(fast).toBeGreaterThan(0);
+    await speed.setValue("slowest");
+    expect(localStorage.getItem("esr.replaySpeed")).toBe("slowest");
+    const before = context.replayAt.value!;
+    step(3000);
+    // The same second of wall time covers an eighth as much history (15 s vs 2 min).
+    expect((context.replayAt.value! - before) / fast).toBeCloseTo(1 / 8);
+  });
+  it("starts from a speed saved earlier", () => {
+    localStorage.setItem("esr.replaySpeed", "slow");
+    const { context } = mountSection(RequestWorkspace);
+    expect(context.replaySpeed.value).toBe("slow");
+  });
+});

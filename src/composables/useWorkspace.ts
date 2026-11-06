@@ -8,12 +8,13 @@ import {
   placeKey,
   liveVerb,
   recordAsOf,
+  replaySpeeds,
   normalizeJcn,
   plainText,
   markdownToRichText,
   steps,
 } from "../presentation";
-import type { PlaceKey } from "../presentation";
+import type { PlaceKey, ReplaySpeed } from "../presentation";
 import { useDialogFocus } from "./useDialogFocus";
 import { useNow } from "./useNow";
 import { useLive } from "./useLive";
@@ -104,6 +105,31 @@ export function useWorkspace(
     place = ref<PlaceKey>("");
   /** Full-screen watch-floor wallboard. */
   const watchFloor = ref(false);
+  /**
+   * Fleet replay speed, shared by this workspace's players (list page and
+   * watch floor). Remembered per browser; storage can be blocked, so it falls
+   * back to the fastest.
+   */
+  const REPLAY_SPEED_KEY = "esr.replaySpeed";
+  const replaySpeed = ref<ReplaySpeed>(
+    (() => {
+      try {
+        const saved = localStorage.getItem(REPLAY_SPEED_KEY);
+        return replaySpeeds.some((s) => s.id === saved)
+          ? (saved as ReplaySpeed)
+          : "fast";
+      } catch {
+        return "fast";
+      }
+    })(),
+  );
+  watch(replaySpeed, (speed) => {
+    try {
+      localStorage.setItem(REPLAY_SPEED_KEY, speed);
+    } catch {
+      // Storage blocked: the choice lasts until the page reloads.
+    }
+  });
   /** Fleet replay position (epoch ms). Null shows live data. */
   const replayAt = ref<number | null>(null);
   const clock = useNow();
@@ -728,6 +754,7 @@ export function useWorkspace(
     status,
     place,
     replayAt,
+    replaySpeed,
     watchFloor,
     fleet,
     fleetNow,
