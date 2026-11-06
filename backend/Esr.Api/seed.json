@@ -21,6 +21,14 @@
       "phone": "555-0142"
     },
     {
+      "id": "engineer2",
+      "name": "Priya Shah",
+      "role": "Engineer",
+      "site": "Bangor",
+      "shop": "Engineering",
+      "phone": "555-0147"
+    },
+    {
       "id": "supervisor",
       "name": "Casey Rivera",
       "role": "Supervisor",

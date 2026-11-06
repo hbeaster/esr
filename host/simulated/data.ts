@@ -314,8 +314,15 @@ export function createSimulatedRecords(seed: SimulatedSeed): EsrRecord[] {
         latest - createdDaysAgo * DAY_MS + step * pace * DAY_MS,
       ).toISOString();
 
-    const requestor = actor(kingsBay ? "remote" : "requestor");
-    const engineer = actor(kingsBay ? "remote" : "engineer");
+    // Bangor work is shared: Jordan files some requests himself, and Priya
+    // takes about a third of the assignments, so "My work" is a real subset.
+    const requestor = actor(
+      kingsBay ? "remote" : index % 7 === 3 ? "engineer" : "requestor",
+    );
+    const engineer = actor(
+      // index % 3 === 0 never lands on a Kings Bay record (index % 6 === 5).
+      kingsBay ? "remote" : index % 3 === 0 ? "engineer2" : "engineer",
+    );
     const supervisor = actor("supervisor");
     const shop = actor("shop");
     const division = actor("division");

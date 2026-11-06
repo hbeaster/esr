@@ -9,6 +9,7 @@ import {
   liveVerb,
   recordAsOf,
   replaySpeeds,
+  warmSearchIndex,
   normalizeJcn,
   plainText,
   markdownToRichText,
@@ -231,6 +232,21 @@ export function useWorkspace(
       (local.value ||
         state.permissions[state.user?.id || ""]?.crossSite === "review"),
   );
+  /** A person's name for search, or "" when unknown. */
+  const personName = (id: string) =>
+    state.users.find((u) => u.id === id)?.name ?? "";
+  // Index records for search in the background whenever a new set loads,
+  // so the first keystroke does not pay for it. Single live updates are
+  // indexed lazily by the search itself.
+  let stopWarming = () => {};
+  watch(
+    () => state.records,
+    (records) => {
+      stopWarming();
+      stopWarming = warmSearchIndex(records, personName);
+    },
+  );
+  onBeforeUnmount(() => stopWarming());
   const filtered = computed(() =>
     filterRecords(
       state.records,
@@ -239,6 +255,7 @@ export function useWorkspace(
       scope.value,
       state.user?.id,
       place.value,
+      personName,
     ),
   );
   /**
@@ -257,6 +274,8 @@ export function useWorkspace(
       status.value,
       scope.value,
       state.user?.id,
+      "",
+      personName,
     )) {
       const loc = parseLocation(r.location);
       if (!loc) bump("unlocated");
@@ -790,6 +809,7 @@ export function useWorkspace(
     counts,
     placeCounts,
     owner,
+    personName,
     run,
     reload,
     resetDraft,

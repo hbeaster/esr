@@ -10,7 +10,12 @@ import {
 } from "../../host/simulated/handler";
 import type { SimulatedRequest } from "../../host/simulated/handler";
 import type { Bootstrap, EsrRecord } from "../../src/types";
-import { compartments, parseLocation, placeKey } from "../../src/presentation";
+import {
+  compartments,
+  filterRecords,
+  parseLocation,
+  placeKey,
+} from "../../src/presentation";
 import { simulatedLds } from "../../host/simulated/data";
 import seedJson from "../../backend/Esr.Api/seed.json";
 
@@ -62,6 +67,18 @@ describe("simulated records", () => {
       expect(loc!.frame!).toBeLessThanOrEqual(last);
       if (loc!.side !== "centerline")
         expect(loc!.board, lds.location).not.toBeNull();
+    }
+  });
+  it("share Bangor work, so each person's My work is a real subset", () => {
+    const local = records.filter((r) => r.site === "Bangor");
+    const mine = (id: string) =>
+      filterRecords(local, "", "", "mine", id).length;
+    // Jordan is assigned some and files some; Priya takes the rest of the assignments.
+    expect(local.some((r) => r.requestorId === "engineer")).toBe(true);
+    expect(local.some((r) => r.engineerId === "engineer2")).toBe(true);
+    for (const id of ["requestor", "engineer", "engineer2"]) {
+      expect(mine(id)).toBeGreaterThan(0);
+      expect(mine(id)).toBeLessThan(local.length);
     }
   });
   it("keep 14 open records at Bangor", () => {

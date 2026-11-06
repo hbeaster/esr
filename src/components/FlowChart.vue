@@ -4,7 +4,8 @@ import { date, filterRecords, flowSeries } from "../presentation";
 import type { FlowPoint } from "../presentation";
 import { useNow } from "../composables/useNow";
 import { useWorkspaceContext } from "../composables/workspaceContext";
-const { state, query, scope, place, replayAt } = useWorkspaceContext();
+const { state, query, scope, place, replayAt, personName } =
+  useWorkspaceContext();
 const now = useNow();
 
 /**
@@ -20,6 +21,7 @@ const series = computed(() =>
       scope.value,
       state.user?.id,
       place.value,
+      personName,
     ),
     now.value,
   ),

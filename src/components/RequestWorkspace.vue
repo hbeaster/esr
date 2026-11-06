@@ -168,7 +168,7 @@ const stepHint: Record<string, string> = {
         <label class="search"><span aria-hidden="true">⌕</span><input
           v-model="query"
           aria-label="Search requests"
-          placeholder="Search serial, JCN, requester, shop, or condition…"
+          placeholder="Search all columns: names, serial, JCN, status, location…"
         ></label><select
           v-model="status"
           aria-label="Filter by status"

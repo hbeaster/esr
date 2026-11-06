@@ -788,7 +788,207 @@ type SearchableRecord = Pick<
   | "engineerId"
   | "status"
 > &
-  Partial<Pick<EsrRecord, "requestorId" | "location">>;
+  Partial<
+    Pick<
+      EsrRecord,
+      | "id"
+      | "version"
+      | "updatedAt"
+      | "requestorId"
+      | "location"
+      | "component"
+      | "workStatement"
+      | "createdAt"
+      | "site"
+    >
+  >;
+
+// ---- All-column search ----
+/**
+ * Plain words from stored rich text, for indexing only. A light tag strip,
+ * not the sanitizer in plainText(): the index only needs the words, and
+ * parsing every record's HTML was most of the cost of building it.
+ */
+const searchWords = (html?: string | null) =>
+  (html ?? "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+/** Lowercase, accents removed, so "Résumé" finds "resume". */
+const normalize = (value: string) =>
+  value.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+interface SearchEntry {
+  key: string;
+  /** Every searchable column joined, normalized. */
+  text: string;
+  /** Distinct words of `text`, for typo-tolerant matching. */
+  words: string[];
+}
+/**
+ * Search text per record, built once and reused until the record changes
+ * (its id, version, update time, or assigned engineer's name). Building it is
+ * the expensive part: rich text is parsed to plain text. Bounded so a long
+ * session cannot grow it without limit.
+ */
+const searchCache = new Map<string, SearchEntry>();
+const SEARCH_CACHE_LIMIT = 20_000;
+function searchEntry(
+  r: SearchableRecord,
+  nameOf?: (id: string) => string,
+): SearchEntry {
+  const engineer = r.engineerId ? (nameOf?.(r.engineerId) ?? "") : "unassigned";
+  const key = `${r.id ?? ""}|${r.version ?? ""}|${r.updatedAt ?? ""}|${engineer}`;
+  const cached = r.id ? searchCache.get(r.id) : undefined;
+  if (cached?.key === key) return cached;
+  const created = r.createdAt ? Date.parse(r.createdAt) : NaN;
+  const text = normalize(
+    [
+      // Table columns, in order.
+      r.serial,
+      r.jcn,
+      r.refit,
+      r.name,
+      r.shop,
+      searchWords(r.condition),
+      searchWords(r.resolution),
+      r.swbs,
+      engineer,
+      Number.isNaN(created) ? "" : date(r.createdAt!),
+      Number.isNaN(created) ? "" : r.createdAt!.slice(0, 10),
+      // Shown elsewhere on the record.
+      r.title,
+      ...r.attributes,
+      r.component,
+      r.location,
+      r.workStatement,
+      r.site,
+    ]
+      .filter(Boolean)
+      .join(" \u0001 "),
+  );
+  const entry = {
+    key,
+    text,
+    words: [...new Set(text.match(/[a-z0-9]+/g) ?? [])],
+  };
+  if (r.id) {
+    if (searchCache.size >= SEARCH_CACHE_LIMIT) searchCache.clear();
+    searchCache.set(r.id, entry);
+  }
+  return entry;
+}
+/**
+ * Builds the search index ahead of the first keystroke, a slice at a time
+ * in idle time so a large load never blocks the page. Returns a cancel
+ * function. Records already indexed and unchanged are skipped.
+ */
+export function warmSearchIndex(
+  records: SearchableRecord[],
+  nameOf?: (id: string) => string,
+  sliceSize = 400,
+): () => void {
+  let index = 0;
+  let cancelled = false;
+  const idle: (cb: () => void) => void =
+    typeof requestIdleCallback === "function"
+      ? (cb) => requestIdleCallback(cb, { timeout: 500 })
+      : (cb) => setTimeout(cb, 16);
+  const slice = () => {
+    if (cancelled) return;
+    const end = Math.min(records.length, index + sliceSize);
+    for (; index < end; index++) searchEntry(records[index], nameOf);
+    if (index < records.length) idle(slice);
+  };
+  idle(slice);
+  return () => (cancelled = true);
+}
+/**
+ * Optimal string alignment distance (Levenshtein plus adjacent swaps),
+ * stopping as soon as it must exceed `limit`.
+ */
+function withinEdits(a: string, b: string, limit: number): boolean {
+  if (Math.abs(a.length - b.length) > limit) return false;
+  let prev2: number[] = [];
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const row = [i];
+    let best = i;
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      let value = Math.min(prev[j] + 1, row[j - 1] + 1, prev[j - 1] + cost);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1])
+        value = Math.min(value, prev2[j - 2] + 1);
+      row.push(value);
+      best = Math.min(best, value);
+    }
+    if (best > limit) return false;
+    prev2 = prev;
+    prev = row;
+  }
+  return prev[b.length] <= limit;
+}
+/**
+ * Typos allowed for a search word: none under 3 letters, 1 up to 7, 2 from 8.
+ * None for words with digits: serials, JCNs, frames, and dates are
+ * identifiers, and one digit off is a different record.
+ */
+const typoLimit = (term: string) =>
+  /\d/.test(term) || term.length < 3 ? 0 : term.length <= 7 ? 1 : 2;
+/**
+ * Compiles a query into a record test. Every word must match some column:
+ * as a substring first (cheap), else within a typo or two of a whole word or
+ * of a word's start ("jordn" finds Jordan, "awaitng" finds Awaiting). Typo
+ * checks run only for words with no substring hit, and each distinct word in
+ * the data is checked once per query.
+ */
+export function compileSearch(
+  query: string,
+  nameOf?: (id: string) => string,
+): ((r: SearchableRecord) => boolean) | null {
+  const terms = normalize(query).match(/[a-z0-9]+/g) ?? [];
+  if (!terms.length) return null;
+  const fuzzy = terms.map((term) => {
+    const limit = typoLimit(term);
+    const memo = new Map<string, boolean>();
+    return (word: string) => {
+      let hit = memo.get(word);
+      if (hit === undefined) {
+        // The first letter must match: it is rarely the mistyped one, and it
+        // keeps "jordan" from matching "morgan".
+        hit =
+          limit > 0 &&
+          word[0] === term[0] &&
+          !/\d/.test(word) &&
+          (withinEdits(term, word, limit) ||
+            (word.length > term.length &&
+              withinEdits(term, word.slice(0, term.length), limit)));
+        memo.set(word, hit);
+      }
+      return hit;
+    };
+  });
+  return (r) => {
+    const entry = searchEntry(r, nameOf);
+    const status = normalize(r.status);
+    return terms.every(
+      (term, i) =>
+        entry.text.includes(term) ||
+        status.includes(term) ||
+        (typoLimit(term) > 0 &&
+          (entry.words.some(fuzzy[i]) || status.split(/\s+/).some(fuzzy[i]))),
+    );
+  };
+}
+/**
+ * Filters records by search, status, scope, and place. The search covers
+ * every table column (and title, location, component, work statement, site),
+ * tolerates small typos, and needs every word to match. Pass `nameOf` so the
+ * assigned engineer's name is searchable.
+ */
 export function filterRecords<T extends SearchableRecord>(
   records: T[],
   query: string,
@@ -796,32 +996,19 @@ export function filterRecords<T extends SearchableRecord>(
   scope: Scope,
   userId?: string,
   place: PlaceKey = "",
+  nameOf?: (id: string) => string,
 ): T[] {
-  const search = query.trim().toLowerCase();
+  const matches = compileSearch(query, nameOf);
   return records.filter(
     (r) =>
-      (!search ||
-        [
-          r.title,
-          r.serial,
-          r.jcn,
-          r.refit,
-          r.name,
-          r.shop,
-          plainText(r.condition),
-          plainText(r.resolution),
-          r.swbs,
-          ...r.attributes,
-        ]
-          .join(" ")
-          .toLowerCase()
-          .includes(search)) &&
       (!status || r.status === status) &&
       (scope !== "mine" ||
         r.engineerId === userId ||
         r.requestorId === userId) &&
       (scope !== "history" || r.status === "ESR Closed") &&
-      inPlace(r.location, place),
+      inPlace(r.location, place) &&
+      // Cheapest checks first; the search runs only on what is left.
+      (!matches || matches(r)),
   );
 }
 

@@ -54,6 +54,7 @@ const {
   activity,
   openRecord,
   lastChange,
+  personName,
 } = useWorkspaceContext();
 const emit = defineEmits<{ "show-all": [] }>();
 const props = defineProps<{
@@ -203,6 +204,8 @@ const diveContacts = computed(() => {
       status.value,
       scope.value,
       state.user?.id,
+      "",
+      personName,
     ).filter((r) => parseLocation(r.location)?.compartment === id),
     fleetNow.value,
   );
@@ -1151,8 +1154,8 @@ onBeforeUnmount(() => {
   }
 }
 .sound-toggle {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   padding: 0;
   border-radius: 50%;
   font-size: 13px;

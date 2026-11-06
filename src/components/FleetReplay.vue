@@ -135,9 +135,14 @@ defineExpose({ play, playing });
   gap: var(--sp-2);
   flex-wrap: wrap;
 }
+/* One control height for the replay row: button, speed menu, and sound toggle. */
 .replay-start {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  height: 28px;
   font-size: var(--fs-sm);
-  padding: 4px 12px;
+  padding: 0 12px;
   border-radius: 999px;
 }
 .replay-start span {
@@ -167,6 +172,8 @@ defineExpose({ play, playing });
   width: auto;
   min-width: 0;
   flex: none;
+  /* The shared form styles add a top margin that pushes selects off the row. */
+  margin: 0;
   height: 28px;
   padding: 0 var(--sp-2);
   border-radius: 999px;
