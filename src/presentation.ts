@@ -70,8 +70,14 @@ export function equipmentClass(
   for (const field of fields) {
     const text = (field || "").toLowerCase();
     if (!text) continue;
-    const hit = equipmentPatterns.find(([, pattern]) => pattern.test(text));
-    if (hit) return hit[0];
+    // The earliest match wins, so the subject ("Galley exhaust damper —
+    // calibration drift") outranks words in the finding that follows it.
+    let best: { kind: EquipmentClass; at: number } | null = null;
+    for (const [kind, pattern] of equipmentPatterns) {
+      const at = text.search(pattern);
+      if (at !== -1 && (!best || at < best.at)) best = { kind, at };
+    }
+    if (best) return best.kind;
   }
   return "generic";
 }
@@ -87,41 +93,150 @@ export const equipmentClassLabel = (value: EquipmentClass): string =>
     engine: "Engine",
     generic: "Equipment",
   })[value];
-/** Mock hull compartments, bow to stern. */
-export const hullZones = [
-  { id: "forward", label: "Forward" },
-  { id: "operations", label: "Operations" },
-  { id: "midships", label: "Midships" },
-  { id: "auxiliary", label: "Auxiliary" },
-  { id: "engineering", label: "Engineering" },
-  { id: "aft", label: "Aft" },
+/**
+ * The boat's three compartments, bow to stern, and their levels top to
+ * bottom. Frame ranges are mock and not to scale.
+ */
+export const compartments = [
+  {
+    id: "forward",
+    label: "FWD Compartment",
+    short: "FWD",
+    frames: [1, 45],
+    levels: ["upper", "second", "third", "lower"],
+  },
+  {
+    id: "missile",
+    label: "Missile Compartment",
+    short: "Missile",
+    frames: [46, 110],
+    levels: ["upper", "second", "third", "lower"],
+  },
+  {
+    id: "engine",
+    label: "Engine Room",
+    short: "Engine Room",
+    frames: [111, 160],
+    levels: ["upper", "middle", "lower"],
+  },
 ] as const;
-export type HullZone = (typeof hullZones)[number]["id"];
-/** Ordered: auxiliary first so "Auxiliary machinery space" stays auxiliary. */
-const hullZonePatterns: [HullZone, RegExp][] = [
-  ["auxiliary", /\baux(?:iliary)?\b/],
-  [
-    "engineering",
-    /\bengine room\b|\bpropulsion\b|\bturbines?\b|\bmotor room\b|\bmaneuvering\b/,
-  ],
-  ["aft", /\baft\b|\bstern\b|\bshafts?\b/],
-  [
-    "operations",
-    /\bcontrol\b|\bsail\b|\boperations\b|\battack center\b|\bnavigation\b/,
-  ],
-  ["midships", /\bmidships?\b|\bberthing\b|\bmess\b|\bgalley\b/],
-  ["forward", /\bforward\b|\bfwd\b|\bbow\b|\btorpedo\b/],
+export type CompartmentId = (typeof compartments)[number]["id"];
+export type Level = "upper" | "second" | "third" | "middle" | "lower";
+export type Side = "port" | "starboard" | "centerline";
+export type Board = "inboard" | "outboard";
+export interface ShipLocation {
+  compartment: CompartmentId;
+  level: Level | null;
+  frame: number | null;
+  side: Side | null;
+  board: Board | null;
+}
+export const levelLabels: Record<Level, string> = {
+  upper: "Upper level",
+  second: "Second level",
+  third: "Third level",
+  middle: "Middle level",
+  lower: "Lower level",
+};
+export const compartmentOf = (id: CompartmentId) =>
+  compartments.find((c) => c.id === id)!;
+export const levelsOf = (id: CompartmentId): readonly Level[] =>
+  compartmentOf(id).levels;
+
+const compartmentPatterns: [CompartmentId, RegExp][] = [
+  ["missile", /\bmissile\b|\bmc\b/],
+  ["engine", /\bengine room\b|\ber\b|\bengineroom\b/],
+  ["forward", /\bfwd\b|\bforward\b/],
 ];
-/** Mock hull zone for an LDS location, or null when blank or unrecognized. */
-export function hullZone(location?: string | null): HullZone | null {
-  const text = (location || "").trim().toLowerCase();
-  if (!text) return null;
+const levelPatterns: [Level, RegExp][] = [
+  ["upper", /\bupper\b|\b1st\b|\bfirst\b/],
+  ["second", /\bsecond\b|\b2nd\b/],
+  ["third", /\bthird\b|\b3rd\b/],
+  ["middle", /\bmiddle\b|\bmid\b/],
+  ["lower", /\blower\b|\bbottom\b/],
+];
+/**
+ * Reads a location written as "<Compartment>, <level> level, frame <n>,
+ * <port|starboard|centerline>, <inboard|outboard>", for example
+ * "Missile Compartment, second level, frame 64, port, outboard". Tolerates
+ * abbreviations (FWD, ER, 2nd, stbd, fr 64), any order, and any case. A level
+ * the compartment does not have is dropped. Null when no compartment is named.
+ */
+export function parseLocation(text?: string | null): ShipLocation | null {
+  const t = (text ?? "").toLowerCase();
+  const compartment = compartmentPatterns.find(([, p]) => p.test(t))?.[0];
+  if (!compartment) return null;
+  const level = levelPatterns.find(([, p]) => p.test(t))?.[0] ?? null;
+  const frame = /\b(?:frame|fr)\.?\s*(\d{1,3})\b/.exec(t);
+  const side = /\bport\b/.test(t)
+    ? "port"
+    : /\bstarboard\b|\bstbd\b/.test(t)
+      ? "starboard"
+      : /\bcenter\s*line\b|\bcentreline\b/.test(t)
+        ? "centerline"
+        : null;
+  const board = /\binboard\b/.test(t)
+    ? "inboard"
+    : /\boutboard\b/.test(t)
+      ? "outboard"
+      : null;
+  return {
+    compartment,
+    level: level && levelsOf(compartment).includes(level) ? level : null,
+    frame: frame ? Number(frame[1]) : null,
+    side,
+    board,
+  };
+}
+const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+/** Nautical description, e.g. "Missile Compartment · Second level · Frame 64 · Port, outboard". */
+export function describeLocation(loc: ShipLocation): string {
+  const parts: string[] = [compartmentOf(loc.compartment).label];
+  if (loc.level) parts.push(levelLabels[loc.level]);
+  if (loc.frame !== null) parts.push(`Frame ${loc.frame}`);
+  const lateral = [loc.side && capital(loc.side), loc.board].filter(Boolean);
+  if (loc.side === "centerline") lateral.splice(1);
+  if (lateral.length)
+    parts.push(
+      lateral.length === 2
+        ? `${lateral[0]}, ${lateral[1]}`
+        : capital(String(lateral[0])),
+    );
+  return parts.join(" · ");
+}
+/**
+ * A place filter is a compartment ("missile") or a compartment and level
+ * ("missile/second"). Empty matches everything.
+ */
+export type PlaceKey = "" | CompartmentId | `${CompartmentId}/${Level}`;
+export const placeKey = (
+  compartment: CompartmentId,
+  level?: Level | null,
+): PlaceKey => (level ? `${compartment}/${level}` : compartment);
+export function splitPlace(key: PlaceKey): {
+  compartment: CompartmentId | null;
+  level: Level | null;
+} {
+  const [compartment, level] = key.split("/") as [CompartmentId?, Level?];
+  return { compartment: compartment || null, level: level ?? null };
+}
+export function inPlace(
+  location: string | null | undefined,
+  key: PlaceKey,
+): boolean {
+  if (!key) return true;
+  const loc = parseLocation(location);
+  const { compartment, level } = splitPlace(key);
   return (
-    hullZonePatterns.find(([, pattern]) => pattern.test(text))?.[0] ?? null
+    !!loc && loc.compartment === compartment && (!level || loc.level === level)
   );
 }
-export const hullZoneLabel = (zone: HullZone): string =>
-  hullZones.find((z) => z.id === zone)!.label;
+export function placeLabel(key: PlaceKey): string {
+  const { compartment, level } = splitPlace(key);
+  if (!compartment) return "";
+  const name = compartmentOf(compartment).label;
+  return level ? `${name} · ${levelLabels[level]}` : name;
+}
 export const initials = (name?: string | null): string =>
   (name || "")
     .split(" ")
@@ -667,7 +782,7 @@ export function filterRecords<T extends SearchableRecord>(
   status: string,
   scope: Scope,
   userId?: string,
-  zone: HullZone | "" = "",
+  place: PlaceKey = "",
 ): T[] {
   const search = query.trim().toLowerCase();
   return records.filter(
@@ -693,7 +808,7 @@ export function filterRecords<T extends SearchableRecord>(
         r.engineerId === userId ||
         r.requestorId === userId) &&
       (scope !== "history" || r.status === "ESR Closed") &&
-      (!zone || hullZone(r.location) === zone),
+      inPlace(r.location, place),
   );
 }
 

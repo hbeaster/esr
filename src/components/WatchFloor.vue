@@ -11,8 +11,8 @@ import {
   equipmentClass,
   equipmentClassLabel,
   formatDuration,
-  hullZone,
-  hullZoneLabel,
+  describeLocation,
+  parseLocation,
   liveVerb,
   plainText,
   rankByCriticality,
@@ -98,7 +98,7 @@ const spotlight = computed(() => {
   if (!pool.length) return null;
   const { record, age } = pool[spotlightIndex.value % pool.length];
   const kind = equipmentClass(record);
-  const zone = hullZone(record.location);
+  const loc = parseLocation(record.location);
   const limits = agingThresholdsDays[record.status];
   return {
     record,
@@ -110,7 +110,9 @@ const spotlight = computed(() => {
     stale: age?.tone === "stale",
     limit: limits ? `stale after ${limits[1]} days` : "",
     place: record.location
-      ? `${record.location}${zone ? ` · ${hullZoneLabel(zone)}` : ""}`
+      ? loc
+        ? describeLocation(loc)
+        : record.location
       : "Location not provided",
     subsafe: record.attributes.includes("SUBSAFE"),
   };

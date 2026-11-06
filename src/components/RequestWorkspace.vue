@@ -7,7 +7,7 @@ import {
   statusAge,
   stepOf,
   esrTableColumns,
-  hullZoneLabel,
+  placeLabel,
   initials,
   date,
   plainText,
@@ -25,7 +25,7 @@ const {
   scope,
   query,
   status,
-  zone,
+  place,
   watchFloor,
   fleet,
   fleetNow,
@@ -49,7 +49,7 @@ const staleCounts = computed(() => {
   return result;
 });
 const tableCard = ref<HTMLElement | null>(null);
-/** From a capped compartment dive: bring the zone-filtered table into view. */
+/** From a capped compartment dive: bring the place-filtered table into view. */
 function showAllInTable() {
   tableCard.value?.scrollIntoView({ behavior: "smooth", block: "start" });
   tableCard.value?.focus({ preventScroll: true });
@@ -187,19 +187,19 @@ const stepHint: Record<string, string> = {
             {{ step }}
           </option>
         </select><button
-          v-if="zone"
+          v-if="place"
           class="zone-filter"
-          :aria-label="`Remove zone filter ${hullZoneLabel(zone)}`"
-          @click="zone = ''"
+          :aria-label="`Remove place filter ${placeLabel(place)}`"
+          @click="place = ''"
         >
-          Zone: {{ hullZoneLabel(zone) }} <span aria-hidden="true">×</span>
+          {{ placeLabel(place) }} <span aria-hidden="true">×</span>
         </button><button
-          v-if="status || query || zone"
+          v-if="status || query || place"
           class="text-button"
           @click="
             status = '';
             query = '';
-            zone = '';
+            place = '';
           "
         >
           Clear filters

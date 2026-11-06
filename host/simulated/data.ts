@@ -20,52 +20,110 @@ export const SIMULATED_RECORD_COUNT = 60;
 
 /**
  * The first two JCNs match the CRACN mock's demo jobs, so the New Request form
- * behaves alike. The rest exist only in simulated data, so every mock hull zone
- * has records.
+ * behaves alike. The rest exist only in simulated data. Together they cover
+ * every compartment level. Locations use the standard nautical format that
+ * parseLocation reads: compartment, level, frame, side, inboard/outboard.
  */
 export const simulatedLds: Record<string, LdsData> = {
   "21036WX010184": {
     workStatement: "Inspect auxiliary seawater pump coupling",
     refit: "A014",
     component: "ASW-P-02 / TSN-10482",
-    location: "Auxiliary machinery space",
+    location: "FWD Compartment, lower level, frame 38, starboard, outboard",
     swbs: "6286FCA00000",
   },
   "21036WX020207": {
     workStatement: "Restore valve actuator mounting hardware",
     refit: "A018",
     component: "VLV-214 / TSN-20871",
-    location: "Forward equipment space",
+    location: "Missile Compartment, third level, frame 72, port, inboard",
     swbs: "4521VLV21400",
   },
   "21036WX030311": {
     workStatement: "Inspect propulsion motor mounting and cooling",
     refit: "A021",
     component: "MTR-01 / TSN-30115",
-    location: "Engine room lower level",
+    location: "Engine Room, lower level, frame 148, centerline",
     swbs: "2351MTR01000",
   },
   "21036WX040422": {
     workStatement: "Recalibrate depth gauge transmitter",
     refit: "A021",
     component: "PT-118 / TSN-40233",
-    location: "Control room",
+    location: "FWD Compartment, upper level, frame 22, port, inboard",
     swbs: "4365PT118000",
   },
   "21036WX050533": {
     workStatement: "Repair galley exhaust damper linkage",
     refit: "A018",
     component: "DMP-07 / TSN-50344",
-    location: "Crew mess and galley",
+    location: "FWD Compartment, second level, frame 30, starboard, inboard",
     swbs: "5121DMP07000",
   },
   "21036WX060644": {
     workStatement: "Inspect shaft seal cooling line",
     refit: "A014",
     component: "SS-02 / TSN-60455",
-    location: "Aft shaft alley",
+    location: "Engine Room, lower level, frame 157, port, outboard",
     swbs: "2441SS020000",
   },
+  "21036WX070755": {
+    workStatement: "Clean chilled water cooler tube bundle",
+    refit: "A021",
+    component: "HX-12 / TSN-70566",
+    location: "Missile Compartment, lower level, frame 95, starboard, outboard",
+    swbs: "5141HX120000",
+  },
+  "21036WX080866": {
+    workStatement: "Inspect hydraulic accumulator precharge",
+    refit: "A018",
+    component: "ACC-31 / TSN-80677",
+    location: "Missile Compartment, second level, frame 64, port, outboard",
+    swbs: "5561ACC31000",
+  },
+  "21036WX090977": {
+    workStatement: "Test shore power breaker trip settings",
+    refit: "A014",
+    component: "BKR-4A / TSN-90788",
+    location: "Engine Room, middle level, frame 126, starboard, inboard",
+    swbs: "3241BKR4A000",
+  },
+  "21036WX101088": {
+    workStatement: "Rebalance ventilation supply fan",
+    refit: "A021",
+    component: "FAN-03 / TSN-10899",
+    location: "Missile Compartment, upper level, frame 81, starboard, inboard",
+    swbs: "5121FAN03000",
+  },
+  "21036WX111199": {
+    workStatement: "Replace trim tank level sensor",
+    refit: "A018",
+    component: "LT-05 / TSN-11910",
+    location: "FWD Compartment, third level, frame 41, port, outboard",
+    swbs: "5291LT050000",
+  },
+  "21036WX121210": {
+    workStatement: "Inspect motor generator brush rigging",
+    refit: "A014",
+    component: "MG-2 / TSN-12021",
+    location: "Engine Room, upper level, frame 118, port, outboard",
+    swbs: "3111MG020000",
+  },
+};
+/** The system each simulated job concerns, used in its record titles so the equipment icon matches. */
+const simulatedSystems: Record<string, string> = {
+  "21036WX010184": "Auxiliary seawater pump",
+  "21036WX020207": "Hydraulic valve actuator",
+  "21036WX030311": "Propulsion motor",
+  "21036WX040422": "Depth gauge transmitter",
+  "21036WX050533": "Galley exhaust damper",
+  "21036WX060644": "Shaft seal cooling line",
+  "21036WX070755": "Chilled water cooler",
+  "21036WX080866": "Hydraulic accumulator",
+  "21036WX090977": "Shore power breaker",
+  "21036WX101088": "Ventilation supply fan",
+  "21036WX111199": "Trim tank level sensor",
+  "21036WX121210": "Motor generator",
 };
 
 export const simulatedTemplates: EngineeringTemplate[] = [
@@ -211,23 +269,29 @@ export function createSimulatedRecords(seed: SimulatedSeed): EsrRecord[] {
     if (!found) throw new Error(`Simulated data needs the "${id}" identity.`);
     return found;
   };
-  // Weighted so the mock hull heatmap shows hot spots: auxiliary and
-  // engineering carry most of the work. Thirteen slots never line up with the
-  // every-sixth Kings Bay record, so every zone has records at each site.
+  // Weighted so the mock hull heatmap shows hot spots: the FWD lower level
+  // (auxiliary machinery), Missile second level, and Engine Room carry the most
+  // work. Nineteen slots never line up with the every-sixth Kings Bay record.
   const jcns = [
-    "21036WX010184", // auxiliary
-    "21036WX030311", // engineering
+    "21036WX010184", // FWD lower: seawater pump
+    "21036WX080866", // Missile second: accumulator
+    "21036WX030311", // ER lower: propulsion motor
+    "21036WX040422", // FWD upper: depth gauge
     "21036WX010184",
-    "21036WX020207", // forward
-    "21036WX030311",
-    "21036WX040422", // operations
-    "21036WX010184",
+    "21036WX090977", // ER middle: shore power breaker
+    "21036WX070755", // Missile lower: chilled water cooler
     "N/A",
-    "21036WX050533", // midships
-    "21036WX030311",
-    "21036WX020207",
-    "21036WX060644", // aft
+    "21036WX050533", // FWD second: galley damper
+    "21036WX080866",
+    "21036WX020207", // Missile third: valve actuator
+    "21036WX121210", // ER upper: motor generator
     "21036WX010184",
+    "21036WX101088", // Missile upper: ventilation fan
+    "21036WX030311",
+    "21036WX111199", // FWD third: trim tank sensor
+    "21036WX090977",
+    "N/A",
+    "21036WX060644", // ER lower: shaft seal line
   ];
 
   const latest = latestRecordMs();
@@ -380,7 +444,7 @@ export function createSimulatedRecords(seed: SimulatedSeed): EsrRecord[] {
       title:
         index === 3
           ? longTitle
-          : `${systems[index % systems.length]} — ${findings[index % findings.length]}`,
+          : `${simulatedSystems[jcn] ?? systems[index % systems.length]} — ${findings[index % findings.length]}`,
       name: requestor.name,
       shop: requestor.shop,
       phone: requestor.phone,

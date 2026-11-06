@@ -12,8 +12,10 @@ import {
   equipmentClass,
   filterRecords,
   equipmentClassLabel,
-  hullZone,
-  hullZoneLabel,
+  describeLocation,
+  inPlace,
+  parseLocation,
+  placeLabel,
 } from "../../src/presentation";
 import { makeRecord } from "../fixtures";
 
@@ -44,6 +46,21 @@ describe("equipmentClass", () => {
     ).toBe("heat-exchanger");
   });
 
+  it("names the equipment a title starts with, not words in its finding", () => {
+    expect(
+      equipmentClass({
+        ...blank,
+        title: "Galley exhaust damper — calibration drift",
+      }),
+    ).toBe("ventilation");
+    expect(
+      equipmentClass({
+        ...blank,
+        title: "Hydraulic accumulator — insulation breakdown",
+      }),
+    ).toBe("tank");
+  });
+
   it("lets the component outrank a conflicting title", () => {
     expect(
       equipmentClass({
@@ -63,34 +80,83 @@ describe("equipmentClass", () => {
   });
 });
 
-describe("hullZone", () => {
-  it("maps LDS locations to mock hull zones", () => {
-    expect(hullZone("Auxiliary machinery space")).toBe("auxiliary");
-    expect(hullZone("Forward equipment space")).toBe("forward");
-    expect(hullZone("Engine room lower level")).toBe("engineering");
-    expect(hullZone("Control room")).toBe("operations");
-    expect(hullZoneLabel("auxiliary")).toBe("Auxiliary");
+describe("ship locations", () => {
+  it("reads the standard nautical format", () => {
+    const loc = parseLocation(
+      "Missile Compartment, second level, frame 64, port, outboard",
+    );
+    expect(loc).toEqual({
+      compartment: "missile",
+      level: "second",
+      frame: 64,
+      side: "port",
+      board: "outboard",
+    });
+    expect(describeLocation(loc!)).toBe(
+      "Missile Compartment · Second level · Frame 64 · Port, outboard",
+    );
   });
-
-  it("returns null for blank or unrecognized locations", () => {
-    expect(hullZone("")).toBeNull();
-    expect(hullZone(null)).toBeNull();
-    expect(hullZone("Pier 4")).toBeNull();
+  it("tolerates abbreviations, order, and case", () => {
+    expect(parseLocation("fr 38 STBD outboard, FWD, 3rd")).toEqual({
+      compartment: "forward",
+      level: "third",
+      frame: 38,
+      side: "starboard",
+      board: "outboard",
+    });
+    expect(
+      parseLocation("ER middle level frame 126 starboard inboard"),
+    ).toMatchObject({ compartment: "engine", level: "middle" });
+  });
+  it("keeps only levels the compartment has, and handles the centerline", () => {
+    // The FWD Compartment has no middle level; the Engine Room has no second.
+    expect(parseLocation("FWD Compartment, middle level")?.level).toBeNull();
+    expect(parseLocation("Engine Room, second level")?.level).toBeNull();
+    const centerline = parseLocation(
+      "Engine Room, lower level, frame 148, centerline",
+    )!;
+    expect(centerline).toMatchObject({ side: "centerline", board: null });
+    expect(describeLocation(centerline)).toBe(
+      "Engine Room · Lower level · Frame 148 · Centerline",
+    );
+  });
+  it("returns null without a recognizable compartment", () => {
+    expect(parseLocation("")).toBeNull();
+    expect(parseLocation(null)).toBeNull();
+    expect(parseLocation("Auxiliary machinery space")).toBeNull();
+    expect(parseLocation("Pier 4, port side")).toBeNull();
   });
 });
 
-describe("filterRecords zone", () => {
+describe("place filter", () => {
   const records = [
-    makeRecord({ id: "aux", location: "Auxiliary machinery space" }),
-    makeRecord({ id: "fwd", location: "Forward equipment space" }),
-    makeRecord({ id: "none", location: "" }),
+    makeRecord({
+      id: "mc2",
+      location: "Missile Compartment, second level, frame 64, port, outboard",
+    }),
+    makeRecord({
+      id: "mc4",
+      location:
+        "Missile Compartment, lower level, frame 95, starboard, outboard",
+    }),
+    makeRecord({
+      id: "fwd",
+      location: "FWD Compartment, lower level, frame 38",
+    }),
+    makeRecord({ id: "none", location: "Pier 4" }),
   ];
-  it("keeps only records in the selected hull zone", () => {
-    const ids = (zone: Parameters<typeof filterRecords>[5]) =>
-      filterRecords(records, "", "", "all", undefined, zone).map((r) => r.id);
-    expect(ids("auxiliary")).toEqual(["aux"]);
-    expect(ids("aft")).toEqual([]);
-    expect(ids("")).toEqual(["aux", "fwd", "none"]);
+  it("keeps records in a compartment, or in one level of it", () => {
+    const ids = (place: Parameters<typeof filterRecords>[5]) =>
+      filterRecords(records, "", "", "all", undefined, place).map((r) => r.id);
+    expect(ids("missile")).toEqual(["mc2", "mc4"]);
+    expect(ids("missile/second")).toEqual(["mc2"]);
+    expect(ids("engine")).toEqual([]);
+    expect(ids("")).toEqual(["mc2", "mc4", "fwd", "none"]);
+    expect(inPlace("Pier 4", "forward")).toBe(false);
+    expect(placeLabel("missile/second")).toBe(
+      "Missile Compartment · Second level",
+    );
+    expect(placeLabel("engine")).toBe("Engine Room");
   });
 });
 

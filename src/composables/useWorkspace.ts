@@ -4,8 +4,8 @@ import {
   activityFeed,
   appendRichText,
   filterRecords,
-  hullZone,
-  hullZones,
+  parseLocation,
+  placeKey,
   liveVerb,
   recordAsOf,
   normalizeJcn,
@@ -13,7 +13,7 @@ import {
   markdownToRichText,
   steps,
 } from "../presentation";
-import type { HullZone } from "../presentation";
+import type { PlaceKey } from "../presentation";
 import { useDialogFocus } from "./useDialogFocus";
 import { useNow } from "./useNow";
 import { useLive } from "./useLive";
@@ -100,7 +100,8 @@ export function useWorkspace(
     scope = ref<Scope>("all"),
     query = ref(""),
     status = ref(""),
-    zone = ref<HullZone | "">("");
+    /** Compartment ("missile") or compartment and level ("missile/second") filter. */
+    place = ref<PlaceKey>("");
   /** Full-screen watch-floor wallboard. */
   const watchFloor = ref(false);
   /** Fleet replay position (epoch ms). Null shows live data. */
@@ -211,22 +212,33 @@ export function useWorkspace(
       status.value,
       scope.value,
       state.user?.id,
-      zone.value,
+      place.value,
     ),
   );
-  /** Records per mock hull zone under every filter except the zone itself. */
-  const zoneCounts = computed(() => {
-    const result = Object.fromEntries(
-      [...hullZones.map((z) => z.id), "unlocated"].map((id) => [id, 0]),
-    ) as Record<HullZone | "unlocated", number>;
+  /**
+   * Records per compartment and per compartment level, under every filter
+   * except the place itself. Keys are place keys plus "unlocated".
+   */
+  const placeCounts = computed(() => {
+    const result: Partial<Record<PlaceKey | "unlocated", number>> = {
+      unlocated: 0,
+    };
+    const bump = (key: PlaceKey | "unlocated") =>
+      (result[key] = (result[key] ?? 0) + 1);
     for (const r of filterRecords(
       fleet.value,
       query.value,
       status.value,
       scope.value,
       state.user?.id,
-    ))
-      result[hullZone(r.location) ?? "unlocated"]++;
+    )) {
+      const loc = parseLocation(r.location);
+      if (!loc) bump("unlocated");
+      else {
+        bump(loc.compartment);
+        if (loc.level) bump(placeKey(loc.compartment, loc.level));
+      }
+    }
     return result;
   });
   const counts = computed(() =>
@@ -339,7 +351,7 @@ export function useWorkspace(
     replayAt.value = null;
     status.value = "";
     query.value = "";
-    zone.value = "";
+    place.value = "";
     historySnapshot.value = null;
     error.value = "";
     notice.value = "";
@@ -714,7 +726,7 @@ export function useWorkspace(
     scope,
     query,
     status,
-    zone,
+    place,
     replayAt,
     watchFloor,
     fleet,
@@ -749,7 +761,7 @@ export function useWorkspace(
     canComment,
     filtered,
     counts,
-    zoneCounts,
+    placeCounts,
     owner,
     run,
     reload,

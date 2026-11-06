@@ -1,19 +1,29 @@
 <script setup lang="ts">
 import { useId } from "vue";
-import { hullZones } from "../presentation";
-import type { HullZone } from "../presentation";
+import { compartments } from "../presentation";
+import type { CompartmentId } from "../presentation";
 import {
-  HULL_HEIGHT,
+  BULKHEADS,
+  DECK_PATH,
+  FIN_PATH,
+  HATCHES,
+  HULL_X,
+  LABEL_Y,
+  HULL_BOTTOM,
   HULL_PATH,
   HULL_TOP,
-  zoneBands,
-  zoneCenter,
+  SAIL_PATH,
+  compartmentBands,
+  compartmentCenter,
+  deckLines,
 } from "../hullGeometry";
 defineProps<{
-  active?: HullZone | null;
+  active?: CompartmentId | null;
   muted?: boolean;
   /** Hide labels and headings, e.g. while zoomed into one compartment. */
   bare?: boolean;
+  /** Optional count shown after each compartment label. */
+  counts?: Partial<Record<CompartmentId, number>>;
 }>();
 // Two maps can share one shadow root, so each needs its own clip id.
 const clipId = `esr-hull-clip-${useId()}`;
@@ -28,45 +38,75 @@ const clipId = `esr-hull-clip-${useId()}`;
     </defs>
     <text
       class="heading"
-      x="42"
-      y="20"
+      :x="HULL_X[0]"
+      y="14"
     >
-      ◀ FWD
+      ◀ AFT
     </text>
     <text
       class="heading"
-      x="600"
-      y="20"
+      :x="HULL_X[1]"
+      y="14"
       text-anchor="end"
     >
-      AFT ▶
+      FWD ▶
     </text>
     <path
       class="fin"
       vector-effect="non-scaling-stroke"
-      d="M570 82L592 56H602L594 84M570 98L592 124H602L594 96"
+      :d="FIN_PATH"
     />
     <path
       class="sail"
       vector-effect="non-scaling-stroke"
-      d="M178 62L186 34H226L234 62M170 46H186M226 46H242"
+      :d="SAIL_PATH"
+    />
+    <path
+      class="deck-hump"
+      vector-effect="non-scaling-stroke"
+      :d="DECK_PATH"
+    />
+    <line
+      v-for="x in HATCHES"
+      :key="`hatch-${x}`"
+      class="hatch"
+      vector-effect="non-scaling-stroke"
+      :x1="x"
+      :x2="x"
+      y1="45.5"
+      y2="49"
     />
     <path
       class="hull-fill"
       :d="HULL_PATH"
     />
     <g :clip-path="`url(#${clipId})`">
+      <slot />
+      <template
+        v-for="c in compartments"
+        :key="c.id"
+      >
+        <line
+          v-for="y in deckLines(c.id)"
+          :key="`${c.id}-${y}`"
+          class="deck"
+          vector-effect="non-scaling-stroke"
+          :x1="compartmentBands[c.id][0]"
+          :x2="compartmentBands[c.id][1]"
+          :y1="y"
+          :y2="y"
+        />
+      </template>
       <line
-        v-for="z in hullZones.slice(1)"
-        :key="z.id"
+        v-for="x in BULKHEADS"
+        :key="x"
         class="bulkhead"
         vector-effect="non-scaling-stroke"
-        :x1="zoneBands[z.id][0]"
-        :x2="zoneBands[z.id][0]"
+        :x1="x"
+        :x2="x"
         :y1="HULL_TOP"
-        :y2="HULL_TOP + HULL_HEIGHT"
+        :y2="HULL_BOTTOM"
       />
-      <slot />
     </g>
     <path
       class="hull-line"
@@ -74,14 +114,24 @@ const clipId = `esr-hull-clip-${useId()}`;
       :d="HULL_PATH"
     />
     <text
-      v-for="z in hullZones"
-      :key="z.id"
-      :class="['zone-label', { active: z.id === active }]"
-      :x="zoneCenter(z.id)"
-      y="144"
+      v-for="c in compartments"
+      :key="c.id"
+      :class="['zone-label', { active: c.id === active }]"
+      :x="compartmentCenter(c.id)"
+      :y="LABEL_Y"
       text-anchor="middle"
     >
-      {{ z.label }}
+      <tspan class="long">
+        {{ c.label }}
+      </tspan><tspan class="short">
+        {{ c.short }}
+      </tspan><tspan
+        v-if="counts && counts[c.id] !== undefined"
+        class="zone-count"
+        dx="6"
+      >
+        {{ counts[c.id] }}
+      </tspan>
     </text>
     <slot name="overlay" />
   </g>
@@ -107,13 +157,27 @@ const clipId = `esr-hull-clip-${useId()}`;
   stroke-linecap: round;
 }
 .sail,
-.fin {
+.fin,
+.deck-hump {
   fill: var(--surface);
 }
+.deck-hump {
+  stroke: var(--ink-3);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.hatch {
+  stroke: var(--ink-4);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
 .bulkhead {
-  stroke: var(--line);
+  stroke: var(--ink-4);
   stroke-width: 1.5;
-  stroke-dasharray: 3 3;
+}
+.deck {
+  stroke: var(--line);
+  stroke-width: 1;
 }
 .zone-label {
   font-size: 11px;
@@ -123,23 +187,36 @@ const clipId = `esr-hull-clip-${useId()}`;
   font-weight: 800;
   fill: var(--esr-accent-text);
 }
+.zone-count {
+  font-weight: 800;
+  fill: var(--ink-2);
+}
+.short {
+  display: none;
+}
 .bare .heading,
 .bare .zone-label {
   display: none;
 }
 .muted .hull-line,
 .muted .sail,
+.muted .deck-hump,
 .muted .fin {
   stroke: var(--ink-4);
   stroke-dasharray: 5 4;
 }
 @container (max-width: 560px) {
-  .zone-label:not(.active),
   .heading {
     display: none;
   }
-  .zone-label.active {
-    font-size: 18px;
+  .zone-label {
+    font-size: 16px;
+  }
+  .long {
+    display: none;
+  }
+  .short {
+    display: inline;
   }
 }
 </style>

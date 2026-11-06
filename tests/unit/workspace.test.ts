@@ -21,6 +21,7 @@ import RequestForm from "../../src/components/RequestForm.vue";
 import RequestWorkspace from "../../src/components/RequestWorkspace.vue";
 import RecordDetail from "../../src/components/RecordDetail.vue";
 import WatchFloor from "../../src/components/WatchFloor.vue";
+import HullLocationMap from "../../src/components/HullLocationMap.vue";
 import Workspace from "../../src/Workspace.ce.vue";
 import WorkspaceDialogs from "../../src/components/WorkspaceDialogs.vue";
 
@@ -571,57 +572,70 @@ describe("ESR table columns", () => {
   });
 });
 
-describe("hull zone filter", () => {
+const MC2 = "Missile Compartment, second level, frame 64, port, outboard";
+const MC4 = "Missile Compartment, lower level, frame 95, starboard, outboard";
+const FWD4 = "FWD Compartment, lower level, frame 38, starboard, outboard";
+describe("hull place filter", () => {
   const located = () =>
     makeBootstrap({
       records: [
-        makeRecord({ id: "aux-1", location: "Auxiliary machinery space" }),
-        makeRecord({
-          id: "aux-2",
-          location: "Auxiliary machinery space",
-          status: "ESR Closed",
-        }),
-        makeRecord({ id: "fwd", location: "Forward equipment space" }),
+        makeRecord({ id: "mc-1", location: MC2 }),
+        makeRecord({ id: "mc-2", location: MC4, status: "ESR Closed" }),
+        makeRecord({ id: "fwd", location: FWD4 }),
         makeRecord({ id: "none" }),
       ],
     });
-  it("counts zones under every filter except the zone itself", () => {
+  it("counts compartments and levels under every filter except the place itself", () => {
     const { context } = mountSection(RequestWorkspace, located());
-    expect(context.zoneCounts.value).toMatchObject({
-      auxiliary: 2,
+    expect(context.placeCounts.value).toMatchObject({
+      missile: 2,
+      "missile/second": 1,
+      "missile/lower": 1,
       forward: 1,
-      aft: 0,
+      "forward/lower": 1,
       unlocated: 1,
     });
-    context.zone.value = "auxiliary";
-    expect(context.filtered.value.map((r) => r.id)).toEqual(["aux-1", "aux-2"]);
-    expect(context.zoneCounts.value.forward).toBe(1);
+    expect(context.placeCounts.value.engine).toBeUndefined();
+    context.place.value = "missile";
+    expect(context.filtered.value.map((r) => r.id)).toEqual(["mc-1", "mc-2"]);
+    context.place.value = "missile/second";
+    expect(context.filtered.value.map((r) => r.id)).toEqual(["mc-1"]);
+    expect(context.placeCounts.value.forward).toBe(1);
     context.status.value = "ESR Closed";
-    expect(context.zoneCounts.value).toMatchObject({
-      auxiliary: 1,
-      forward: 0,
-    });
+    expect(context.placeCounts.value).toMatchObject({ missile: 1 });
+    expect(context.placeCounts.value.forward).toBeUndefined();
     context.navigate("workspace");
-    expect(context.zone.value).toBe("");
+    expect(context.place.value).toBe("");
   });
-  it("filters the table from a zone chip and clears it", async () => {
+  it("filters by compartment chip, then by level chip, and clears", async () => {
     const { wrapper, context } = mountSection(RequestWorkspace, located());
     await wrapper
-      .get('[aria-label="Filter by hull zone"] button')
+      .get('[aria-label="Filter by compartment"] button')
       .trigger("click");
-    expect(context.zone.value).toBe("forward");
+    expect(context.place.value).toBe("forward");
     expect(wrapper.findAll("tbody tr")).toHaveLength(1);
     await wrapper
-      .get('[aria-label="Remove zone filter Forward"]')
+      .get('[aria-label="Remove place filter FWD Compartment"]')
       .trigger("click");
     expect(wrapper.findAll("tbody tr")).toHaveLength(4);
-    context.zone.value = "auxiliary";
+    context.place.value = "missile";
     await wrapper.vm.$nextTick();
+    const levels = wrapper.get(
+      '[aria-label="Filter Missile Compartment by level"]',
+    );
+    expect(
+      levels.findAll("button").map((b) => b.text().replace(/\s+/g, " ")),
+    ).toEqual(["Upper 0", "Second 1", "Third 0", "Lower 1"]);
+    await levels.findAll("button")[1].trigger("click");
+    expect(context.place.value).toBe("missile/second");
+    expect(wrapper.findAll("tbody tr")).toHaveLength(1);
+    await levels.findAll("button")[1].trigger("click");
+    expect(context.place.value).toBe("missile");
     const clear = wrapper
       .findAll("button")
       .find((b) => b.text() === "Clear filters")!;
     await clear.trigger("click");
-    expect(context.zone.value).toBe("");
+    expect(context.place.value).toBe("");
   });
 });
 
@@ -721,15 +735,15 @@ describe("compartment dive", () => {
         makeRecord({
           id: "aux-1",
           serial: "260061A",
-          location: "Auxiliary machinery space",
+          location: FWD4,
           component: "ASW-P-02 / TSN-10482",
         }),
         makeRecord({
           id: "aux-2",
           serial: "260062A",
-          location: "Auxiliary machinery space",
+          location: FWD4,
         }),
-        makeRecord({ id: "fwd", location: "Forward equipment space" }),
+        makeRecord({ id: "mc", location: MC2 }),
       ],
     });
   const band = (wrapper: VueWrapper, index: number) =>
@@ -737,26 +751,43 @@ describe("compartment dive", () => {
   it("dives into a compartment, opens a contact, and surfaces", async () => {
     reduceMotion();
     const { wrapper, context } = mountSection(RequestWorkspace, located());
+    // Cells run bow to stern, top to bottom: index 3 is the FWD lower level.
     await band(wrapper, 3).trigger("click");
-    expect(context.zone.value).toBe("auxiliary");
+    expect(context.place.value).toBe("forward/lower");
     const contacts = wrapper.findAll(".contact");
+    const where =
+      "FWD Compartment · Lower level · Frame 38 · Starboard, outboard";
     expect(contacts.map((c) => c.attributes("aria-label"))).toEqual([
-      "Contact 260061A: Pump, In Process",
-      "Contact 260062A: Pump, In Process",
+      `Contact 260061A: Pump, In Process, ${where}`,
+      `Contact 260062A: Pump, In Process, ${where}`,
     ]);
     expect(wrapper.text()).toContain("2 contacts");
     await wrapper.get(".hull-heatmap").trigger("keydown", { key: "Escape" });
-    expect(context.zone.value).toBe("");
+    expect(context.place.value).toBe("");
     expect(wrapper.findAll(".contact")).toHaveLength(0);
     await band(wrapper, 3).trigger("click");
     await wrapper.findAll(".contact")[1].trigger("keydown", { key: "Enter" });
     expect(context.view.value).toBe("record");
     expect(context.selectedId.value).toBe("aux-2");
   });
-  it("surfaces when the zone filter is cleared elsewhere", async () => {
+  it("switches levels inside a dive and dims the others", async () => {
+    reduceMotion();
+    const { wrapper, context } = mountSection(RequestWorkspace, located());
+    await band(wrapper, 3).trigger("click");
+    expect(wrapper.findAll(".contact.dim")).toHaveLength(0);
+    // The FWD upper level, inside the same dive: the filter switches level.
+    await band(wrapper, 0).trigger("click");
+    expect(context.place.value).toBe("forward/upper");
+    expect(wrapper.findAll(".contact.dim")).toHaveLength(2);
+    await band(wrapper, 0).trigger("click");
+    expect(context.place.value).toBe("forward");
+    expect(wrapper.find(".surface").exists()).toBe(true);
+  });
+  it("surfaces when the place filter is cleared elsewhere", async () => {
     reduceMotion();
     const { wrapper } = mountSection(RequestWorkspace, located());
-    await band(wrapper, 0).trigger("click");
+    // Index 5 is the Missile Compartment's second level.
+    await band(wrapper, 5).trigger("click");
     expect(wrapper.findAll(".contact")).toHaveLength(1);
     const clear = wrapper
       .findAll("button")
@@ -774,7 +805,7 @@ describe("capped compartment dive", () => {
         makeRecord({
           id: `aux-${i}`,
           serial: `26${String(1000 + i).padStart(4, "0")}A`,
-          location: "Auxiliary machinery space",
+          location: FWD4,
           component: "ASW-P-02 / TSN-10482",
           status: "Unassigned",
           // Older records first, so the oldest are the most critical.
@@ -792,7 +823,7 @@ describe("capped compartment dive", () => {
     const overflow = wrapper.get(".contact.overflow");
     expect(overflow.text()).toBe("+6");
     expect(overflow.attributes("aria-label")).toBe(
-      "Show all 30 Auxiliary records in the table",
+      "Show all 30 FWD Compartment records in the table",
     );
     expect(wrapper.text()).toContain("24 most critical of 30");
     expect(wrapper.text()).toContain("6 more in the table");
@@ -881,7 +912,7 @@ describe("opened vs closed chart", () => {
           id: "open-1",
           serial: "260091A",
           createdAt: dayAgo(10),
-          location: "Auxiliary machinery space",
+          location: FWD4,
         }),
         makeRecord({
           id: "closed-1",
@@ -929,19 +960,49 @@ describe("opened vs closed chart", () => {
     expect(rows.length).toBeGreaterThan(5);
     expect(rows[0].text()).toMatch(/^Now, .*2\s*1\s*1$/);
   });
-  it("follows search and zone, but not the status filter", async () => {
+  it("follows search and place, but not the status filter", async () => {
     const { wrapper, context } = mountSection(RequestWorkspace, data());
     context.status.value = "ESR Closed";
     await wrapper.vm.$nextTick();
     expect(stats(wrapper)).toContain("2 opened");
     context.status.value = "";
-    context.zone.value = "auxiliary";
+    context.place.value = "forward";
     await wrapper.vm.$nextTick();
     expect(stats(wrapper)).toContain("1 opened");
     expect(stats(wrapper)).toContain("0 closed");
-    context.zone.value = "";
+    context.place.value = "";
     context.query.value = "260092A";
     await wrapper.vm.$nextTick();
     expect(stats(wrapper)).toContain("0 open now");
+  });
+});
+
+describe("record location map", () => {
+  const titles = (wrapper: VueWrapper) =>
+    wrapper.findAll("svg > title").map((t) => t.text());
+  it("pins the compartment, level, frame, and side in nautical terms", () => {
+    const wrapper = mount(HullLocationMap, { props: { location: MC2 } });
+    wrappers.push(wrapper);
+    expect(titles(wrapper)).toEqual([
+      "Mock hull map: Missile Compartment · Second level · Frame 64 · Port, outboard",
+      "Cross-section looking forward: second level, port, outboard",
+    ]);
+    // Looking forward, port is on the left of the centerline (x 60).
+    const pin = wrapper.get(".section-pin").attributes("transform")!;
+    expect(Number(/translate\(([\d.]+)/.exec(pin)![1])).toBeLessThan(30);
+    expect(wrapper.get("figcaption").text()).toContain(
+      "Missile Compartment · Second level · Frame 64 · Port, outboard",
+    );
+  });
+  it("keeps text it cannot place, without a pin or cross-section", () => {
+    const wrapper = mount(HullLocationMap, {
+      props: { location: "Auxiliary machinery space" },
+    });
+    wrappers.push(wrapper);
+    expect(titles(wrapper)).toEqual([
+      "Mock hull map: Auxiliary machinery space (compartment not recognized)",
+    ]);
+    expect(wrapper.find(".section").exists()).toBe(false);
+    expect(wrapper.find(".pin").exists()).toBe(false);
   });
 });

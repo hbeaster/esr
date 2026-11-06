@@ -5,30 +5,40 @@ import FleetReplay from "./FleetReplay.vue";
 import EquipmentGlyph from "./EquipmentGlyph.vue";
 import {
   agingThresholdsDays,
+  compartmentOf,
+  compartments,
   date,
+  describeLocation,
   equipmentClass,
   equipmentClassLabel,
   filterRecords,
   formatDuration,
+  levelLabels,
+  parseLocation,
+  placeKey,
+  placeLabel,
   plainText,
   rankByCriticality,
-  hullZone,
-  hullZoneLabel,
-  hullZones,
+  splitPlace,
   statusAge,
   statusTone,
 } from "../presentation";
-import type { HullZone } from "../presentation";
+import type { CompartmentId, Level } from "../presentation";
 import {
   FULL_VIEW,
+  HULL_BOTTOM,
   HULL_CENTER_Y,
-  HULL_HEIGHT,
   HULL_TOP,
+  HULL_X,
+  UNKNOWN_LEVEL_BAND,
+  cellCenter,
+  compartmentBands,
+  compartmentCenter,
+  compartmentInterior,
   contactCap,
   contactLayout,
   diveViewBox,
-  zoneBands,
-  zoneCenter,
+  levelBand,
 } from "../hullGeometry";
 import type { ViewBox } from "../hullGeometry";
 import { useWorkspaceContext } from "../composables/workspaceContext";
@@ -37,8 +47,8 @@ const {
   query,
   status,
   scope,
-  zone,
-  zoneCounts,
+  place,
+  placeCounts,
   fleet,
   fleetNow,
   replayAt,
@@ -46,30 +56,69 @@ const {
   openRecord,
   lastChange,
 } = useWorkspaceContext();
-const max = computed(() =>
-  Math.max(1, ...hullZones.map((z) => zoneCounts.value[z.id])),
+const emit = defineEmits<{ "show-all": [] }>();
+const props = defineProps<{
+  /** "wallboard": hull only, larger, no dive or filter controls. */
+  variant?: "card" | "wallboard";
+}>();
+const wallboard = computed(() => props.variant === "wallboard");
+const selected = computed(() => splitPlace(place.value));
+const shortLevel = (level: Level) => levelLabels[level].replace(" level", "");
+
+// ---- Cells: one per compartment level ----
+const cells = computed(() =>
+  compartments.flatMap((c) =>
+    c.levels.map((level) => {
+      const [x0, x1] = compartmentBands[c.id];
+      const [y0, y1] = levelBand(c.id, level);
+      const key = placeKey(c.id, level);
+      return {
+        compartment: c.id,
+        level,
+        key,
+        x0,
+        x1,
+        y0,
+        y1,
+        count: placeCounts.value[key] ?? 0,
+        center: cellCenter(c.id, level),
+      };
+    }),
+  ),
 );
-const shade = (id: HullZone) => {
-  const count = zoneCounts.value[id];
-  return count ? 0.1 + (0.6 * count) / max.value : 0;
-};
+const max = computed(() => Math.max(1, ...cells.value.map((c) => c.count)));
+const shade = (count: number) => (count ? 0.1 + (0.6 * count) / max.value : 0);
+const compartmentCounts = computed(() =>
+  Object.fromEntries(
+    compartments.map((c) => [c.id, placeCounts.value[c.id] ?? 0]),
+  ) as Record<CompartmentId, number>,
+);
 const title = computed(
   () =>
-    `Mock fleet hull heatmap: ${hullZones
-      .map((z) => `${z.label} ${zoneCounts.value[z.id]}`)
-      .join(", ")}; ${zoneCounts.value.unlocated} without a location`,
+    `Mock fleet hull heatmap: ${compartments
+      .map(
+        (c) =>
+          `${c.label} ${compartmentCounts.value[c.id]} (${c.levels
+            .map((l) => `${shortLevel(l).toLowerCase()} ${placeCounts.value[placeKey(c.id, l)] ?? 0}`)
+            .join(", ")})`,
+      )
+      .join("; ")}; ${placeCounts.value.unlocated ?? 0} without a location`,
 );
 /** Stale limits for the legend, e.g. "Unassigned 7 days · In Process 30 days". */
 const staleLimits = Object.entries(agingThresholdsDays)
   .map(([status, [, stale]]) => `${status} ${stale} days`)
   .join(" · ");
-function toggle(id: HullZone) {
-  zone.value = zone.value === id ? "" : id;
+function toggleCompartment(id: CompartmentId) {
+  place.value = place.value === id ? "" : id;
+}
+function toggleLevel(id: CompartmentId, level: Level) {
+  const key = placeKey(id, level);
+  place.value = place.value === key ? id : key;
 }
 
-// ---- Compartment dive: zoom into one zone and show its records as contacts ----
+// ---- Compartment dive: zoom into one compartment and show its records as contacts ----
 const DIVE_MS = 650;
-const dive = ref<HullZone | null>(null);
+const dive = ref<CompartmentId | null>(null);
 /** True once the zoom has landed, so contacts appear after the camera stops. */
 const landed = ref(false);
 const view = ref<ViewBox>({ ...FULL_VIEW });
@@ -101,46 +150,53 @@ function tweenTo(target: ViewBox, done?: () => void) {
   };
   tweenFrame = requestAnimationFrame(step);
 }
-function diveInto(z: HullZone) {
-  dive.value = z;
+function diveInto(id: CompartmentId, level: Level | null = null) {
+  const key = placeKey(id, level);
+  if (place.value !== key) place.value = key;
+  if (dive.value === id) return;
+  dive.value = id;
   landed.value = false;
-  if (zone.value !== z) zone.value = z;
-  tweenTo(diveViewBox(z), () => (landed.value = true));
+  tweenTo(diveViewBox(id, unknownLevelIn(id)), () => (landed.value = true));
 }
 function surface() {
   if (!dive.value) return;
   dive.value = null;
   landed.value = false;
-  if (zone.value) zone.value = "";
+  if (place.value) place.value = "";
   tweenTo(FULL_VIEW);
 }
-function onBand(z: HullZone) {
+/** A cell selects its compartment and level and dives; inside a dive it switches the level. */
+function onCell(id: CompartmentId, level: Level) {
   if (wallboard.value) return;
-  if (dive.value === z) surface();
-  else diveInto(z);
+  if (dive.value === id) toggleLevel(id, level);
+  else diveInto(id, level);
 }
-// Keep the dive in step with the zone filter changed elsewhere.
-watch(zone, (z) => {
+// Keep the dive in step with the place filter changed elsewhere.
+watch(place, (key) => {
   if (!dive.value) return;
-  if (!z) surface();
-  else if (z !== dive.value) diveInto(z);
+  const { compartment } = splitPlace(key);
+  if (!compartment) surface();
+  else if (compartment !== dive.value) {
+    dive.value = null;
+    diveInto(compartment, splitPlace(key).level);
+  }
 });
-const emit = defineEmits<{ "show-all": [] }>();
-const props = defineProps<{
-  /** "wallboard": hull only, larger, no dive or filter controls. */
-  variant?: "card" | "wallboard";
-}>();
-const wallboard = computed(() => props.variant === "wallboard");
+/** Whether any record in a compartment lacks a level, so the dive needs the strip under the hull. */
+const unknownLevelIn = (id: CompartmentId) =>
+  fleet.value.some((r) => {
+    const loc = parseLocation(r.location);
+    return loc?.compartment === id && !loc.level;
+  });
 const compact = (n: number) =>
   n >= 1000 ? `${(n / 1000).toFixed(n >= 10_000 ? 0 : 1)}k` : String(n);
 /**
  * The dived compartment's records, most critical first, capped so a boat with
- * thousands of ESRs stays readable. The rest fold into one overflow marker
- * that leads to the (already zone-filtered) table.
+ * thousands of ESRs stays readable. Each sits on its level at its frame. The
+ * rest fold into one overflow marker that leads to the place-filtered table.
  */
 const diveContacts = computed(() => {
-  const z = dive.value;
-  if (!z) return { contacts: [], overflow: null, total: 0 };
+  const id = dive.value;
+  if (!id) return { contacts: [], overflow: null, total: 0, unknownLevel: false };
   const ranked = rankByCriticality(
     filterRecords(
       fleet.value,
@@ -148,34 +204,47 @@ const diveContacts = computed(() => {
       status.value,
       scope.value,
       state.user?.id,
-    ).filter((r) => hullZone(r.location) === z),
+    ).filter((r) => parseLocation(r.location)?.compartment === id),
     fleetNow.value,
   );
-  const shown = ranked.slice(0, contactCap(z));
+  const shown = ranked.slice(0, contactCap());
   const hidden = ranked.length - shown.length;
+  const locations = shown.map(({ record }) => parseLocation(record.location)!);
   const layout = contactLayout(
-    [...shown.map((c) => c.record.id), ...(hidden ? ["overflow"] : [])],
-    z,
+    [
+      ...shown.map(({ record }, i) => ({
+        id: record.id,
+        level: locations[i].level,
+        frame: locations[i].frame,
+      })),
+      // The overflow marker sits at the end of the strip under the hull.
+      ...(hidden ? [{ id: "overflow", level: null, frame: 10_000 }] : []),
+    ],
+    id,
   );
   const contacts = shown.map(({ record: r, age }, i) => {
+    const loc = locations[i];
     const kind = equipmentClass(r);
     const stale = age?.tone === "stale";
     const subsafe = r.attributes.includes("SUBSAFE");
     const serial = r.serial || "Unassigned request";
     const heading = r.title || plainText(r.condition);
+    const where = describeLocation(loc);
     return {
       ...layout[i],
       record: r,
+      level: loc.level,
       kind,
       kindLabel: equipmentClassLabel(kind),
       serial,
+      where,
       heading: heading.length > 90 ? `${heading.slice(0, 88)}…` : heading,
       status: r.status,
       tone: statusTone(r.status),
       age: age ? formatDuration(age.ms) : "",
       stale,
       subsafe,
-      label: `Contact ${r.serial || "unassigned request"}: ${equipmentClassLabel(kind)}, ${r.status}${stale ? ", stale" : ""}${subsafe ? ", SUBSAFE" : ""}`,
+      label: `Contact ${r.serial || "unassigned request"}: ${equipmentClassLabel(kind)}, ${r.status}${stale ? ", stale" : ""}${subsafe ? ", SUBSAFE" : ""}, ${where}`,
     };
   });
   return {
@@ -188,10 +257,14 @@ const diveContacts = computed(() => {
         }
       : null,
     total: ranked.length,
+    unknownLevel: locations.some((l) => !l.level),
   };
 });
 const contacts = computed(() => diveContacts.value.contacts);
 type DiveContact = (typeof diveContacts.value.contacts)[number];
+/** Contacts off the selected level step back while a level is chosen. */
+const dimmed = (c: DiveContact) =>
+  !!selected.value.level && c.level !== selected.value.level;
 
 // ---- Contact tooltip: what a contact is, without opening it ----
 interface Tip {
@@ -213,8 +286,8 @@ function showTip(event: Event, contact: DiveContact | null) {
     Math.max(box.left + box.width / 2 - frame.left, 140),
     frame.width - 140,
   );
-  // Room for the tip (about 140px) above the contact, else drop it below.
-  const below = top < 160;
+  // Room for the tip (about 160px) above the contact, else drop it below.
+  const below = top < 180;
   tip.value = { x, y: below ? box.bottom - frame.top : top, below, contact };
 }
 function hideTip() {
@@ -222,40 +295,50 @@ function hideTip() {
 }
 watch(dive, hideTip);
 
-/** Serials of stale records per zone, at the fleet time. */
-const staleByZone = computed(() => {
-  const result: Partial<Record<HullZone, string[]>> = {};
+/** Stale records per compartment, at the fleet time, with their level. */
+const staleByCompartment = computed(() => {
+  const result: Partial<Record<CompartmentId, string[]>> = {};
   for (const r of fleet.value) {
-    const z = hullZone(r.location);
-    if (z && statusAge(r, fleetNow.value)?.tone === "stale")
-      (result[z] ??= []).push(r.serial || "unassigned request");
+    const loc = parseLocation(r.location);
+    if (loc && statusAge(r, fleetNow.value)?.tone === "stale")
+      (result[loc.compartment] ??= []).push(
+        `${r.serial || "unassigned request"}${loc.level ? ` (${shortLevel(loc.level).toLowerCase()})` : ""}`,
+      );
   }
   return result;
 });
-const staleTitle = (id: HullZone) => {
-  const serials = staleByZone.value[id] ?? [];
+const staleTitle = (id: CompartmentId) => {
+  const serials = staleByCompartment.value[id] ?? [];
   const shown = serials.slice(0, 6).join(", ");
-  return `${hullZones.find((z) => z.id === id)!.label}: ${serials.length} stale (past the time limit for their status) — ${shown}${serials.length > 6 ? ", …" : ""}`;
+  return `${compartmentOf(id).label}: ${serials.length} stale (past the time limit for their status) — ${shown}${serials.length > 6 ? ", …" : ""}`;
 };
 
-// ---- Pings: sonar contacts (stale) and replay events ----
+// ---- Pings: sonar contacts (stale) and replay or live events ----
 interface Ping {
   id: number;
-  zone: HullZone;
+  x: number;
+  y: number;
   kind: "stale" | "event";
 }
 const pings = ref<Ping[]>([]);
 let pingId = 0;
 const timers = new Set<ReturnType<typeof setTimeout>>();
-function addPing(z: HullZone, kind: Ping["kind"]) {
+function addPing(x: number, y: number, kind: Ping["kind"]) {
   if (pings.value.length > 24) return;
-  const ping = { id: ++pingId, zone: z, kind };
+  const ping = { id: ++pingId, x, y, kind };
   pings.value = [...pings.value, ping];
   const timer = setTimeout(() => {
     pings.value = pings.value.filter((p) => p.id !== ping.id);
     timers.delete(timer);
   }, 1100);
   timers.add(timer);
+}
+/** Ping the cell a location names, or its compartment when the level is unknown. */
+function pingAt(location: string, kind: Ping["kind"]) {
+  const loc = parseLocation(location);
+  if (!loc) return;
+  const { x, y } = cellCenter(loc.compartment, loc.level);
+  addPing(x, y, kind);
 }
 
 // ---- Sonar sweep (live view only, skipped for reduced motion) ----
@@ -265,14 +348,14 @@ const SWEEP_MS = 2600;
 const trailWidth = computed(() => view.value.w * 0.14);
 /** Sweep the whole hull, or only the dived compartment. */
 const sweepRange = (): [number, number] =>
-  dive.value ? zoneBands[dive.value] : [zoneBands.forward[0], zoneBands.aft[1]];
+  dive.value ? compartmentBands[dive.value] : HULL_X;
 const sweepX = ref<number | null>(null);
 const gradientId = `esr-sonar-${useId()}`;
 const reducedMotion =
   typeof window !== "undefined" &&
   !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 let frame = 0;
-let pinged = new Set<HullZone>();
+let pinged = new Set<CompartmentId>();
 function sweep(stamp: number) {
   const phase = (stamp % SWEEP_PERIOD_MS) / SWEEP_MS;
   if (replayAt.value !== null || phase > 1 || (dive.value && !landed.value)) {
@@ -283,12 +366,16 @@ function sweep(stamp: number) {
     const x = from + phase * (to - from);
     sweepX.value = x;
     if (!dive.value)
-      for (const z of hullZones)
-      if (!pinged.has(z.id) && x >= zoneCenter(z.id) && staleByZone.value[z.id]) {
-        pinged.add(z.id);
-        addPing(z.id, "stale");
-        sonarSound();
-      }
+      for (const c of compartments)
+        if (
+          !pinged.has(c.id) &&
+          x >= compartmentCenter(c.id) &&
+          staleByCompartment.value[c.id]
+        ) {
+          pinged.add(c.id);
+          addPing(compartmentCenter(c.id), HULL_CENTER_Y, "stale");
+          sonarSound();
+        }
   }
   frame = requestAnimationFrame(sweep);
 }
@@ -320,23 +407,21 @@ function sonarSound() {
   osc.stop(t + 0.95);
 }
 
-// ---- Replay: ping zones as events happen, and a running ticker ----
+// ---- Replay: ping cells as events happen, and a running ticker ----
 watch(replayAt, (now, before) => {
   if (now === null || before === null || now <= before) return;
   for (const e of activity.value) {
     const t = Date.parse(e.time);
     if (t <= before) continue;
     if (t > now) break;
-    const z = hullZone(e.location);
-    if (z) addPing(z, "event");
+    pingAt(e.location, "event");
   }
 });
-// Live pushes ping the compartment where the change happened.
+// Live pushes ping the cell where the change happened.
 watch(lastChange, (change) => {
   if (!change || replayAt.value !== null || dive.value) return;
   const record = state.records.find((r) => r.id === change.id);
-  const z = record && hullZone(record.location);
-  if (z) addPing(z, "event");
+  if (record) pingAt(record.location, "event");
 });
 const ticker = computed(() => {
   const t = replayAt.value;
@@ -376,7 +461,9 @@ onBeforeUnmount(() => {
               class="crumb"
               aria-hidden="true"
             >›</span>
-            <strong class="dive-zone">{{ hullZoneLabel(dive) }}</strong>
+            <strong class="dive-zone">{{
+              selected.compartment === dive ? placeLabel(place) : compartmentOf(dive).label
+            }}</strong>
             <span
               v-if="diveContacts.overflow"
               class="dive-count"
@@ -414,10 +501,8 @@ onBeforeUnmount(() => {
     <svg
       :viewBox="viewBox"
       :role="dive ? 'group' : 'img'"
-      :aria-label="
-        dive ? `${hullZoneLabel(dive)} compartment contacts` : undefined
-      "
-      :class="{ selecting: zone && !dive }"
+      :aria-label="dive ? `${compartmentOf(dive).label} contacts` : undefined"
+      :class="{ selecting: place && !dive }"
     >
       <title>{{ title }}</title>
       <defs>
@@ -441,21 +526,31 @@ onBeforeUnmount(() => {
         </linearGradient>
       </defs>
       <HullOutline
-        :active="zone || null"
+        :active="selected.compartment"
         :bare="!!dive"
+        :counts="compartmentCounts"
       >
         <rect
-          v-for="z in hullZones"
-          :key="z.id"
-          :class="['heat', { selected: zone === z.id }]"
-          :x="zoneBands[z.id][0]"
-          :y="HULL_TOP"
-          :width="zoneBands[z.id][1] - zoneBands[z.id][0]"
-          :height="HULL_HEIGHT"
-          :style="{ fillOpacity: dive ? 0.07 : shade(z.id) }"
+          v-for="c in cells"
+          :key="c.key"
+          :class="[
+            'heat',
+            {
+              selected:
+                selected.compartment === c.compartment &&
+                (!selected.level || selected.level === c.level),
+            },
+          ]"
+          :x="c.x0"
+          :y="c.y0"
+          :width="c.x1 - c.x0"
+          :height="c.y1 - c.y0"
+          :style="{ fillOpacity: dive ? 0.07 : shade(c.count) }"
           vector-effect="non-scaling-stroke"
-          @click="onBand(z.id)"
-        />
+          @click="onCell(c.compartment, c.level)"
+        >
+          <title>{{ placeLabel(c.key) }}: {{ c.count }}</title>
+        </rect>
         <g
           v-if="sweepX !== null"
           class="sweep"
@@ -465,7 +560,7 @@ onBeforeUnmount(() => {
             :x="sweepX - trailWidth"
             :y="HULL_TOP"
             :width="trailWidth"
-            :height="HULL_HEIGHT"
+            :height="HULL_BOTTOM - HULL_TOP"
             :fill="`url(#${gradientId})`"
           />
           <line
@@ -473,7 +568,7 @@ onBeforeUnmount(() => {
             :x1="sweepX"
             :x2="sweepX"
             :y1="HULL_TOP"
-            :y2="HULL_TOP + HULL_HEIGHT"
+            :y2="HULL_BOTTOM"
           />
         </g>
         <template #overlay>
@@ -481,37 +576,70 @@ onBeforeUnmount(() => {
             v-for="p in dive ? [] : pings"
             :key="p.id"
             :class="['ping', p.kind]"
-            :cx="zoneCenter(p.zone)"
-            :cy="HULL_CENTER_Y"
-            r="10"
+            :cx="p.x"
+            :cy="p.y"
+            r="8"
           />
-          <template
-            v-for="z in dive ? [] : hullZones"
-            :key="z.id"
+          <template v-if="!dive">
+            <text
+              v-for="c in cells.filter((cell) => cell.count)"
+              :key="`count-${c.key}`"
+              :class="[
+                'count',
+                {
+                  selected:
+                    selected.compartment === c.compartment &&
+                    (!selected.level || selected.level === c.level),
+                },
+              ]"
+              :x="c.center.x"
+              :y="c.center.y + 4"
+              text-anchor="middle"
+              @click="onCell(c.compartment, c.level)"
+            >
+              {{ c.count }}
+            </text>
+            <template
+              v-for="c in compartments"
+              :key="`stale-${c.id}`"
+            >
+              <g
+                v-if="staleByCompartment[c.id]"
+                class="stale-marker"
+                :transform="`translate(${compartmentInterior[c.id][1] - 8} ${HULL_TOP - 1})`"
+              >
+                <title>{{ staleTitle(c.id) }}</title>
+                <circle r="6.5" />
+                <text
+                  y="3"
+                  text-anchor="middle"
+                >{{ staleByCompartment[c.id]!.length }}</text>
+              </g>
+            </template>
+          </template>
+          <g
+            v-if="dive"
+            class="row-labels"
+            aria-hidden="true"
           >
             <text
-              v-if="zoneCounts[z.id]"
-              :class="['count', { selected: zone === z.id }]"
-              :x="zoneCenter(z.id)"
-              :y="HULL_CENTER_Y + 7"
-              text-anchor="middle"
-              @click="onBand(z.id)"
+              v-for="level in compartmentOf(dive).levels"
+              :key="level"
+              :class="{ active: selected.level === level }"
+              :x="compartmentBands[dive][0] - 3"
+              :y="(levelBand(dive, level)[0] + levelBand(dive, level)[1]) / 2 + 2"
+              text-anchor="end"
             >
-              {{ zoneCounts[z.id] }}
+              {{ shortLevel(level) }}
             </text>
-            <g
-              v-if="staleByZone[z.id]"
-              class="stale-marker"
-              :transform="`translate(${zoneBands[z.id][1] - (z.id === 'aft' ? 36 : 14)} ${HULL_TOP + 12})`"
+            <text
+              v-if="diveContacts.unknownLevel"
+              :x="compartmentInterior[dive][0]"
+              :y="UNKNOWN_LEVEL_BAND[0] - 1"
             >
-              <title>{{ staleTitle(z.id) }}</title>
-              <circle r="9" />
-              <text
-                y="4"
-                text-anchor="middle"
-              >{{ staleByZone[z.id]!.length }}</text>
-            </g>
-          </template>
+              Level not recorded
+            </text>
+          </g>
           <g
             v-if="dive && landed"
             class="contacts"
@@ -519,7 +647,7 @@ onBeforeUnmount(() => {
             <g
               v-for="(c, i) in contacts"
               :key="c.id"
-              :class="['contact', c.tone, { stale: c.stale, lit: sweepX !== null && c.x <= sweepX && sweepX - c.x < 24 }]"
+              :class="['contact', c.tone, { stale: c.stale, dim: dimmed(c), lit: sweepX !== null && c.x <= sweepX && sweepX - c.x < 24 }]"
               :transform="`translate(${c.x} ${c.y})`"
               role="button"
               tabindex="0"
@@ -561,7 +689,7 @@ onBeforeUnmount(() => {
               :transform="`translate(${diveContacts.overflow.x} ${diveContacts.overflow.y})`"
               role="button"
               tabindex="0"
-              :aria-label="`Show all ${diveContacts.total} ${hullZoneLabel(dive!)} records in the table`"
+              :aria-label="`Show all ${diveContacts.total} ${compartmentOf(dive!).label} records in the table`"
               @click="emit('show-all')"
               @keydown.enter.prevent="emit('show-all')"
               @keydown.space.prevent="emit('show-all')"
@@ -613,6 +741,9 @@ onBeforeUnmount(() => {
         </div>
         <p class="tip-title">
           {{ tip.contact.heading }}
+        </p>
+        <p class="tip-where">
+          {{ tip.contact.where }}
         </p>
         <div class="tip-meta">
           <span :class="['badge', tip.contact.tone]"><span class="status-dot" />{{ tip.contact.status }}</span>
@@ -676,20 +807,37 @@ onBeforeUnmount(() => {
       v-if="!wallboard"
       class="zone-chips"
       role="group"
-      aria-label="Filter by hull zone"
+      aria-label="Filter by compartment"
     >
       <button
-        v-for="z in hullZones"
-        :key="z.id"
-        :class="['zone-chip', { selected: zone === z.id }]"
-        :aria-pressed="zone === z.id"
-        :disabled="!zoneCounts[z.id] && zone !== z.id"
-        @click="toggle(z.id)"
+        v-for="c in compartments"
+        :key="c.id"
+        :class="['zone-chip', { selected: selected.compartment === c.id }]"
+        :aria-pressed="selected.compartment === c.id"
+        :disabled="!compartmentCounts[c.id] && selected.compartment !== c.id"
+        @click="toggleCompartment(c.id)"
       >
-        {{ z.label }} <strong>{{ zoneCounts[z.id] }}</strong>
+        {{ c.short }} <strong>{{ compartmentCounts[c.id] }}</strong>
       </button>
       <span class="unlocated">No location
-        <strong>{{ zoneCounts.unlocated }}</strong></span>
+        <strong>{{ placeCounts.unlocated ?? 0 }}</strong></span>
+    </div>
+    <div
+      v-if="!wallboard && selected.compartment"
+      class="zone-chips level-chips"
+      role="group"
+      :aria-label="`Filter ${compartmentOf(selected.compartment).label} by level`"
+    >
+      <button
+        v-for="level in compartmentOf(selected.compartment).levels"
+        :key="level"
+        :class="['zone-chip', { selected: selected.level === level }]"
+        :aria-pressed="selected.level === level"
+        @click="toggleLevel(selected.compartment!, level)"
+      >
+        {{ shortLevel(level) }}
+        <strong>{{ placeCounts[placeKey(selected.compartment!, level)] ?? 0 }}</strong>
+      </button>
     </div>
     <p
       class="legend"
@@ -768,8 +916,10 @@ onBeforeUnmount(() => {
   border-color: var(--esr-accent);
   color: var(--esr-accent-text);
 }
-.diving svg {
+.hull-heatmap.diving svg {
   max-height: 360px;
+  /* The zoomed view crops the sail and neighbors instead of drawing over the header. */
+  overflow: hidden;
 }
 .contact {
   cursor: pointer;
@@ -916,6 +1066,28 @@ onBeforeUnmount(() => {
     opacity: 0;
   }
 }
+.contact.dim {
+  opacity: 0.35;
+}
+.row-labels text {
+  font-size: 5px;
+  font-weight: 700;
+  fill: var(--ink-4);
+}
+.row-labels text.active {
+  fill: var(--esr-accent-text);
+}
+.tip-where {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+.level-chips {
+  margin-top: var(--sp-1);
+}
+.level-chips .zone-chip {
+  font-size: var(--fs-xs);
+}
 .stale-ring {
   fill: none;
   stroke: var(--red-solid);
@@ -987,12 +1159,12 @@ onBeforeUnmount(() => {
   pointer-events: none;
 }
 .count {
-  font-size: 22px;
+  font-size: 11px;
   font-weight: 800;
   fill: var(--esr-accent-text);
   paint-order: stroke;
   stroke: var(--surface);
-  stroke-width: 4px;
+  stroke-width: 3px;
   stroke-linejoin: round;
   cursor: pointer;
 }
@@ -1005,7 +1177,7 @@ onBeforeUnmount(() => {
   stroke-width: 2;
 }
 .stale-marker text {
-  font-size: 11px;
+  font-size: 8px;
   font-weight: 800;
   fill: #fff;
 }
@@ -1116,6 +1288,12 @@ onBeforeUnmount(() => {
   100% {
     opacity: 0;
     transform: scale(4);
+  }
+}
+/* Per-level counts get too small on narrow screens; the labels and chips carry the totals. */
+@container (max-width: 560px) {
+  .count {
+    display: none;
   }
 }
 @media (prefers-reduced-motion: reduce) {

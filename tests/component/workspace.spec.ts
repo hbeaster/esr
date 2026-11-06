@@ -13,7 +13,7 @@ const lds: Record<string, LdsData> = {
     workStatement: "Inspect auxiliary seawater pump coupling",
     refit: "A014",
     component: "ASW-P-02 / TSN-10482",
-    location: "Auxiliary machinery space",
+    location: "FWD Compartment, lower level, frame 38, starboard, outboard",
     swbs: "6286FCA00000",
   },
 };
@@ -89,22 +89,36 @@ test("isolated component loads, filters, navigates, and lays out at mobile width
     }),
   ).toBeVisible();
   await expect(
-    page.getByRole("img", { name: /Mock fleet hull heatmap: .*Auxiliary 1/ }),
+    page.getByRole("img", {
+      name: /Mock fleet hull heatmap: FWD Compartment 1 \(upper 0, second 0, third 0, lower 1\)/,
+    }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Auxiliary 1" }).click();
+  await page.getByRole("button", { name: "FWD 1" }).click();
   await expect(page.locator("tbody tr")).toHaveCount(1);
   await expect(
-    page.getByRole("button", { name: "Remove zone filter Auxiliary" }),
+    page.getByRole("button", { name: "Remove place filter FWD Compartment" }),
+  ).toBeVisible();
+  await page
+    .getByRole("group", { name: "Filter FWD Compartment by level" })
+    .getByRole("button", { name: "Lower 1" })
+    .click();
+  await expect(
+    page.getByRole("button", {
+      name: "Remove place filter FWD Compartment · Lower level",
+    }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Clear filters" }).click();
   await expect(page.locator("tbody tr")).toHaveCount(6);
-  // Click the band beside its count label, which sits on top of the center.
+  // The FWD lower level cell (index 3): inside the hull past the rounded bow,
+  // and beside the count label that sits on top of the cell's center.
   await page
     .locator(".hull-heatmap .heat")
     .nth(3)
-    .click({ position: { x: 8, y: 8 } });
+    .click({ position: { x: 70, y: 12 } });
   await expect(
-    page.getByRole("button", { name: /^Contact 260037A: Pump/ }),
+    page.getByRole("button", {
+      name: /^Contact 260037A: Pump, .*FWD Compartment · Lower level · Frame 38/,
+    }),
   ).toBeVisible();
   await expect(page.locator("tbody tr")).toHaveCount(1);
   await page.getByRole("button", { name: "Surface" }).click();
@@ -153,7 +167,7 @@ test("editor inserts approved template, answers sequential prompts, and saves", 
   ).toBeVisible();
   await expect(
     page.getByRole("img", {
-      name: "Mock hull map: Auxiliary machinery space (Auxiliary)",
+      name: "Mock hull map: FWD Compartment · Lower level · Frame 38 · Starboard, outboard",
     }),
   ).toBeVisible();
   const progress = page.getByRole("list", { name: "Workflow progress" });

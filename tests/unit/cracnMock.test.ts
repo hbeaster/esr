@@ -58,7 +58,7 @@ describe("CRACN mock server", () => {
     ).json();
     expect(item).toMatchObject({
       equipmentName: "ASW-P-02",
-      location: "Auxiliary machinery space",
+      location: "FWD Compartment, lower level, frame 38, starboard, outboard",
     });
     expect((await get(`/${job.noncanonicalRefs.refit.ref}`)).status).toBe(200);
   });

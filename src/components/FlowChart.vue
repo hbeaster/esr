@@ -4,11 +4,11 @@ import { date, filterRecords, flowSeries } from "../presentation";
 import type { FlowPoint } from "../presentation";
 import { useNow } from "../composables/useNow";
 import { useWorkspaceContext } from "../composables/workspaceContext";
-const { state, query, scope, zone, replayAt } = useWorkspaceContext();
+const { state, query, scope, place, replayAt } = useWorkspaceContext();
 const now = useNow();
 
 /**
- * Follows search, scope, and zone. Not the status filter: "the history of
+ * Follows search, scope, and place (compartment or level). Not the status filter: "the history of
  * records that are In Process today" is not a meaningful flow.
  */
 const series = computed(() =>
@@ -19,7 +19,7 @@ const series = computed(() =>
       "",
       scope.value,
       state.user?.id,
-      zone.value,
+      place.value,
     ),
     now.value,
   ),
@@ -215,7 +215,7 @@ const cursor = computed(() =>
           <template v-if="series.length">
             {{ date(new Date(domain[0]).toISOString()) }} – now ·
           </template>
-          Follows search, tab, and zone; not the status filter.
+          Follows search, tab, and compartment; not the status filter.
         </p>
       </div>
       <div

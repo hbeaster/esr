@@ -10,7 +10,8 @@ import {
 } from "../../host/simulated/handler";
 import type { SimulatedRequest } from "../../host/simulated/handler";
 import type { Bootstrap, EsrRecord } from "../../src/types";
-import { hullZone, hullZones } from "../../src/presentation";
+import { compartments, parseLocation, placeKey } from "../../src/presentation";
+import { simulatedLds } from "../../host/simulated/data";
 import seedJson from "../../backend/Esr.Api/seed.json";
 
 const seed = seedJson as unknown as SimulatedSeed;
@@ -34,10 +35,38 @@ const json = <T>(response: ReturnType<typeof handle>) => {
 const blocks = (record: EsrRecord) => record.signatures.map((s) => s.block);
 
 describe("simulated records", () => {
-  it("place records in every mock hull zone", () => {
-    const zones = new Set(records.map((r) => hullZone(r.location)));
-    for (const zone of hullZones) expect(zones).toContain(zone.id);
-    expect(zones).toContain(null);
+  it("place records on every level of every compartment", () => {
+    const cells = new Set(
+      records.map((r) => {
+        const loc = parseLocation(r.location);
+        return loc ? placeKey(loc.compartment, loc.level) : "unlocated";
+      }),
+    );
+    for (const c of compartments)
+      for (const level of c.levels)
+        expect(cells).toContain(placeKey(c.id, level));
+    expect(cells).toContain("unlocated");
+  });
+  it("describe each simulated job's location fully, in nautical terms", () => {
+    for (const lds of Object.values(simulatedLds)) {
+      const loc = parseLocation(lds.location);
+      expect(loc, lds.location).not.toBeNull();
+      expect(loc!.level, lds.location).not.toBeNull();
+      expect(loc!.frame, lds.location).not.toBeNull();
+      expect(loc!.side, lds.location).not.toBeNull();
+      // Frames fall inside their compartment's range.
+      const [first, last] = compartments.find(
+        (c) => c.id === loc!.compartment,
+      )!.frames;
+      expect(loc!.frame!).toBeGreaterThanOrEqual(first);
+      expect(loc!.frame!).toBeLessThanOrEqual(last);
+      if (loc!.side !== "centerline")
+        expect(loc!.board, lds.location).not.toBeNull();
+    }
+  });
+  it("keep 14 open records at Bangor", () => {
+    const local = records.filter((r) => r.site === "Bangor");
+    expect(local.filter((r) => r.status !== "ESR Closed")).toHaveLength(14);
   });
 
   it("are deterministic and use unique, recognisable IDs", () => {
