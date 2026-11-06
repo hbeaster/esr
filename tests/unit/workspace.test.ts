@@ -1053,3 +1053,62 @@ describe("replay speed", () => {
     expect(context.replaySpeed.value).toBe("slow");
   });
 });
+
+describe("stale badges by level", () => {
+  const daysAgo = (n: number) =>
+    new Date(Date.now() - n * 86_400_000).toISOString();
+  const data = () =>
+    makeBootstrap({
+      records: [
+        // Unassigned 20 days: past the 7-day limit, on the Missile second level.
+        makeRecord({
+          id: "stale",
+          serial: null,
+          status: "Unassigned",
+          engineerId: null,
+          createdAt: daysAgo(20),
+          location: MC2,
+        }),
+        // Fresh, on the Missile lower level.
+        makeRecord({
+          id: "fresh",
+          serial: null,
+          status: "Unassigned",
+          engineerId: null,
+          createdAt: daysAgo(1),
+          location: MC4,
+        }),
+      ],
+    });
+  it("puts the badge on the stale record's level and counts it on the level chip", async () => {
+    vi.spyOn(window, "matchMedia").mockReturnValue({
+      matches: true,
+    } as MediaQueryList);
+    const { wrapper, context } = mountSection(RequestWorkspace, data());
+    const markers = wrapper.findAll(".stale-marker");
+    expect(markers).toHaveLength(1);
+    expect(markers[0].get("title").text()).toMatch(
+      /^Missile Compartment · Second level: 1 stale/,
+    );
+    // The badge sits on the second level's row (y 65–80), not above the hull.
+    const y = Number(
+      /translate\([\d.]+ ([\d.]+)\)/.exec(
+        markers[0].attributes("transform")!,
+      )![1],
+    );
+    expect(y).toBeCloseTo(72.5);
+    context.place.value = "missile";
+    await wrapper.vm.$nextTick();
+    const chips = wrapper
+      .get('[aria-label="Filter Missile Compartment by level"]')
+      .findAll("button");
+    expect(chips[1].find(".chip-stale").text()).toBe("1");
+    expect(chips[3].find(".chip-stale").exists()).toBe(false);
+    // In the dive, the stale contact is marked whatever the motion setting.
+    await wrapper.findAll(".heat")[5].trigger("click");
+    const contacts = wrapper.findAll(".contact");
+    const stale = contacts.find((c) => c.classes("stale"))!;
+    expect(stale.attributes("aria-label")).toContain("stale");
+    expect(contacts.filter((c) => c.classes("stale"))).toHaveLength(1);
+  });
+});

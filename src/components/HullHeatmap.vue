@@ -23,11 +23,10 @@ import {
   statusAge,
   statusTone,
 } from "../presentation";
-import type { CompartmentId, Level } from "../presentation";
+import type { CompartmentId, Level, PlaceKey } from "../presentation";
 import {
   FULL_VIEW,
   HULL_BOTTOM,
-  HULL_CENTER_Y,
   HULL_TOP,
   HULL_X,
   UNKNOWN_LEVEL_BAND,
@@ -295,23 +294,42 @@ function hideTip() {
 }
 watch(dive, hideTip);
 
-/** Stale records per compartment, at the fleet time, with their level. */
-const staleByCompartment = computed(() => {
-  const result: Partial<Record<CompartmentId, string[]>> = {};
+/**
+ * Stale records at the fleet time, grouped by the level they are on
+ * ("missile/second"), or by compartment alone when no level is recorded.
+ */
+const staleByPlace = computed(() => {
+  const result: Partial<Record<PlaceKey, string[]>> = {};
   for (const r of fleet.value) {
     const loc = parseLocation(r.location);
     if (loc && statusAge(r, fleetNow.value)?.tone === "stale")
-      (result[loc.compartment] ??= []).push(
-        `${r.serial || "unassigned request"}${loc.level ? ` (${shortLevel(loc.level).toLowerCase()})` : ""}`,
+      (result[placeKey(loc.compartment, loc.level)] ??= []).push(
+        r.serial || "unassigned request",
       );
   }
   return result;
 });
-const staleTitle = (id: CompartmentId) => {
-  const serials = staleByCompartment.value[id] ?? [];
-  const shown = serials.slice(0, 6).join(", ");
-  return `${compartmentOf(id).label}: ${serials.length} stale (past the time limit for their status) — ${shown}${serials.length > 6 ? ", …" : ""}`;
-};
+/** Badge positions: on each stale level's row at the bow-side end, or above the compartment when the level is unknown. */
+const staleMarkers = computed(() =>
+  (Object.entries(staleByPlace.value) as [PlaceKey, string[]][]).map(
+    ([key, serials]) => {
+      const { compartment, level } = splitPlace(key);
+      const x = compartmentInterior[compartment!][1] - 7;
+      const y = level ? cellCenter(compartment!, level).y : HULL_TOP - 1;
+      const shown = serials.slice(0, 6).join(", ");
+      return {
+        key,
+        compartment: compartment!,
+        x,
+        y,
+        count: serials.length,
+        title: `${placeLabel(key)}${level ? "" : " (level not recorded)"}: ${serials.length} stale (past the time limit for their status) — ${shown}${serials.length > 6 ? ", …" : ""}`,
+      };
+    },
+  ),
+);
+const staleIn = (id: CompartmentId) =>
+  staleMarkers.value.filter((m) => m.compartment === id);
 
 // ---- Pings: sonar contacts (stale) and replay or live events ----
 interface Ping {
@@ -370,10 +388,12 @@ function sweep(stamp: number) {
         if (
           !pinged.has(c.id) &&
           x >= compartmentCenter(c.id) &&
-          staleByCompartment.value[c.id]
+          staleIn(c.id).length
         ) {
           pinged.add(c.id);
-          addPing(compartmentCenter(c.id), HULL_CENTER_Y, "stale");
+          // Ping the levels that hold the stale work, not the whole compartment.
+          for (const m of staleIn(c.id))
+            addPing(compartmentCenter(c.id), m.y, "stale");
           sonarSound();
         }
   }
@@ -599,23 +619,19 @@ onBeforeUnmount(() => {
             >
               {{ c.count }}
             </text>
-            <template
-              v-for="c in compartments"
-              :key="`stale-${c.id}`"
+            <g
+              v-for="m in staleMarkers"
+              :key="`stale-${m.key}`"
+              class="stale-marker"
+              :transform="`translate(${m.x} ${m.y})`"
             >
-              <g
-                v-if="staleByCompartment[c.id]"
-                class="stale-marker"
-                :transform="`translate(${compartmentInterior[c.id][1] - 8} ${HULL_TOP - 1})`"
-              >
-                <title>{{ staleTitle(c.id) }}</title>
-                <circle r="6.5" />
-                <text
-                  y="3"
-                  text-anchor="middle"
-                >{{ staleByCompartment[c.id]!.length }}</text>
-              </g>
-            </template>
+              <title>{{ m.title }}</title>
+              <circle r="5.5" />
+              <text
+                y="2.6"
+                text-anchor="middle"
+              >{{ m.count }}</text>
+            </g>
           </template>
           <g
             v-if="dive"
@@ -836,7 +852,11 @@ onBeforeUnmount(() => {
         @click="toggleLevel(selected.compartment!, level)"
       >
         {{ shortLevel(level) }}
-        <strong>{{ placeCounts[placeKey(selected.compartment!, level)] ?? 0 }}</strong>
+        <strong>{{ placeCounts[placeKey(selected.compartment!, level)] ?? 0 }}</strong><span
+          v-if="staleByPlace[placeKey(selected.compartment!, level)]"
+          class="chip-stale"
+          :aria-label="`, ${staleByPlace[placeKey(selected.compartment!, level)]!.length} stale`"
+        >{{ staleByPlace[placeKey(selected.compartment!, level)]!.length }}</span>
       </button>
     </div>
     <p
@@ -847,7 +867,7 @@ onBeforeUnmount(() => {
         class="legend-badge"
         aria-hidden="true"
       >3</span>
-      <span><strong>Stale records</strong> in that compartment, past the time limit
+      <span><strong>Stale records</strong> on that level, past the time limit
         for their status. Stale after: {{ staleLimits }}.</span>
     </p>
   </section>
@@ -1088,6 +1108,24 @@ onBeforeUnmount(() => {
 .level-chips .zone-chip {
   font-size: var(--fs-xs);
 }
+/* Stale contacts keep a solid red outline; the pulse adds motion on top. */
+.contact.stale .disc {
+  stroke: var(--red-solid);
+  stroke-width: 2.5px;
+}
+.chip-stale {
+  display: inline-grid;
+  place-items: center;
+  min-width: 16px;
+  height: 16px;
+  margin-left: 5px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--red-solid);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+}
 .stale-ring {
   fill: none;
   stroke: var(--red-solid);
@@ -1177,7 +1215,7 @@ onBeforeUnmount(() => {
   stroke-width: 2;
 }
 .stale-marker text {
-  font-size: 8px;
+  font-size: 7px;
   font-weight: 800;
   fill: #fff;
 }

@@ -654,11 +654,18 @@ fieldset .check {
 
 /* ---------- Motion preferences ---------- */
 @media (prefers-reduced-motion: reduce) {
+  /*
+   * Make motion instant rather than removing transforms: SVG positions shapes
+   * with transform (pins, contacts, badges, labels) and tooltips center with
+   * it, so `transform: none` would move them, not stop them moving.
+   */
   *,
   *::before,
   *::after {
     transition-duration: 0.01ms !important;
-    transform: none !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
   }
 }
 
